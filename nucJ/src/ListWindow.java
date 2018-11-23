@@ -63,6 +63,7 @@ import com.github.hmdev.writer.Epub3ImageWriter;
 import com.github.hmdev.writer.Epub3Writer;
 import com.opencsv.CSVWriter;
 
+import list.DialogConverterSettings;
 import list.NovelList;
 import list.NovelMeta;
 
@@ -92,7 +93,7 @@ public class ListWindow {
   Process kindleProcess;
 
   /** 設定ファイル */
-  Properties props;
+  public Properties props;
   /** 設定ファイル名 */
   String propFileName = "NucJ.ini";
 
@@ -290,15 +291,28 @@ public class ListWindow {
     // });
     // mnNewMenu.add(mntm2);
 
-    JMenuItem mntm3 = new JMenuItem("Test Command");
-    mntm3.addActionListener(new ActionListener() {
+    // JMenuItem mntm3 = new JMenuItem("Test Command");
+    // mntm3.addActionListener(new ActionListener() {
+    // public void actionPerformed(ActionEvent e) {
+    // LogAppender.println("RowSelection: " + table.getRowSelectionAllowed());
+    // LogAppender.println("ColumnSelection: " +
+    // table.getColumnSelectionAllowed());
+    // LogAppender.println("CellSelection: " + table.getCellSelectionEnabled());
+    // }
+    // });
+    // mnNewMenu.add(mntm3);
+
+    JMenuItem menuOpenPrefDialog = new JMenuItem("設定...");
+    menuOpenPrefDialog.addActionListener(new ActionListener() {
+      JFrame owner;
+
       public void actionPerformed(ActionEvent e) {
-        LogAppender.println("RowSelection: " + table.getRowSelectionAllowed());
-        LogAppender.println("ColumnSelection: " + table.getColumnSelectionAllowed());
-        LogAppender.println("CellSelection: " + table.getCellSelectionEnabled());
+        DialogConverterSettings dialogConverterSettings = new DialogConverterSettings(owner);
+        dialogConverterSettings.setModal(true);
+        dialogConverterSettings.setVisible(true);
       }
     });
-    mnNewMenu.add(mntm3);
+    mnNewMenu.add(menuOpenPrefDialog);
 
     JPanel rootPanel = new JPanel();
     rootPanel.setLayout(new BoxLayout(rootPanel, BoxLayout.Y_AXIS));
