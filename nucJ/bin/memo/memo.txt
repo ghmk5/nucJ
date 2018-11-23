@@ -1,0 +1,109 @@
+[動作解析]
+・AozoraEpub3Applet
+   ＊propsの値は起動時にiniファイルからロードされる 読み込み操作はメソッドAozoraEpub3Applet.loadPropertiesに記述されており、
+     loadPropertiesがinit()内で実行される
+  URLをペーストまたはDnD→vecUrlStringにadd
+  vecUrlStringを引数としてstartConvertWorker→ConvertWorkerを起動
+  AozoraEpub3Applet.convertWebを実行 戻り値なし
+    引数: vecUrlString, vecUrlSrcFile, dstPath
+    vecUrlStringの要素を一つづつ取り出してurlStringとする
+    WebAozoraConverter.createWebAozoraConverterを実行 戻り値はWebAozoraConverter
+      引数: urlString
+    生成されたWebAozoraConverterを実行 戻り値はFile srcFile L4074
+      引数:  urlString createWebAozoraConverterの引数から
+            this.cachePath: デフォルト値あり JTextField jTextCachePathから拾う jTextCachePathの値は起動時にpropsから入力
+            interval: デフォルト値あり JTextField jTextWebIntervalから拾う 同上
+            modifiedExpire: JTextField jTextWebModifiedExpire
+            this.jCheckWebConvertUpdated.isSelected()
+            this.jCheckWebModifiedOnly.isSelected()
+            jCheckWebModifiedTail.isSelected()
+            beforeChapter: JCheckBox jCheckWebBeforeChapter
+    AozoraEpub3Applet.convertFilesを実行 戻り値なし L4115
+      引数:  new File[] { srcFile }
+            dstPath: デフォルト値なし jComboDstPathの選択内容 jCheckSamePathが選択されていればsrcFileと同じパス propsに保持
+      引数は上の2つだけだが、内部で設定GUIガジェットからパラメータを拾っている
+        jTextResizeNumW
+        jTextResizeNumH
+        jTextDispW
+        jTextDispH
+        jTextCoverW
+        jTextCoverH
+        jTextSinglePageSizeW
+        jTextSinglePageSizeH
+        jTextSinglePageWidth
+        jCheckImageScale
+        jTextImageScale
+        jCheckImageFloat
+        jComboImageFloatType
+        jTextImageFloatW
+        jTextImageFloatH
+        jTextJpegQuality
+        jTextGammaValue
+        jCheckAutoMargin
+        jTextAutoMarginLimitH
+        jTextAutoMarginLimitV
+        jTextAutoMarginWhiteLevel
+        jTextAutoMarginPadding
+        jComboAutoMarginNombre
+        jTextAutoMarginNombreSize
+        jComboRotateImage
+        jRadioImageSizeType1
+        
+    
+
+
+    引数: urlStringとwebConfigPath
+    urlStringのFQDNによってwebConfigPath中の対応する設定ファイルを開き、パラメータを読み込む
+    ＊ここではpropsから読み込むパラメータは使わない？
+    →指定したベースURLの作品がキャッシュされ、青空文庫テキストに変換されてconverted.txtに保存される
+  
+
+  プロパティの読み込みと保存、利用
+    起動時処理
+      AozoraEpub3.iniからpropsに読み込む
+      propsから前回使用したプロファイルの保存ファイル名を取得し、そのファイルからpropsに読み込む
+      保存されたプロファイルが存在しない場合はプロファイル名"デフォルト"で新たにプロファイルを作成し、保存する
+      設定値を表示/操作するGUIオブジェクトを生成する際に、初期値をpropsから読み込んで与える
+    変換その他プロパティの値を必要とする機能の実行時
+      設定値を表示/操作するGUIオブジェクトの状態を取得して使用する
+    終了時
+      GUIオブジェクトの一つ一つからpropsに読み込み、AozoraEpub3.iniに保存する
+      アプレットのウィンドウを閉じるのではなく、Java VMを終了させた場合は保存されない(windowlistenerで動かしているのでそうなるのが普通)
+  ＊プロファイルは新規生成時以外はプロファイルリストのプルダウンメニューを操作しない限り保存されない
+    初回起動時にプロファイル名"デフォルト"でその時点でのAozoraEpub3.iniと同じ内容で保存されるが、以後は設定を変更しても自動的には保存されない
+
+
+[新しく覚えたこと/Tipsなど]
+・jTable関連
+  条件によって表示色・フォントスタイルを変える - ListWindow.java
+  カラムヘッダクリックでソート/カラムヘッダ境界線ダブルクリックで列幅調整 - ListWindow.java
+  setSelectionForegroundが効かない？ 値は変更されるようだが表示が変わらない。MacでもWindowsでも同じ
+    setSelectionBackgroundは普通に効く。JListならsetSelectionForegroundも効く
+    ＊Eclipseのデフォルトで選択状態のテキストがえらく見難いのと同じ原因な気がする
+      VMで選択強調色と被選択テキストの表示色をシステムプロパティから拾ってくるみたいな処理が挟まっていて、コード上で明示的に書いても無視されてるみたいな
+
+・CSV関連
+  保存時に文字化けが起きる
+    opencsvのCSVWriterには文字コードを指定して書き出す機能がない。UTF-8前提で書くと、MacOSなら平気なのだがWindowsでは文字化けが起きる
+    (java側で文字コードをいじってる部分はないはずなので、javaが叩いてるOSのAPIの問題な気がする)
+    streamを書き出す前にjava.io.OutputStreamWriterを挟み、ここで文字コードを指定することで文字化けを回避できる - ListWindow.writeCSV 
+    readerの方はどのみちjava.io.InputStreamReaderを介して読み込むので、同様に文字コードを指定できる
+
+
+[方針とか]
+・csvに入れるデータのうち、表示するのは 作品ID author title numSections last updatedだけ
+  (作品IDをキーにして、テーブルとは別に保持するメタデータと繋ぐ)
+・他にメタデータとして、チェックフラグ URL 著者ID
+
+
+[TODO]
+・起動時にCSVを読み込む done
+・デフォルトのカラム幅設定と、手動で調整した場合の記録と復帰 done
+・ウィンドウの位置とサイズの記録と復帰 done
+・リストのチェックフラグがfalseのエントリはグレイアウトする done
+・テーブルのコンテキストメニュー done
+・CSVを読み込んでNovelListを生成し、DefaultTableModelを作ってテーブルに挿入する done
+・テーブルのソート done
+・NovelListの内容をCSVに書き出す処理 done
+・テーブル行のダブルクリック
+・直前のチェックで更新されたエントリは太字にする 
