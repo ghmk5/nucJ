@@ -218,6 +218,10 @@ public class ListWindow {
    * Initialize the contents of the frame.
    */
   private void initialize() {
+
+    System.setProperty("awt.useSystemAAFontSettings", "on");
+    System.setProperty("swing.aatext", "true");
+
     this.jarPath = "";
 
     this.cachePath = new File(this.jarPath + "cache");
@@ -367,6 +371,8 @@ public class ListWindow {
     };
     table.setSelectionForeground(Color.WHITE);
     table.setSelectionBackground(UIManager.getColor("EditorPane.selectionBackground"));
+    // table.setFont(new Font("Ricty", Font.PLAIN, 13));
+    // System.out.println(table.getFont().getFontName());
 
     // テーブルのコンテキストメニュー
     JPopupMenu tableContextMenu = new JPopupMenu();
