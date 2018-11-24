@@ -6,6 +6,7 @@ import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.FontFormatException;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -131,6 +132,9 @@ public class ListWindow {
   private final Action actionAddEntry = new ActionAddEntry();
   private final Action actionChkUpdt = new ActionChkUpdt();
 
+  Font mplus2mMediumFont;
+  Font mplus2mBoldFont;
+
   // イニシャライザ
   {
   }
@@ -246,6 +250,22 @@ public class ListWindow {
     if (path != null && path.length() > 0)
       this.currentPath = new File(path);
 
+    // テーブル表示につかうフォントをjar同梱のttfファイルから生成
+    mplus2mMediumFont = null;
+    mplus2mBoldFont = null;
+    try {
+      mplus2mMediumFont = Font.createFont(Font.TRUETYPE_FONT,
+          this.getClass().getResourceAsStream("fonts/mplus-2m-medium.ttf"));
+      mplus2mBoldFont = Font.createFont(Font.TRUETYPE_FONT,
+          this.getClass().getResourceAsStream("fonts/mplus-2m-bold.ttf"));
+    } catch (FontFormatException e2) {
+      // TODO 自動生成された catch ブロック
+      e2.printStackTrace();
+    } catch (IOException e2) {
+      // TODO 自動生成された catch ブロック
+      e2.printStackTrace();
+    }
+
     frame = new JFrame("Narrow Update checker J");
     frame.setMinimumSize(new Dimension(450, 600));
     // frame.setBounds(100, 100, 450, 600);
@@ -314,6 +334,8 @@ public class ListWindow {
         DialogConverterSettings dialogConverterSettings = new DialogConverterSettings(owner);
         dialogConverterSettings.setModal(true);
         dialogConverterSettings.setVisible(true);
+        // TODO propsをファイルから読み直す処理
+        System.out.println("Here's step after dialog closed");
       }
     });
     mnNewMenu.add(menuOpenPrefDialog);
@@ -331,7 +353,6 @@ public class ListWindow {
     panel1.add(lastChkLbl);
     JButton btnChkUpdt = new JButton("Check Update");
     btnChkUpdt.setActionCommand("check");
-    btnChkUpdt.setFont(new Font("MS UI Gothic", Font.PLAIN, 12));
     panel1.add(btnChkUpdt);
     btnChkUpdt.setAction(actionChkUpdt);
     rootPanel.add(panel1);
@@ -357,8 +378,16 @@ public class ListWindow {
             c.setForeground(Color.GRAY);
           } else {
             c.setForeground(getForeground());
+
+            // 対象コンポーネントの表示フォントをボールドにする
+            // if (mplus2mBoldFont != null) {
+            // mplus2mBoldFont = mplus2mBoldFont.deriveFont(0, 13.0f);
+            // c.setFont(mplus2mBoldFont);
+            // } else {
             // Font font = table.getFont().deriveFont(Font.BOLD);
             // c.setFont(font);
+            // }
+
           }
         }
         return c;
@@ -369,10 +398,12 @@ public class ListWindow {
         return false;
       }
     };
+    if (mplus2mMediumFont != null) {
+      mplus2mMediumFont = mplus2mMediumFont.deriveFont(0, 13.0f);
+      table.setFont(mplus2mMediumFont);
+    }
     table.setSelectionForeground(Color.WHITE);
     table.setSelectionBackground(UIManager.getColor("EditorPane.selectionBackground"));
-    table.setFont(new Font("M+ 2m", Font.PLAIN, 13));
-    System.out.println(table.getFont().getFontName());
 
     // テーブルのコンテキストメニュー
     JPopupMenu tableContextMenu = new JPopupMenu();
@@ -415,7 +446,6 @@ public class ListWindow {
     textField.setColumns(24);
     JButton btnAddEntry = new JButton("Add Entry");
     btnAddEntry.setActionCommand("add");
-    btnAddEntry.setFont(new Font("MS UI Gothic", Font.PLAIN, 12));
     panel3.add(btnAddEntry);
     btnAddEntry.setAction(actionAddEntry);
     rootPanel.add(panel3);
