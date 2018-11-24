@@ -371,8 +371,8 @@ public class ListWindow {
     };
     table.setSelectionForeground(Color.WHITE);
     table.setSelectionBackground(UIManager.getColor("EditorPane.selectionBackground"));
-    // table.setFont(new Font("Ricty", Font.PLAIN, 13));
-    // System.out.println(table.getFont().getFontName());
+    table.setFont(new Font("M+ 2m", Font.PLAIN, 13));
+    System.out.println(table.getFont().getFontName());
 
     // テーブルのコンテキストメニュー
     JPopupMenu tableContextMenu = new JPopupMenu();
