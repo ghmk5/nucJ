@@ -246,6 +246,7 @@ public class ListWindow {
       fos.close();
     } catch (Exception e) {
     }
+
     String path = props.getProperty("LastDir");
     if (path != null && path.length() > 0)
       this.currentPath = new File(path);
@@ -331,11 +332,18 @@ public class ListWindow {
       JFrame owner;
 
       public void actionPerformed(ActionEvent e) {
-        DialogConverterSettings dialogConverterSettings = new DialogConverterSettings(owner);
+        DialogConverterSettings dialogConverterSettings = new DialogConverterSettings(owner, props);
+        dialogConverterSettings.addWindowListener(new WindowAdapter() {
+          @Override
+          public void windowClosed(WindowEvent e) {
+            LogAppender.println(dialogConverterSettings.testString);
+            // props = dialogConverterSettings.props;
+          }
+        });
         dialogConverterSettings.setModal(true);
         dialogConverterSettings.setVisible(true);
-        // TODO propsをファイルから読み直す処理
-        System.out.println("Here's step after dialog closed");
+        // TODO 設定ダイアログから戻ってきたpropsをファイルに書き込む
+        // System.out.println("Here's step after dialog closed");
       }
     });
     mnNewMenu.add(menuOpenPrefDialog);
