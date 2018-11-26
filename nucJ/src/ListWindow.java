@@ -329,10 +329,10 @@ public class ListWindow {
 
     JMenuItem menuOpenPrefDialog = new JMenuItem("設定...");
     menuOpenPrefDialog.addActionListener(new ActionListener() {
-      JFrame owner;
+      // JFrame owner;
 
       public void actionPerformed(ActionEvent e) {
-        DialogConverterSettings dialogConverterSettings = new DialogConverterSettings(owner, props);
+        DialogConverterSettings dialogConverterSettings = new DialogConverterSettings(frame, props);
         dialogConverterSettings.addWindowListener(new WindowAdapter() {
           @Override
           public void windowClosed(WindowEvent e) {

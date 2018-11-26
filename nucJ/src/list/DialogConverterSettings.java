@@ -3,6 +3,7 @@ package list;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.FontMetrics;
@@ -131,6 +132,28 @@ public class DialogConverterSettings extends JDialog {
 
   JCheckBox jCheckImageFloatPage;
   JCheckBox jCheckImageFloatBlock;
+
+  JCheckBox jCheckSvgImage;
+
+  JTextField jTextJpegQuality;
+  JCheckBox jCheckGamma;
+  JTextField jTextGammaValue;
+  JCheckBox jCheckResizeH;
+  JTextField jTextResizeNumH;
+
+  JCheckBox jCheckResizeW;
+  JTextField jTextResizeNumW;
+  JComboBox jComboRotateImage;
+
+  JCheckBox jCheckAutoMargin;
+  JTextField jTextAutoMarginLimitH;
+  JTextField jTextAutoMarginLimitV;
+  JTextField jTextAutoMarginWhiteLevel;
+  JTextField jTextAutoMarginPadding;
+  JTextField jTextAutoMarginNombreSize;
+  JComboBox jComboAutoMarginNombre;
+
+  JLabel label;// 使い回し用ラベル
 
   /**
    * Create the dialog.
@@ -725,6 +748,231 @@ public class DialogConverterSettings extends JDialog {
     jCheckImageFloatBlock.setBorder(padding2);
     tab2InnerPanel6.add(jCheckImageFloatBlock);
 
+    // "画像2"タブ
+    JPanel tab3RootPanel = new JPanel();
+    tab3RootPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 1, 0));
+    tabbedpane.addTab("画像2", new ImageIcon(this.getClass().getResource("/images/image.png")), tab3RootPanel);
+
+    // "画像2"タブ内 "全画面表示"グループ
+    JPanel tab3InnerPanel1 = new JPanel();
+    tab3InnerPanel1.setLayout(new BoxLayout(tab3InnerPanel1, BoxLayout.X_AXIS));
+    tab3InnerPanel1.setBorder(new NarrowTitledBorder("全画面表示"));
+    tab3RootPanel.add(tab3InnerPanel1);
+    jCheckSvgImage = new JCheckBox("SVGタグ出力（画像zipのみ） ");
+    jCheckSvgImage.setFocusPainted(false);
+    jCheckSvgImage.setToolTipText("画像のみのzipの場合、固定レイアウト＋SVGタグで出力します");
+    jCheckSvgImage.setBorder(padding2);
+    tab3InnerPanel1.add(jCheckSvgImage);
+
+    // "画像2"タブ内 "Jpeg圧縮率"グループ
+    JPanel tab3InnerPanel2 = new JPanel();
+    tab3InnerPanel2.setLayout(new BoxLayout(tab3InnerPanel2, BoxLayout.X_AXIS));
+    tab3InnerPanel2.setBorder(new NarrowTitledBorder("Jpeg圧縮率"));
+    tab3RootPanel.add(tab3InnerPanel2);
+    jTextJpegQuality = new JTextField("85");
+    jTextJpegQuality.setToolTipText("表紙編集、縮小、回転、余白除去時のJpeg保存時の画質(100が最高画質)");
+    jTextJpegQuality.setHorizontalAlignment(JTextField.RIGHT);
+    jTextJpegQuality.setInputVerifier(new IntegerInputVerifier(85, 30, 100));
+    jTextJpegQuality.setMaximumSize(text3);
+    jTextJpegQuality.setPreferredSize(text3);
+    jTextJpegQuality.addFocusListener(new TextSelectFocusListener(jTextJpegQuality));
+    tab3InnerPanel2.add(jTextJpegQuality);
+    tab3InnerPanel2.add(new JLabel(" (30～100)"));
+
+    // "画像2"タブ内 "色調整"グループ
+    JPanel tab3InnerPanel3 = new JPanel();
+    tab3InnerPanel3.setLayout(new BoxLayout(tab3InnerPanel3, BoxLayout.X_AXIS));
+    tab3InnerPanel3.setBorder(new NarrowTitledBorder("色調整"));
+    tab3RootPanel.add(tab3InnerPanel3);
+    jCheckGamma = new JCheckBox("ガンマ補正");
+    jCheckGamma.setToolTipText("画像の濃さを変更します (濃:0.2～1.8:淡)");
+    jCheckGamma.setFocusPainted(false);
+    jCheckGamma.setBorder(padding2);
+    jCheckGamma.setIconTextGap(2);
+    jCheckGamma.addChangeListener(new ChangeListener() {
+      public void stateChanged(ChangeEvent e) {
+        jTextGammaValue.setEditable(jCheckGamma.isSelected());
+      }
+    });
+    tab3InnerPanel3.add(jCheckGamma);
+    jTextGammaValue = new JTextField("1.0");
+    jTextGammaValue.setToolTipText(jCheckGamma.getToolTipText());
+    jTextGammaValue.setHorizontalAlignment(JTextField.RIGHT);
+    jTextGammaValue.setInputVerifier(new FloatInputVerifier(1.0f, 0.2f, 1.8f));
+    jTextGammaValue.setMaximumSize(text3);
+    jTextGammaValue.setPreferredSize(text3);
+    jTextGammaValue.setEditable(jCheckGamma.isSelected());
+    jTextGammaValue.addFocusListener(new TextSelectFocusListener(jTextGammaValue));
+    tab3InnerPanel3.add(jTextGammaValue);
+
+    // "画像2"タブ内 "画像縮小回転"グループ
+    JPanel tab3InnerPanel4 = new JPanel();
+    tab3InnerPanel4.setLayout(new BoxLayout(tab3InnerPanel4, BoxLayout.X_AXIS));
+    tab3InnerPanel4.setBorder(new NarrowTitledBorder("画像縮小回転"));
+    tab3RootPanel.add(tab3InnerPanel4);
+    ChangeListener resizeChangeLister = new ChangeListener() {
+      public void stateChanged(ChangeEvent e) {
+        setResizeTextEditable(true);
+      }
+    };
+    jCheckResizeW = new JCheckBox("横");
+    jCheckResizeW.setFocusPainted(false);
+    jCheckResizeW.setBorder(padding2);
+    jCheckResizeW.setIconTextGap(2);
+    jCheckResizeW.addChangeListener(resizeChangeLister);
+    tab3InnerPanel4.add(jCheckResizeW);
+    jTextResizeNumW = new JTextField("2048");
+    jTextResizeNumW.setHorizontalAlignment(JTextField.RIGHT);
+    jTextResizeNumW.setInputVerifier(new IntegerInputVerifier(2048, 100, 9999));
+    jTextResizeNumW.setMaximumSize(text4);
+    jTextResizeNumW.setPreferredSize(text4);
+    jTextResizeNumW.addFocusListener(new TextSelectFocusListener(jTextResizeNumW));
+    jTextResizeNumW.setEditable(jCheckResizeW.isSelected());
+    tab3InnerPanel4.add(jTextResizeNumW);
+    label = new JLabel("px以下 ");
+    label.setBorder(padding2H);
+    tab3InnerPanel4.add(label);
+    jCheckResizeH = new JCheckBox("縦");
+    jCheckResizeH.setFocusPainted(false);
+    jCheckResizeH.setBorder(padding2);
+    jCheckResizeH.setIconTextGap(2);
+    jCheckResizeH.addChangeListener(resizeChangeLister);
+    tab3InnerPanel4.add(jCheckResizeH);
+    jTextResizeNumH = new JTextField("2048");
+    jTextResizeNumH.setHorizontalAlignment(JTextField.RIGHT);
+    jTextResizeNumH.setInputVerifier(new IntegerInputVerifier(2048, 100, 9999));
+    jTextResizeNumH.setMaximumSize(text4);
+    jTextResizeNumH.setPreferredSize(text4);
+    jTextResizeNumH.addFocusListener(new TextSelectFocusListener(jTextResizeNumH));
+    tab3InnerPanel4.add(jTextResizeNumH);
+    label = new JLabel("px以下");
+    label.setBorder(padding2H);
+    tab3InnerPanel4.add(label);
+    this.setResizeTextEditable(true);
+    label = new JLabel(" 自動回転");
+    label.setBorder(padding2H);
+    tab3InnerPanel4.add(label);
+    jComboRotateImage = new JComboBox(new String[] { "なし", "右", "左" });
+    jComboRotateImage.setToolTipText("単ページ時画面の縦横比に合わせて画像を回転します");
+    jComboRotateImage.setFocusable(false);
+    jComboRotateImage.setBorder(padding0);
+    jComboRotateImage.setPreferredSize(new Dimension(84, 20));
+    tab3InnerPanel4.add(jComboRotateImage);
+
+    // "画像2"タブ内 "余白除去"グループ
+    JPanel tab3InnerPanel5 = new JPanel();
+    tab3InnerPanel5.setLayout(new BoxLayout(tab3InnerPanel5, BoxLayout.Y_AXIS));
+    tab3InnerPanel5.setBorder(new NarrowTitledBorder("余白除去"));
+    tab3RootPanel.add(tab3InnerPanel5);
+    JPanel tab3panel5UpperPanel = new JPanel();
+    tab3panel5UpperPanel.setLayout(new BoxLayout(tab3panel5UpperPanel, BoxLayout.X_AXIS));
+    tab3panel5UpperPanel.setBorder(padding4B);
+    tab3InnerPanel5.add(tab3panel5UpperPanel);
+    jCheckAutoMargin = new JCheckBox("有効 ");
+    jCheckAutoMargin.setFocusPainted(false);
+    jCheckAutoMargin.setBorder(padding2);
+    jCheckAutoMargin.setIconTextGap(2);
+    jCheckAutoMargin.addChangeListener(new ChangeListener() {
+      public void stateChanged(ChangeEvent e) {
+        boolean selected = jCheckAutoMargin.isSelected();
+        jTextAutoMarginLimitH.setEditable(selected);
+        jTextAutoMarginLimitV.setEditable(selected);
+        jTextAutoMarginWhiteLevel.setEditable(selected);
+        jTextAutoMarginPadding.setEditable(selected);
+        jTextAutoMarginNombreSize.setEditable(selected);
+      }
+    });
+    tab3panel5UpperPanel.add(jCheckAutoMargin);
+    label = new JLabel(" 横");
+    label.setToolTipText("横方向の余白除去量の制限 左右の余白の合計");
+    tab3panel5UpperPanel.add(label);
+    jTextAutoMarginLimitH = new JTextField("15");
+    jTextAutoMarginLimitH.setToolTipText(label.getToolTipText());
+    jTextAutoMarginLimitH.setHorizontalAlignment(JTextField.RIGHT);
+    jTextAutoMarginLimitH.setInputVerifier(new IntegerInputVerifier(15, 0, 50));
+    jTextAutoMarginLimitH.setMaximumSize(text3);
+    jTextAutoMarginLimitH.setPreferredSize(text3);
+    jTextAutoMarginLimitH.setEditable(jCheckAutoMargin.isSelected());
+    jTextAutoMarginLimitH.addFocusListener(new TextSelectFocusListener(jTextAutoMarginLimitH));
+    tab3panel5UpperPanel.add(jTextAutoMarginLimitH);
+    label = new JLabel("%");
+    label.setBorder(padding2H);
+    tab3panel5UpperPanel.add(label);
+    label = new JLabel(" 縦");
+    label.setToolTipText("縦方向の余白除去量の制限 上下の余白の合計");
+    tab3panel5UpperPanel.add(label);
+    jTextAutoMarginLimitV = new JTextField("15");
+    jTextAutoMarginLimitV.setToolTipText(label.getToolTipText());
+    jTextAutoMarginLimitV.setHorizontalAlignment(JTextField.RIGHT);
+    jTextAutoMarginLimitV.setInputVerifier(new IntegerInputVerifier(15, 0, 50));
+    jTextAutoMarginLimitV.setMaximumSize(text3);
+    jTextAutoMarginLimitV.setPreferredSize(text3);
+    jTextAutoMarginLimitV.setEditable(jCheckAutoMargin.isSelected());
+    jTextAutoMarginLimitV.addFocusListener(new TextSelectFocusListener(jTextAutoMarginLimitV));
+    tab3panel5UpperPanel.add(jTextAutoMarginLimitV);
+    label = new JLabel("%");
+    label.setBorder(padding2H);
+    tab3panel5UpperPanel.add(label);
+    tab3panel5UpperPanel.add(label);
+    label = new JLabel("  余白追加");
+    label.setToolTipText("余白除去後に追加する余白の量(追加部分の画像はそのまま)");
+    tab3panel5UpperPanel.add(label);
+    jTextAutoMarginPadding = new JTextField("1.0");
+    jTextAutoMarginPadding.setToolTipText(label.getToolTipText());
+    jTextAutoMarginPadding.setHorizontalAlignment(JTextField.RIGHT);
+    jTextAutoMarginPadding.setInputVerifier(new FloatInputVerifier(1.0f, 0, 50));
+    jTextAutoMarginPadding.setMaximumSize(text3);
+    jTextAutoMarginPadding.setPreferredSize(text3);
+    jTextAutoMarginPadding.setEditable(jCheckAutoMargin.isSelected());
+    jTextAutoMarginPadding.addFocusListener(new TextSelectFocusListener(jTextAutoMarginPadding));
+    tab3panel5UpperPanel.add(jTextAutoMarginPadding);
+    label = new JLabel("%");
+    label.setBorder(padding2H);
+    tab3panel5UpperPanel.add(label);
+
+    label = new JLabel("  白レベル");
+    label.setToolTipText("余白部分の白い画素と判別するレベルを指定します (黒:0～白:100)");
+    tab3panel5UpperPanel.add(label);
+    jTextAutoMarginWhiteLevel = new JTextField("80");
+    jTextAutoMarginWhiteLevel.setToolTipText(label.getToolTipText());
+    jTextAutoMarginWhiteLevel.setHorizontalAlignment(JTextField.RIGHT);
+    jTextAutoMarginWhiteLevel.setInputVerifier(new IntegerInputVerifier(80, 0, 100));
+    jTextAutoMarginWhiteLevel.setMaximumSize(text3);
+    jTextAutoMarginWhiteLevel.setPreferredSize(text3);
+    jTextAutoMarginWhiteLevel.setEditable(jCheckAutoMargin.isSelected());
+    jTextAutoMarginWhiteLevel.addFocusListener(new TextSelectFocusListener(jTextAutoMarginWhiteLevel));
+    tab3panel5UpperPanel.add(jTextAutoMarginWhiteLevel);
+    label = new JLabel("%");
+    label.setBorder(padding2H);
+
+    JPanel tab3panel5LowerPanel = new JPanel();
+    tab3panel5LowerPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
+    tab3InnerPanel5.add(tab3panel5LowerPanel);
+    label = new JLabel("ノンブル除去 (位置");
+    label.setBorder(padding2H);
+    tab3panel5LowerPanel.add(label);
+    jComboAutoMarginNombre = new JComboBox(new String[] { "なし", "上", "下", "上下" });
+    jComboAutoMarginNombre.setToolTipText("ノンブルを除去します。除去した場合は除去制限が5%追加されます");
+    jComboAutoMarginNombre.setFocusable(false);
+    jComboAutoMarginNombre.setMaximumSize(new Dimension(text3.width + 24, 20));
+    jComboAutoMarginNombre.setPreferredSize(new Dimension(84, 20));
+    tab3panel5LowerPanel.add(jComboAutoMarginNombre);
+    label = new JLabel(" 高さ");
+    label.setBorder(padding2H);
+    tab3panel5LowerPanel.add(label);
+    jTextAutoMarginNombreSize = new JTextField("3.0");
+    jTextAutoMarginNombreSize.setToolTipText("ノンブルの文字部分の高さを指定します。これより大きい場合はノンブル除去されません");
+    jTextAutoMarginNombreSize.setHorizontalAlignment(JTextField.RIGHT);
+    jTextAutoMarginNombreSize.setInputVerifier(new FloatInputVerifier(3.0f, 0.5f, 10));
+    jTextAutoMarginNombreSize.setMaximumSize(text3);
+    jTextAutoMarginNombreSize.setPreferredSize(text3);
+    jTextAutoMarginNombreSize.setEditable(jCheckAutoMargin.isSelected());
+    jTextAutoMarginNombreSize.addFocusListener(new TextSelectFocusListener(jTextAutoMarginPadding));
+    tab3panel5LowerPanel.add(jTextAutoMarginNombreSize);
+    label = new JLabel("% )");
+    label.setBorder(padding2H);
+    tab3panel5LowerPanel.add(label);
+
     // JPanel tabPanel3 = new JPanel();
     //
     // JPanel tabPanel4 = new JPanel();
@@ -939,6 +1187,36 @@ public class DialogConverterSettings extends JDialog {
     }
   }
 
+  /** コンポーネント内をすべてsetEnabled */
+  private void setEnabledAll(Component c, boolean b) {
+    if (c instanceof JPanel) {
+      for (Component c2 : ((Container) c).getComponents())
+        setEnabledAll(c2, b);
+    } else {// if (!(c instanceof JLabel)) {
+      c.setEnabled(b);
+    }
+  }
+
+  /** 画像縮小回転可否のチェックボックスをON/OFF */
+  private void setResizeTextEditable(boolean enabled) {
+    if (enabled) {
+      this.jTextResizeNumW.setEditable(jCheckResizeW.isSelected());
+      this.jTextResizeNumH.setEditable(jCheckResizeH.isSelected());
+      // this.jTextPixelW.setEditable(jCheckPixel.isSelected());
+      // this.jTextPixelH.setEditable(jCheckPixel.isSelected());
+    } else {
+      this.jTextResizeNumW.setEditable(false);
+      this.jTextResizeNumH.setEditable(false);
+      // this.jTextPixelW.setEditable(false);
+      // this.jTextPixelH.setEditable(false);
+    }
+  }
+
+  /** propsの内容をGUIオブジェクトに反映させる-コンストラクタの最後かイニシャライザで最初に実行 */
+  private void setPropsValues(Properties props) {
+    // TODO propsの内容をGUIオブジェクトに反映させるメソッド GUIが出来たら書く
+  }
+
   // GUIオブジェクトの状態をプロファイルに保存してダイアログを閉じる
   private class ActionApplyChanges extends AbstractAction {
     public ActionApplyChanges() {
@@ -947,7 +1225,7 @@ public class DialogConverterSettings extends JDialog {
     }
 
     public void actionPerformed(ActionEvent e) {
-      // TODO GUIオブジェクトの状態をプロパティに書き出す処理
+      // TODO GUIオブジェクトの状態をプロファイルに書き出す処理
       testString = "dialog closed by pressing OK button";
       dispose();
     }
