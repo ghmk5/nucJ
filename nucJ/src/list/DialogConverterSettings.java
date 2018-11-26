@@ -14,6 +14,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.io.File;
+import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.Properties;
 
@@ -226,6 +227,17 @@ public class DialogConverterSettings extends JDialog {
 
   JCheckBox jCheckIvsBMP;
   JCheckBox jCheckIvsSSP;
+
+  JTextField jTextWebInterval;
+  JTextField jTextCachePath;
+
+  JTextField jTextWebModifiedExpire;
+  JCheckBox jCheckWebConvertUpdated;
+
+  JCheckBox jCheckWebBeforeChapter;
+  JTextField jTextWebBeforeChapterCount;
+  JCheckBox jCheckWebModifiedOnly;
+  JCheckBox jCheckWebModifiedTail;
 
   JLabel label;// 使い回し用ラベル
 
@@ -1640,6 +1652,120 @@ public class DialogConverterSettings extends JDialog {
     jCheckIvsSSP.setBorder(padding2);
     tab6InnerPanel6.add(jCheckIvsSSP);
 
+    // "Web"タブ
+    JPanel tab7RootPanel = new JPanel();
+    tab7RootPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 1, 0));
+    tabbedpane.addTab("Web", new ImageIcon(this.getClass().getResource("/images/web.png")), tab7RootPanel);
+
+    // "Web"タブ内 "取得間隔"グループ
+    JPanel tab7InnerPanel1 = new JPanel();
+    tab7InnerPanel1.setLayout(new BoxLayout(tab7InnerPanel1, BoxLayout.X_AXIS));
+    tab7InnerPanel1.setBorder(new NarrowTitledBorder("取得設定"));
+    tab7RootPanel.add(tab7InnerPanel1);
+    label = new JLabel("取得間隔");
+    label.setBorder(padding2);
+    label.setToolTipText("Web小説の取得間隔を設定します");
+    tab7InnerPanel1.add(label);
+    jTextWebInterval = new JTextField("0.5");
+    jTextWebInterval.setToolTipText(label.getToolTipText());
+    jTextWebInterval.setHorizontalAlignment(JTextField.RIGHT);
+    jTextWebInterval.setInputVerifier(new FloatInputVerifier(0.5f, 0, 60));
+    jTextWebInterval.setMaximumSize(text3);
+    jTextWebInterval.setPreferredSize(text3);
+    jTextWebInterval.addFocusListener(new TextSelectFocusListener(jTextWebInterval));
+    tab7InnerPanel1.add(jTextWebInterval);
+    label = new JLabel("秒");
+    label.setBorder(padding1);
+    tab7InnerPanel1.add(label);
+
+    // "Web"タブ内 "キャッシュ保存先"グループ
+    JPanel tab7InnerPanel2 = new JPanel();
+    tab7InnerPanel2.setLayout(new BoxLayout(tab7InnerPanel2, BoxLayout.X_AXIS));
+    tab7InnerPanel2.setBorder(new NarrowTitledBorder("キャッシュ保存パス"));
+    tab7RootPanel.add(tab7InnerPanel2);
+    jTextCachePath = new JTextField("cache");
+    jTextCachePath.setToolTipText("キャッシュファイルを保存するパスです。フルパスまたは起動パスからの相対パスを指定します");
+    jTextCachePath.setMaximumSize(text300);
+    jTextCachePath.setPreferredSize(text300);
+    jTextCachePath.addFocusListener(new TextSelectFocusListener(jTextCachePath));
+    tab7InnerPanel2.add(jTextCachePath);
+    JButton jButtonCachePath = new JButton("選択");
+    jButtonCachePath.setBorder(padding2);
+    jButtonCachePath.setIcon(new ImageIcon(this.getClass().getResource("/images/dst_path.png")));
+    jButtonCachePath.setFocusPainted(false);
+    jButtonCachePath.addActionListener(new CachePathChooserListener(jButtonCachePath));
+    tab7InnerPanel2.add(jButtonCachePath);
+
+    // "Web"タブ内 "更新判定"グループ
+    JPanel tab7InnerPanel3 = new JPanel();
+    tab7InnerPanel3.setLayout(new BoxLayout(tab7InnerPanel3, BoxLayout.X_AXIS));
+    tab7InnerPanel3.setBorder(new NarrowTitledBorder("更新判定"));
+    tab7RootPanel.add(tab7InnerPanel3);
+    jTextWebModifiedExpire = new JTextField("24");
+    jTextWebModifiedExpire.setToolTipText("この時間以内に取得したキャッシュを更新分として処理します");
+    jTextWebModifiedExpire.setHorizontalAlignment(JTextField.RIGHT);
+    jTextWebModifiedExpire.setInputVerifier(new NumberVerifier(24, 0, 9999));
+    jTextWebModifiedExpire.setMaximumSize(text4);
+    jTextWebModifiedExpire.setPreferredSize(text4);
+    jTextWebModifiedExpire.addFocusListener(new TextSelectFocusListener(jTextWebModifiedExpire));
+    tab7InnerPanel3.add(jTextWebModifiedExpire);
+    label = new JLabel("時間以内");
+    label.setBorder(padding1);
+    label.setToolTipText(jTextWebModifiedExpire.getToolTipText());
+    tab7InnerPanel3.add(label);
+
+    // "Web"タブ内 "ePub出力設定"グループ
+    JPanel tab7InnerPanel4 = new JPanel();
+    tab7InnerPanel4.setLayout(new BoxLayout(tab7InnerPanel4, BoxLayout.X_AXIS));
+    tab7InnerPanel4.setBorder(new NarrowTitledBorder("ePub出力設定"));
+    tab7RootPanel.add(tab7InnerPanel4);
+    jCheckWebConvertUpdated = new JCheckBox("更新時のみ出力");
+    jCheckWebConvertUpdated.setToolTipText("新規追加または一覧ページで更新がある場合のみePubファイルを出力します");
+    jCheckWebConvertUpdated.setFocusPainted(false);
+    jCheckWebConvertUpdated.setBorder(padding2);
+    tab7InnerPanel4.add(jCheckWebConvertUpdated);
+
+    // "Web"タブ内 "変換対象"グループ
+    JPanel tab7InnerPanel5 = new JPanel();
+    tab7InnerPanel5.setLayout(new BoxLayout(tab7InnerPanel5, BoxLayout.X_AXIS));
+    tab7InnerPanel5.setBorder(new NarrowTitledBorder("変換対象"));
+    tab7RootPanel.add(tab7InnerPanel5);
+    jCheckWebBeforeChapter = new JCheckBox("最新");
+    jCheckWebBeforeChapter.setToolTipText("最新話から指定話数のみ出力します。追加更新分のみの出力がある場合はそれに追加されます");
+    jCheckWebBeforeChapter.setFocusPainted(false);
+    jCheckWebBeforeChapter.setBorder(padding0);
+    jCheckWebBeforeChapter.addChangeListener(new ChangeListener() {
+      public void stateChanged(ChangeEvent e) {
+        jTextWebBeforeChapterCount.setEditable(jCheckWebBeforeChapter.isSelected());
+        jTextWebBeforeChapterCount.repaint();
+      }
+    });
+    tab7InnerPanel5.add(jCheckWebBeforeChapter);
+    jTextWebBeforeChapterCount = new JTextField("1");
+    jTextWebBeforeChapterCount.setToolTipText(jCheckWebBeforeChapter.getToolTipText());
+    jTextWebBeforeChapterCount.setEditable(false);
+    jTextWebBeforeChapterCount.setHorizontalAlignment(JTextField.RIGHT);
+    jTextWebBeforeChapterCount.setInputVerifier(new IntegerInputVerifier(0, 0, 999));
+    jTextWebBeforeChapterCount.setMaximumSize(text3);
+    jTextWebBeforeChapterCount.setPreferredSize(text3);
+    jTextWebBeforeChapterCount.addFocusListener(new TextSelectFocusListener(jTextWebBeforeChapterCount));
+    tab7InnerPanel5.add(jTextWebBeforeChapterCount);
+    label = new JLabel("話 +");
+    label.setBorder(padding1);
+    tab7InnerPanel5.add(label);
+    jCheckWebModifiedOnly = new JCheckBox("更新分");
+    jCheckWebModifiedOnly.setToolTipText("追加更新のあった話のみ変換します");
+    jCheckWebModifiedOnly.setFocusPainted(false);
+    jCheckWebModifiedOnly.setBorder(padding2);
+    tab7InnerPanel5.add(jCheckWebModifiedOnly);
+    tab7InnerPanel5.add(new JLabel("("));
+    jCheckWebModifiedTail = new JCheckBox("連続");
+    jCheckWebModifiedTail.setToolTipText("最新話から連続した更新分のみ変換します。途中話の更新は変換されません");
+    jCheckWebModifiedTail.setFocusPainted(false);
+    jCheckWebModifiedTail.setBorder(padding2);
+    tab7InnerPanel5.add(jCheckWebModifiedTail);
+    tab7InnerPanel5.add(new JLabel(")"));
+
   }
 
   ////////////////////////////////////////////////////////////////
@@ -1860,6 +1986,42 @@ public class DialogConverterSettings extends JDialog {
       this.jTextResizeNumH.setEditable(false);
       // this.jTextPixelW.setEditable(false);
       // this.jTextPixelH.setEditable(false);
+    }
+  }
+
+  /** キャッシュパス選択ボタンイベント */
+  class CachePathChooserListener implements ActionListener {
+    Component parent;
+
+    private CachePathChooserListener(Component parent) {
+      this.parent = parent;
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      File path = new File(jTextCachePath.getText());
+      if (!path.isDirectory())
+        path = path.getParentFile();
+      if (path != null && !path.isDirectory())
+        path = path.getParentFile();
+      JFileChooser fileChooser = new JFileChooser(path);
+      fileChooser.setDialogTitle("キャッシュ出力先を選択");
+      fileChooser.setApproveButtonText("選択");
+      fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+      int state = fileChooser.showOpenDialog(parent);
+      switch (state) {
+      case JFileChooser.APPROVE_OPTION:
+        String pathString = fileChooser.getSelectedFile().getAbsolutePath();
+        try {
+          // パス調整
+          String rootPath = new File("").getCanonicalPath();
+          if (pathString.startsWith(rootPath)) {
+            pathString = pathString.substring(rootPath.length() + 1);
+          }
+        } catch (IOException e1) {
+        }
+        jTextCachePath.setText(pathString);
+      }
     }
   }
 
