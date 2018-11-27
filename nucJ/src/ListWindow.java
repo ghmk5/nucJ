@@ -55,6 +55,9 @@ import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
+import com.github.ghmk5.info.NovelList;
+import com.github.ghmk5.info.NovelMeta;
+import com.github.ghmk5.swing.DialogConverterSettings;
 import com.github.hmdev.converter.AozoraEpub3Converter;
 import com.github.hmdev.info.ProfileInfo;
 import com.github.hmdev.util.CharUtils;
@@ -63,10 +66,6 @@ import com.github.hmdev.web.WebAozoraConverter;
 import com.github.hmdev.writer.Epub3ImageWriter;
 import com.github.hmdev.writer.Epub3Writer;
 import com.opencsv.CSVWriter;
-
-import list.DialogConverterSettings;
-import list.NovelList;
-import list.NovelMeta;
 
 /**
  * @author mk5
@@ -337,13 +336,21 @@ public class ListWindow {
           @Override
           public void windowClosed(WindowEvent e) {
             LogAppender.println(dialogConverterSettings.testString);
-            // props = dialogConverterSettings.props;
+            if (dialogConverterSettings.approved)
+              props = dialogConverterSettings.props;
           }
         });
+        dialogConverterSettings.setLocationRelativeTo(frame);
         dialogConverterSettings.setModal(true);
         dialogConverterSettings.setVisible(true);
-        // TODO 設定ダイアログから戻ってきたpropsをファイルに書き込む
-        // System.out.println("Here's step after dialog closed");
+        try {
+          // 設定ファイル更新
+          FileOutputStream fos = new FileOutputStream(jarPath + propFileName);
+          props.store(fos, "NucJ Parameters");
+          fos.close();
+        } catch (Exception e1) {
+          e1.printStackTrace();
+        }
       }
     });
     mnNewMenu.add(menuOpenPrefDialog);

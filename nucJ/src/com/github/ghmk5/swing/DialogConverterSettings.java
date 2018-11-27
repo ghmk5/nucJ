@@ -1,4 +1,4 @@
-package list;
+package com.github.ghmk5.swing;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -35,12 +35,14 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
+import javax.swing.JToggleButton;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import com.github.hmdev.info.BookInfo;
+import com.github.hmdev.info.SectionInfo;
 import com.github.hmdev.swing.NarrowTitledBorder;
 
 public class DialogConverterSettings extends JDialog {
@@ -78,15 +80,12 @@ public class DialogConverterSettings extends JDialog {
   Dimension combo3 = new Dimension(text3.width + 20, 20);
 
   // 設定パラメータを保持するGUIオブジェクト
-  /** 表題 */
   JComboBox jComboTitle;
   JCheckBox jCheckPubFirst;
   JCheckBox jCheckUseFileName;
-
   JTextField jTextMaxCoverLine;
   JComboBox jComboCover;
   JCheckBox jCheckCoverHistory;
-
   JCheckBox jCheckCoverPage;
   JCheckBox jCheckTitlePage;
   JRadioButton jRadioTitleNormal;
@@ -95,57 +94,43 @@ public class DialogConverterSettings extends JDialog {
   JCheckBox jCheckTocPage;
   JRadioButton jRadioTocV;
   JRadioButton jRadioTocH;
-
   JComboBox jComboExt;
   JCheckBox jCheckAutoFileName;
   JCheckBox jCheckOverWrite;
-
   JCheckBox jCheckSamePath;
   JComboBox jComboDstPath;
-
   JComboBox jComboEncType;
-
   JRadioButton jRadioVertical;
   JRadioButton jRadioHorizontal;
-
   JCheckBox jCheckNoIllust;
-
   JCheckBox jCheckConfirm;
-
   JTextField jTextDispW;
   JTextField jTextDispH;
   JTextField jTextCoverW;
   JTextField jTextCoverH;
-
   JCheckBox jCheckImageScale;
   JTextField jTextImageScale;
   JCheckBox jCheckImageFloat;
   JTextField jTextImageFloatW;
   JTextField jTextImageFloatH;
   JComboBox jComboImageFloatType;
-
   JTextField jTextSinglePageSizeW;
   JTextField jTextSinglePageSizeH;
   JTextField jTextSinglePageWidth;
   JRadioButton jRadioImageSizeType1;
   JRadioButton jRadioImageSizeType3;
   JCheckBox jCheckFitImage;
-
   JCheckBox jCheckImageFloatPage;
   JCheckBox jCheckImageFloatBlock;
-
   JCheckBox jCheckSvgImage;
-
   JTextField jTextJpegQuality;
   JCheckBox jCheckGamma;
   JTextField jTextGammaValue;
   JCheckBox jCheckResizeH;
   JTextField jTextResizeNumH;
-
   JCheckBox jCheckResizeW;
   JTextField jTextResizeNumW;
   JComboBox jComboRotateImage;
-
   JCheckBox jCheckAutoMargin;
   JTextField jTextAutoMarginLimitH;
   JTextField jTextAutoMarginLimitV;
@@ -153,30 +138,22 @@ public class DialogConverterSettings extends JDialog {
   JTextField jTextAutoMarginPadding;
   JTextField jTextAutoMarginNombreSize;
   JComboBox jComboAutoMarginNombre;
-
   JRadioButton jRadioSpaceHyp0;
   JRadioButton jRadioSpaceHyp1;
   JRadioButton jRadioSpaceHyp2;
-
   JRadioButton jRadioChukiRuby0;
   JRadioButton jRadioChukiRuby1;
   JRadioButton jRadioChukiRuby2;
-
   JCheckBox jCheckAutoYoko;
   JCheckBox jCheckAutoYokoNum1;
   JCheckBox jCheckAutoYokoNum3;
   JCheckBox jCheckAutoEQ1;
-
   JCheckBox jCheckCommentPrint;
   JCheckBox jCheckCommentConvert;
-
   JCheckBox jCheckMarkId;
-
   JComboBox jComboxRemoveEmptyLine;
   JComboBox jComboxMaxEmptyLine;
-
   JCheckBox jCheckForceIndent;
-
   JCheckBox jCheckPageBreak;
   JTextField jTextPageBreakSize;
   JTextField jTextPageBreakEmptySize;
@@ -184,7 +161,6 @@ public class DialogConverterSettings extends JDialog {
   JCheckBox jCheckPageBreakEmpty;
   JComboBox jComboxPageBreakEmptyLine;
   JCheckBox jCheckPageBreakChapter;
-
   JTextField jTextMaxChapterNameLength;
   JCheckBox jCheckCoverPageToc;
   JCheckBox jCheckTitleToc;
@@ -192,7 +168,6 @@ public class DialogConverterSettings extends JDialog {
   JCheckBox jCheckChapterExclude;
   JCheckBox jCheckNavNest;
   JCheckBox jCheckNcxNest;
-
   JCheckBox jCheckChapterH;
   JCheckBox jCheckChapterH1;
   JCheckBox jCheckChapterH2;
@@ -206,40 +181,33 @@ public class DialogConverterSettings extends JDialog {
   JCheckBox jCheckChapterNumParenTitle;
   JCheckBox jCheckChapterPattern;
   JComboBox jComboChapterPattern;
-
   JComboBox jComboLineHeight;
-
   JComboBox jComboFontSize;
-
   JCheckBox jCheckBoldUseGothic;
   JCheckBox jCheckGothicUseBold;
-
   JTextField[] jTextPageMargins;
   JRadioButton jRadioPageMarginUnit0;
   JRadioButton jRadioPageMarginUnit1;
   JTextField[] jTextBodyMargins;
   JRadioButton jRadioBodyMarginUnit0;
   JRadioButton jRadioBodyMarginUnit1;
-
   JRadioButton jRadioDakutenType0;
   JRadioButton jRadioDakutenType1;
   JRadioButton jRadioDakutenType2;
-
   JCheckBox jCheckIvsBMP;
   JCheckBox jCheckIvsSSP;
-
   JTextField jTextWebInterval;
   JTextField jTextCachePath;
-
   JTextField jTextWebModifiedExpire;
   JCheckBox jCheckWebConvertUpdated;
-
   JCheckBox jCheckWebBeforeChapter;
   JTextField jTextWebBeforeChapterCount;
   JCheckBox jCheckWebModifiedOnly;
   JCheckBox jCheckWebModifiedTail;
 
   JLabel label;// 使い回し用ラベル
+
+  public Boolean approved; // Applyボタンがクリックされたらtrue 親ウィンドウが直接この値をみて処理する
 
   /**
    * Create the dialog.
@@ -1766,12 +1734,11 @@ public class DialogConverterSettings extends JDialog {
     tab7InnerPanel5.add(jCheckWebModifiedTail);
     tab7InnerPanel5.add(new JLabel(")"));
 
+    loadProperties(props);
+
   }
 
   ////////////////////////////////////////////////////////////////
-
-  // TODO propsの内容をGUIオブジェクトに反映させるメソッドをここで実行
-  // 定義直後にやってるのもあるのでここに移動させる方がいいかも
 
   class TextSelectFocusListener implements FocusListener {
     JTextField jTextField;
@@ -2025,11 +1992,6 @@ public class DialogConverterSettings extends JDialog {
     }
   }
 
-  /** propsの内容をGUIオブジェクトに反映させる-コンストラクタの最後かイニシャライザで最初に実行 */
-  private void setPropsValues(Properties props) {
-    // TODO propsの内容をGUIオブジェクトに反映させるメソッド GUIが出来たら書く
-  }
-
   // GUIオブジェクトの状態をプロファイルに保存してダイアログを閉じる
   private class ActionApplyChanges extends AbstractAction {
     public ActionApplyChanges() {
@@ -2040,6 +2002,8 @@ public class DialogConverterSettings extends JDialog {
     public void actionPerformed(ActionEvent e) {
       // TODO GUIオブジェクトの状態をプロファイルに書き出す処理
       testString = "dialog closed by pressing OK button";
+      approved = true;
+      setProperties(props);
       dispose();
     }
   }
@@ -2053,8 +2017,505 @@ public class DialogConverterSettings extends JDialog {
 
     public void actionPerformed(ActionEvent e) {
       testString = "dialog closed by pressing cancel button";
+      approved = false;
       dispose();
     }
+  }
+
+  ////////////////////////////////////////////////////////////////
+  // Properties
+  ////////////////////////////////////////////////////////////////
+  /** "1"が設定されている場合のみチェックをON nullなら変更しない */
+  private boolean setPropsSelected(JToggleButton button, Properties props, String name) {
+    if (props.containsKey(name)) {
+      boolean selected = "1".equals(props.getProperty(name));
+      button.setSelected(selected);
+      return selected;
+    }
+    return button.isSelected();
+  }
+
+  /** "1"が設定されている場合のみチェックをON nullなら変更しない */
+  private boolean setPropsSelected(JToggleButton button, Properties props, String name, boolean nullSelect) {
+    if (props.containsKey(name)) {
+      boolean selected = "1".equals(props.getProperty(name));
+      button.setSelected(selected);
+      return selected;
+    } else {
+      button.setSelected(nullSelect);
+    }
+    return button.isSelected();
+  }
+
+  /** テキスト値を設定 null なら設定しない */
+  private void setPropsText(JTextField jText, Properties props, String name) {
+    try {
+      if (!props.containsKey(name))
+        return;
+      jText.setText(props.getProperty(name));
+    } catch (Exception e) {
+    }
+  }
+
+  /** int値を設定 null なら設定しない */
+  private void setPropsIntText(JTextField jText, Properties props, String name) {
+    try {
+      if (!props.containsKey(name))
+        return;
+      jText.setText(Integer.toString(Integer.parseInt(props.getProperty(name))));
+    } catch (Exception e) {
+    }
+  }
+
+  /** float値を設定 null なら設定しない */
+  private void setPropsFloatText(JTextField jText, Properties props, String name) {
+    try {
+      if (!props.containsKey(name))
+        return;
+      jText.setText(Float.toString(Float.parseFloat(props.getProperty(name))));
+    } catch (Exception e) {
+    }
+  }
+
+  /** 数値を設定 null なら設定しない */
+  private void setPropsNumberText(JTextField jText, Properties props, String name) {
+    try {
+      if (!props.containsKey(name))
+        return;
+      jText.setText(NumberFormat.getNumberInstance().format(Float.parseFloat(props.getProperty(name))));
+    } catch (Exception e) {
+    }
+  }
+
+  /** propsの値をアプレットに設定 */
+  private void loadProperties(Properties props) {
+    boolean selected;
+
+    // 表題
+    try {
+      jComboTitle.setSelectedIndex(Integer.parseInt(props.getProperty("TitleType")));
+    } catch (Exception e) {
+    }
+    setPropsSelected(jCheckPubFirst, props, "PubFirst");
+    setPropsSelected(jCheckUseFileName, props, "UseFileName");
+    // 表紙
+    if (props.getProperty("Cover") == null || props.getProperty("Cover").length() == 0)
+      jComboCover.setSelectedIndex(0);
+    else
+      jComboCover.setSelectedItem(props.getProperty("Cover"));
+    // 表紙履歴
+    setPropsSelected(jCheckCoverHistory, props, "CoverHistory");
+    // 有効行数
+    setPropsIntText(jTextMaxCoverLine, props, "MaxCoverLine");
+
+    setPropsSelected(jCheckCoverPage, props, "CoverPage");
+    // 表題ページ
+    setPropsSelected(jCheckTitlePage, props, "TitlePageWrite");
+    String propValue = props.getProperty("TitlePage");
+    if (propValue != null) {
+      jRadioTitleNormal.setSelected(Integer.toString(BookInfo.TITLE_NORMAL).equals(propValue));
+      jRadioTitleMiddle.setSelected(Integer.toString(BookInfo.TITLE_MIDDLE).equals(propValue));
+      jRadioTitleHorizontal.setSelected(Integer.toString(BookInfo.TITLE_HORIZONTAL).equals(propValue));
+    }
+
+    setPropsSelected(jCheckTocPage, props, "TocPage");
+    selected = setPropsSelected(jRadioTocV, props, "TocVertical");
+    jRadioTocH.setSelected(!selected);
+    // 出力ファイル設定
+    // 拡張子
+    if (props.getProperty("Ext") != null && props.getProperty("Ext").length() > 0)
+      jComboExt.setSelectedItem(props.getProperty("Ext"));
+    // 出力ファイル名設定
+    setPropsSelected(jCheckAutoFileName, props, "AutoFileName");
+    // ファイルの上書き許可
+    setPropsSelected(jCheckOverWrite, props, "OverWrite");
+    // 栞用ID出力
+    setPropsSelected(jCheckMarkId, props, "MarkId");
+    // 4バイト文字を変換する
+    // setPropsSelected(jCheckGaiji32, props, "Gaiji32");
+    // 縦書き横書き
+    selected = setPropsSelected(jRadioVertical, props, "Vertical");
+    jRadioHorizontal.setSelected(!selected);
+    // 入力文字コード
+    try {
+      jComboEncType.setSelectedIndex(Integer.parseInt(props.getProperty("EncType")));
+    } catch (Exception e) {
+    }
+
+    ////////////////////////////////////////////////////////////////
+    // 画像設定
+    setPropsSelected(jCheckNoIllust, props, "NoIllust");
+    // 画面サイズ
+    setPropsIntText(jTextDispW, props, "DispW");
+    setPropsIntText(jTextDispH, props, "DispH");
+    // 表紙サイズ
+    setPropsIntText(jTextCoverW, props, "CoverW");
+    setPropsIntText(jTextCoverH, props, "CoverH");
+    // 画像単ページ化
+    setPropsIntText(jTextSinglePageSizeW, props, "SinglePageSizeW");
+    setPropsIntText(jTextSinglePageSizeH, props, "SinglePageSizeH");
+    // 横のみ
+    setPropsIntText(jTextSinglePageWidth, props, "SinglePageWidth");
+    // サイズ指定
+    propValue = props.getProperty("ImageSizeType");
+    if (propValue != null) {
+      jRadioImageSizeType1.setSelected(Integer.toString(SectionInfo.IMAGE_SIZE_TYPE_AUTO).equals(propValue));
+      jRadioImageSizeType3.setSelected(Integer.toString(SectionInfo.IMAGE_SIZE_TYPE_ASPECT).equals(propValue));
+    }
+    // 拡大しない
+    setPropsSelected(jCheckFitImage, props, "FitImage");
+    // SVG画像タグ出力
+    setPropsSelected(jCheckSvgImage, props, "SvgImage");
+    try {
+      jComboRotateImage.setSelectedIndex(Integer.parseInt(props.getProperty("RotateImage")));
+    } catch (Exception e) {
+    }
+    // 画像倍率
+    setPropsSelected(jCheckImageScale, props, "ImageScaleChecked", false);
+    setPropsFloatText(jTextImageScale, props, "ImageScale");
+    // 画像回り込み
+    setPropsSelected(jCheckImageFloat, props, "ImageFloat");
+    setPropsIntText(jTextImageFloatW, props, "ImageFloatW");
+    setPropsIntText(jTextImageFloatH, props, "ImageFloatH");
+    try {
+      jComboImageFloatType.setSelectedIndex(Integer.parseInt(props.getProperty("ImageFloatType")));
+    } catch (Exception e) {
+    }
+    // 画像縮小指定
+    setPropsSelected(jCheckResizeW, props, "ResizeW");
+    setPropsIntText(jTextResizeNumW, props, "ResizeNumW");
+    setPropsSelected(jCheckResizeH, props, "ResizeH");
+    setPropsIntText(jTextResizeNumH, props, "ResizeNumH");
+    // Float表示 (デフォルトOFF)
+    setPropsSelected(jCheckImageFloatPage, props, "ImageFloatPage", false);
+    setPropsSelected(jCheckImageFloatBlock, props, "ImageFloatBlock", false);
+    // Jpeg圧縮率
+    setPropsIntText(jTextJpegQuality, props, "JpegQuality");
+    // ガンマ補正
+    setPropsSelected(jCheckGamma, props, "Gamma");
+    setPropsFloatText(jTextGammaValue, props, "GammaValue");
+    // 余白除去
+    setPropsSelected(jCheckAutoMargin, props, "AutoMargin");
+    setPropsIntText(jTextAutoMarginLimitH, props, "AutoMarginLimitH");
+    setPropsIntText(jTextAutoMarginLimitV, props, "AutoMarginLimitV");
+    setPropsIntText(jTextAutoMarginWhiteLevel, props, "AutoMarginWhiteLevel");
+    setPropsFloatText(jTextAutoMarginPadding, props, "AutoMarginPadding");
+    try {
+      jComboAutoMarginNombre.setSelectedIndex(Integer.parseInt(props.getProperty("AutoMarginNombre")));
+    } catch (Exception e) {
+    }
+    setPropsFloatText(jTextAutoMarginNombreSize, props, "AutoMarginNombreSize");
+
+    ////////////////////////////////////////////////////////////////
+    // 詳細設定
+    propValue = props.getProperty("SpaceHyphenation");
+    if (propValue != null) {
+      jRadioSpaceHyp1.setSelected("1".equals(propValue));
+      jRadioSpaceHyp2.setSelected("2".equals(propValue));
+      jRadioSpaceHyp0.setSelected("0".equals(propValue));
+    }
+    // 注記のルビ表示
+    propValue = props.getProperty("ChukiRuby");
+    if (propValue != null) {
+      jRadioChukiRuby0.setSelected("0".equals(propValue));
+      jRadioChukiRuby1.setSelected("1".equals(propValue));
+      jRadioChukiRuby2.setSelected("2".equals(propValue));
+    }
+    // 自動縦中横
+    // 半角2文字縦書き
+    setPropsSelected(jCheckAutoYoko, props, "AutoYoko");
+    // 半角数字1文字縦書き
+    setPropsSelected(jCheckAutoYokoNum1, props, "AutoYokoNum1");
+    // 半角数字3文字縦書き
+    setPropsSelected(jCheckAutoYokoNum3, props, "AutoYokoNum3");
+    // !? 1文字
+    setPropsSelected(jCheckAutoEQ1, props, "AutoYokoEQ1");
+    // コメント出力
+    setPropsSelected(jCheckCommentPrint, props, "CommentPrint");
+    setPropsSelected(jCheckCommentConvert, props, "CommentConvert");
+    // 空行除去
+    try {
+      jComboxRemoveEmptyLine.setSelectedIndex(Integer.parseInt(props.getProperty("RemoveEmptyLine")));
+    } catch (Exception e) {
+    }
+    propValue = props.getProperty("MaxEmptyLine");
+    try {
+      jComboxMaxEmptyLine.setSelectedIndex(Integer.parseInt(propValue));
+    } catch (Exception e) {
+    }
+    // 行頭字下げ追加
+    setPropsSelected(jCheckForceIndent, props, "ForceIndent");
+    // 強制改ページ
+    setPropsSelected(jCheckPageBreak, props, "PageBreak");
+    try {
+      jTextPageBreakSize.setText(Integer.toString(Integer.parseInt(props.getProperty("PageBreakSize"))));
+    } catch (Exception e) {
+    }
+    setPropsSelected(jCheckPageBreakEmpty, props, "PageBreakEmpty");
+    propValue = props.getProperty("PageBreakEmptyLine");
+    if (propValue != null)
+      jComboxPageBreakEmptyLine.setSelectedItem(propValue);
+    setPropsIntText(jTextPageBreakEmptySize, props, "PageBreakEmptySize");
+    setPropsSelected(jCheckPageBreakChapter, props, "PageBreakChapter");
+    setPropsIntText(jTextPageBreakChapterSize, props, "PageBreakChapterSize");
+
+    ////////////////////////////////////////////////////////////////
+    // 目次設定
+    // 最大文字数
+    setPropsIntText(jTextMaxChapterNameLength, props, "MaxChapterNameLength");
+    // 表紙
+    setPropsSelected(jCheckCoverPageToc, props, "CoverPageToc");
+    setPropsSelected(jCheckTitleToc, props, "TitleToc");
+    setPropsSelected(jCheckChapterUseNextLine, props, "ChapterUseNextLine");
+    setPropsSelected(jCheckChapterExclude, props, "ChapterExclude");
+    // 目次階層化
+    setPropsSelected(jCheckNavNest, props, "NavNest");
+    setPropsSelected(jCheckNcxNest, props, "NcxNest");
+    // 改ページ後を目次に追加
+    setPropsSelected(jCheckChapterSection, props, "ChapterSection");
+    // 見出し注記
+    setPropsSelected(jCheckChapterH, props, "ChapterH");
+    setPropsSelected(jCheckChapterH1, props, "ChapterH1");
+    setPropsSelected(jCheckChapterH2, props, "ChapterH2");
+    setPropsSelected(jCheckChapterH3, props, "ChapterH3");
+    setPropsSelected(jCheckSameLineChapter, props, "SameLineChapter");
+    // 章番号、数字、パターン
+    setPropsSelected(jCheckChapterName, props, "ChapterName");
+    setPropsSelected(jCheckChapterNumOnly, props, "ChapterNumOnly");
+    setPropsSelected(jCheckChapterNumTitle, props, "ChapterNumTitle");
+    setPropsSelected(jCheckChapterNumParen, props, "ChapterNumParen");
+    setPropsSelected(jCheckChapterNumParenTitle, props, "ChapterNumParenTitle");
+    setPropsSelected(jCheckChapterPattern, props, "ChapterPattern");
+    if (props.containsKey("ChapterPatternText"))
+      jComboChapterPattern.setSelectedItem(props.getProperty("ChapterPatternText"));
+
+    ////////////////////////////////////////////////////////////////
+    // スタイル
+    propValue = props.getProperty("PageMargin");
+    if (propValue != null) {
+      String[] pageMargins = propValue.split(",");
+      for (int i = 0; i < pageMargins.length; i++)
+        jTextPageMargins[i].setText(pageMargins[i]);
+    }
+    propValue = props.getProperty("PageMarginUnit");
+    if (propValue != null) {
+      jRadioPageMarginUnit0.setSelected("0".equals(propValue));
+      jRadioPageMarginUnit1.setSelected("1".equals(propValue));
+      // jRadioPageMarginUnit2.setSelected("2".equals(propValue));
+    }
+    propValue = props.getProperty("BodyMargin");
+    if (propValue != null) {
+      String[] bodyMargins = propValue.split(",");
+      for (int i = 0; i < bodyMargins.length; i++)
+        jTextBodyMargins[i].setText(bodyMargins[i]);
+    }
+    propValue = props.getProperty("BodyMarginUnit");
+    if (propValue != null) {
+      jRadioBodyMarginUnit0.setSelected("0".equals(propValue));
+      jRadioBodyMarginUnit1.setSelected("1".equals(propValue));
+      // jRadioBodyMarginUnit2.setSelected("2".equals(propValue));
+    }
+    propValue = props.getProperty("LineHeight");
+    if (propValue != null && !"".equals(propValue))
+      jComboLineHeight.setSelectedItem(propValue);
+    propValue = props.getProperty("FontSize");
+    if (propValue != null && !"".equals(propValue))
+      jComboFontSize.setSelectedItem(propValue);
+    setPropsSelected(jCheckBoldUseGothic, props, "BoldUseGothic");
+    setPropsSelected(jCheckGothicUseBold, props, "GothicUseBold");
+
+    // 文字
+    propValue = props.getProperty("DakutenType");
+    if (propValue != null) {
+      jRadioDakutenType0.setSelected("0".equals(propValue));
+      jRadioDakutenType1.setSelected("1".equals(propValue));
+      jRadioDakutenType2.setSelected("2".equals(propValue));
+    }
+    setPropsSelected(jCheckIvsBMP, props, "IvsBMP");
+    setPropsSelected(jCheckIvsSSP, props, "IvsSSP");
+
+    ////////////////////////////////////////////////////////////////
+    // Web
+    setPropsFloatText(jTextWebInterval, props, "WebInterval");
+    setPropsText(jTextCachePath, props, "CachePath");
+    if ("".equals(jTextCachePath.getText()))
+      jTextCachePath.setText("cache");
+    setPropsNumberText(jTextWebModifiedExpire, props, "WebModifiedExpire");
+    setPropsSelected(jCheckWebConvertUpdated, props, "WebConvertUpdated");
+    setPropsSelected(jCheckWebModifiedOnly, props, "WebModifiedOnly");
+    setPropsSelected(jCheckWebModifiedTail, props, "WebModifiedTail");
+    setPropsSelected(jCheckWebBeforeChapter, props, "WebBeforeChapter");
+    setPropsIntText(jTextWebBeforeChapterCount, props, "WebBeforeChapterCount");
+  }
+
+  /** アプレットの設定状態をpropsに保存 */
+  private void setProperties(Properties props) {
+    // アップレット設定の保存
+    props.setProperty("TitleType", "" + this.jComboTitle.getSelectedIndex());
+    props.setProperty("PubFirst", this.jCheckPubFirst.isSelected() ? "1" : "");
+    props.setProperty("UseFileName", this.jCheckUseFileName.isSelected() ? "1" : "");
+    props.setProperty("AutoFileName", this.jCheckAutoFileName.isSelected() ? "1" : "");
+    // 変換設定
+    props.setProperty("MarkId", this.jCheckMarkId.isSelected() ? "1" : "");
+    // props.setProperty("Gaiji32", this.jCheckGaiji32.isSelected()?"1":"");
+    props.setProperty("Vertical", this.jRadioVertical.isSelected() ? "1" : "");
+    // props.setProperty("RtL", this.jRadioRtL.isSelected()?"1":"");
+    props.setProperty("Ext", "" + this.jComboExt.getEditor().getItem().toString().trim());
+    props.setProperty("ChkConfirm", this.jCheckConfirm.isSelected() ? "1" : "");
+
+    // 先頭の挿絵と表紙無しのみ記憶
+    if (this.jComboCover.getSelectedIndex() == 0)
+      props.setProperty("Cover", "");
+    else if (this.jComboCover.getSelectedIndex() == 1)
+      props.setProperty("Cover", "" + this.jComboCover.getEditor().getItem().toString().trim());
+    props.setProperty("CoverHistory", this.jCheckCoverHistory.isSelected() ? "1" : "");
+
+    props.setProperty("MaxCoverLine", this.jTextMaxCoverLine.getText());
+
+    // ページ出力
+    props.setProperty("CoverPage", this.jCheckCoverPage.isSelected() ? "1" : "");
+
+    props.setProperty("TitlePageWrite", this.jCheckTitlePage.isSelected() ? "1" : "");
+    if (this.jRadioTitleNormal.isSelected()) {
+      props.setProperty("TitlePage", "" + BookInfo.TITLE_NORMAL);
+    } else if (this.jRadioTitleMiddle.isSelected()) {
+      props.setProperty("TitlePage", "" + BookInfo.TITLE_MIDDLE);
+    } else if (this.jRadioTitleHorizontal.isSelected()) {
+      props.setProperty("TitlePage", "" + BookInfo.TITLE_HORIZONTAL);
+    }
+    props.setProperty("TocPage", this.jCheckTocPage.isSelected() ? "1" : "");
+    props.setProperty("TocVertical", this.jRadioTocV.isSelected() ? "1" : "");
+    // 挿絵非表示
+    props.setProperty("NoIllust", this.jCheckNoIllust.isSelected() ? "1" : "");
+    // 画面サイズ
+    props.setProperty("DispW", this.jTextDispW.getText());
+    props.setProperty("DispH", this.jTextDispH.getText());
+    // 表紙
+    props.setProperty("CoverW", this.jTextCoverW.getText());
+    props.setProperty("CoverH", this.jTextCoverH.getText());
+    // 画像倍率
+    props.setProperty("ImageScaleChecked", this.jCheckImageScale.isSelected() ? "1" : "");
+    props.setProperty("ImageScale", this.jTextImageScale.getText());
+    // 画像回り込み
+    props.setProperty("ImageFloat", this.jCheckImageFloat.isSelected() ? "1" : "");
+    props.setProperty("ImageFloatType", "" + this.jComboImageFloatType.getSelectedIndex());
+    props.setProperty("ImageFloatW", this.jTextImageFloatW.getText());
+    props.setProperty("ImageFloatH", this.jTextImageFloatH.getText());
+    // 画像サイズ
+    props.setProperty("ResizeW", this.jCheckResizeW.isSelected() ? "1" : "");
+    props.setProperty("ResizeH", this.jCheckResizeH.isSelected() ? "1" : "");
+    props.setProperty("ResizeNumW", this.jTextResizeNumW.getText());
+    props.setProperty("ResizeNumH", this.jTextResizeNumH.getText());
+    // 画像単ページ
+    props.setProperty("SinglePageSizeW", this.jTextSinglePageSizeW.getText());
+    props.setProperty("SinglePageSizeH", this.jTextSinglePageSizeH.getText());
+    props.setProperty("SinglePageWidth", this.jTextSinglePageWidth.getText());
+
+    props.setProperty("ImageSizeType", "" + (this.jRadioImageSizeType1.isSelected() ? SectionInfo.IMAGE_SIZE_TYPE_AUTO
+        : SectionInfo.IMAGE_SIZE_TYPE_ASPECT));
+    props.setProperty("FitImage", this.jCheckFitImage.isSelected() ? "1" : "");
+    props.setProperty("SvgImage", this.jCheckSvgImage.isSelected() ? "1" : "");
+    props.setProperty("RotateImage", "" + this.jComboRotateImage.getSelectedIndex());
+    // 画像回り込み
+    props.setProperty("ImageFloatPage", this.jCheckImageFloatPage.isSelected() ? "1" : "");
+    props.setProperty("ImageFloatBlock", this.jCheckImageFloatBlock.isSelected() ? "1" : "");
+    // JPEG画質
+    props.setProperty("JpegQuality", this.jTextJpegQuality.getText());
+    // ガンマ補正
+    props.setProperty("Gamma", this.jCheckGamma.isSelected() ? "1" : "");
+    props.setProperty("GammaValue", this.jTextGammaValue.getText());
+    // 余白除去
+    props.setProperty("AutoMargin", this.jCheckAutoMargin.isSelected() ? "1" : "");
+    props.setProperty("AutoMarginLimitH", this.jTextAutoMarginLimitH.getText());
+    props.setProperty("AutoMarginLimitV", this.jTextAutoMarginLimitV.getText());
+    props.setProperty("AutoMarginWhiteLevel", this.jTextAutoMarginWhiteLevel.getText());
+    props.setProperty("AutoMarginPadding", this.jTextAutoMarginPadding.getText());
+    props.setProperty("AutoMarginNombre", "" + this.jComboAutoMarginNombre.getSelectedIndex());
+    props.setProperty("AutoMarginNombreSize", this.jTextAutoMarginNombreSize.getText());
+    // 空白の禁則処理
+    props.setProperty("SpaceHyphenation",
+        this.jRadioSpaceHyp0.isSelected() ? "0" : (this.jRadioSpaceHyp1.isSelected() ? "1" : "2"));
+    // 注記のルビ表示
+    props.setProperty("ChukiRuby",
+        this.jRadioChukiRuby0.isSelected() ? "0" : (this.jRadioChukiRuby1.isSelected() ? "1" : "2"));
+    // 自動縦中横
+    props.setProperty("AutoYoko", this.jCheckAutoYoko.isSelected() ? "1" : "");
+    props.setProperty("AutoYokoNum1", this.jCheckAutoYokoNum1.isSelected() ? "1" : "");
+    props.setProperty("AutoYokoNum3", this.jCheckAutoYokoNum3.isSelected() ? "1" : "");
+    props.setProperty("AutoYokoEQ1", this.jCheckAutoEQ1.isSelected() ? "1" : "");
+    // コメント出力
+    props.setProperty("CommentPrint", this.jCheckCommentPrint.isSelected() ? "1" : "");
+    props.setProperty("CommentConvert", this.jCheckCommentConvert.isSelected() ? "1" : "");
+    // 空行除去
+    props.setProperty("RemoveEmptyLine", "" + this.jComboxRemoveEmptyLine.getSelectedIndex());
+    props.setProperty("MaxEmptyLine", "" + this.jComboxMaxEmptyLine.getSelectedIndex());
+    // 行頭字下げ
+    props.setProperty("ForceIndent", this.jCheckForceIndent.isSelected() ? "1" : "");
+    // 強制改ページ
+    props.setProperty("PageBreak", this.jCheckPageBreak.isSelected() ? "1" : "");
+    props.setProperty("PageBreakSize", "" + this.jTextPageBreakSize.getText().trim());
+    props.setProperty("PageBreakEmpty", this.jCheckPageBreakEmpty.isSelected() ? "1" : "");
+    props.setProperty("PageBreakEmptyLine", "" + this.jComboxPageBreakEmptyLine.getSelectedItem().toString().trim());
+    props.setProperty("PageBreakEmptySize", "" + this.jTextPageBreakEmptySize.getText().trim());
+    props.setProperty("PageBreakChapter", this.jCheckPageBreakChapter.isSelected() ? "1" : "");
+    props.setProperty("PageBreakChapterSize", "" + this.jTextPageBreakChapterSize.getText().trim());
+    // 目次出力
+    props.setProperty("MaxChapterNameLength", this.jTextMaxChapterNameLength.getText());
+    props.setProperty("CoverPageToc", this.jCheckCoverPageToc.isSelected() ? "1" : "");
+    props.setProperty("TitleToc", this.jCheckTitleToc.isSelected() ? "1" : "");
+    props.setProperty("ChapterUseNextLine", this.jCheckChapterUseNextLine.isSelected() ? "1" : "");
+    props.setProperty("ChapterExclude", this.jCheckChapterExclude.isSelected() ? "1" : "");
+    props.setProperty("NavNest", this.jCheckNavNest.isSelected() ? "1" : "");
+    props.setProperty("NcxNest", this.jCheckNcxNest.isSelected() ? "1" : "");
+    props.setProperty("ChapterSection", this.jCheckChapterSection.isSelected() ? "1" : "");
+    props.setProperty("ChapterH", this.jCheckChapterH.isSelected() ? "1" : "");
+    props.setProperty("ChapterH1", this.jCheckChapterH1.isSelected() ? "1" : "");
+    props.setProperty("ChapterH2", this.jCheckChapterH2.isSelected() ? "1" : "");
+    props.setProperty("ChapterH3", this.jCheckChapterH3.isSelected() ? "1" : "");
+    props.setProperty("SameLineChapter", this.jCheckSameLineChapter.isSelected() ? "1" : "");
+    props.setProperty("ChapterName", this.jCheckChapterName.isSelected() ? "1" : "");
+    props.setProperty("ChapterNumOnly", this.jCheckChapterNumOnly.isSelected() ? "1" : "");
+    props.setProperty("ChapterNumTitle", this.jCheckChapterNumTitle.isSelected() ? "1" : "");
+    props.setProperty("ChapterNumParen", this.jCheckChapterNumParen.isSelected() ? "1" : "");
+    props.setProperty("ChapterNumParenTitle", this.jCheckChapterNumParenTitle.isSelected() ? "1" : "");
+    props.setProperty("ChapterPattern", this.jCheckChapterPattern.isSelected() ? "1" : "");
+    props.setProperty("ChapterPatternText", this.jComboChapterPattern.getEditor().getItem().toString().trim());
+    // スタイル
+    props.setProperty("PageMargin", this.jTextPageMargins[0].getText() + "," + this.jTextPageMargins[1].getText() + ","
+        + this.jTextPageMargins[2].getText() + "," + this.jTextPageMargins[3].getText());
+    props.setProperty("PageMarginUnit",
+        this.jRadioPageMarginUnit0.isSelected() ? "0" : (this.jRadioPageMarginUnit1.isSelected() ? "1" : "2"));
+    props.setProperty("BodyMargin", this.jTextBodyMargins[0].getText() + "," + this.jTextBodyMargins[1].getText() + ","
+        + this.jTextBodyMargins[2].getText() + "," + this.jTextBodyMargins[3].getText());
+    props.setProperty("BodyMarginUnit",
+        this.jRadioBodyMarginUnit0.isSelected() ? "0" : (this.jRadioBodyMarginUnit1.isSelected() ? "1" : "2"));
+    props.setProperty("LineHeight", this.jComboLineHeight.getEditor().getItem().toString().trim());
+    props.setProperty("FontSize", this.jComboFontSize.getEditor().getItem().toString().trim());
+    props.setProperty("BoldUseGothic", this.jCheckBoldUseGothic.isSelected() ? "1" : "");
+    props.setProperty("GothicUseBold", this.jCheckGothicUseBold.isSelected() ? "1" : "");
+    // 文字
+    props.setProperty("DakutenType",
+        this.jRadioDakutenType0.isSelected() ? "0" : (this.jRadioDakutenType1.isSelected() ? "1" : "2"));
+    props.setProperty("IvsBMP", this.jCheckIvsBMP.isSelected() ? "1" : "");
+    props.setProperty("IvsSSP", this.jCheckIvsSSP.isSelected() ? "1" : "");
+
+    // Web
+    props.setProperty("WebInterval", this.jTextWebInterval.getText());
+    props.setProperty("CachePath", this.jTextCachePath.getText());
+    props.setProperty("WebModifiedExpire", this.jTextWebModifiedExpire.getText());
+    props.setProperty("WebConvertUpdated", this.jCheckWebConvertUpdated.isSelected() ? "1" : "");
+    props.setProperty("WebModifiedOnly", this.jCheckWebModifiedOnly.isSelected() ? "1" : "");
+    props.setProperty("WebModifiedTail", this.jCheckWebModifiedTail.isSelected() ? "1" : "");
+    props.setProperty("WebBeforeChapter", this.jCheckWebBeforeChapter.isSelected() ? "1" : "");
+    props.setProperty("WebBeforeChapterCount", this.jTextWebBeforeChapterCount.getText());
+
+    // 確認ダイアログの元画像を残す
+    // props.setProperty("ReplaceCover",
+    // this.jConfirmDialog.jCheckReplaceCover.isSelected() ? "1" : "");
+    // TODO 変換実行部分ができたらここを復帰させる
+
+    props.setProperty("EncType", "" + this.jComboEncType.getSelectedIndex());
+    props.setProperty("OverWrite", this.jCheckOverWrite.isSelected() ? "1" : "");
   }
 
 }

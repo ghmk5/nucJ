@@ -1,4 +1,4 @@
-package list;
+package com.github.ghmk5.info;
 
 import java.io.IOException;
 import java.net.URL;

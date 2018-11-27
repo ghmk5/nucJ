@@ -30,11 +30,10 @@ import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
 import org.jsoup.select.Elements;
 
+import com.github.ghmk5.info.NovelMeta;
 import com.github.hmdev.util.CharUtils;
 import com.github.hmdev.util.LogAppender;
 import com.github.hmdev.web.ExtractInfo.ExtractId;
-
-import list.NovelMeta;
 
 /** HTMLを青空txtに変換 */
 public class WebAozoraConverter {
