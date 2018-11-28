@@ -2090,6 +2090,10 @@ public class DialogConverterSettings extends JDialog {
   /** propsの値をアプレットに設定 */
   private void loadProperties(Properties props) {
     boolean selected;
+    String propValue;
+
+    // 変換前確認
+    setPropsSelected(jCheckConfirm, props, "ChkConfirm");
 
     // 表題
     try {
@@ -2111,7 +2115,7 @@ public class DialogConverterSettings extends JDialog {
     setPropsSelected(jCheckCoverPage, props, "CoverPage");
     // 表題ページ
     setPropsSelected(jCheckTitlePage, props, "TitlePageWrite");
-    String propValue = props.getProperty("TitlePage");
+    propValue = props.getProperty("TitlePage");
     if (propValue != null) {
       jRadioTitleNormal.setSelected(Integer.toString(BookInfo.TITLE_NORMAL).equals(propValue));
       jRadioTitleMiddle.setSelected(Integer.toString(BookInfo.TITLE_MIDDLE).equals(propValue));
