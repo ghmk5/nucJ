@@ -23,12 +23,16 @@ import java.io.Writer;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
 
 import javax.swing.AbstractAction;
+import javax.swing.AbstractButton;
 import javax.swing.Action;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -37,6 +41,7 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
@@ -46,6 +51,8 @@ import javax.swing.SortOrder;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.UIManager;
+import javax.swing.UIManager.LookAndFeelInfo;
+import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
@@ -129,6 +136,8 @@ public class ListWindow {
   RowSorter<TableModel> sorter;
   String dateLastChecked; // 最後に更新チェックした日時 Propertyとして保存するのでString
   String datePrevChecked; // その前の更新チェックの日時 同上
+  static HashMap<String, String> lafMap;
+  ButtonGroup mntmLafSubGroup;
 
   private final Action actionAddEntry = new ActionAddEntry();
   private final Action actionChkUpdt = new ActionChkUpdt();
@@ -185,20 +194,29 @@ public class ListWindow {
             LogAppender.println("テーブルカラム幅の復元に失敗した");
           }
 
-          // 終了処理
-          // Macではアプリケーションウィンドウのクローズボックスのクリックではなく、cmd-QでJavaVMを終了させると
-          // 実行されないので注意 - 重要な情報の保存など、確実に実行させたい処理はここに書くべきではない
+          // Look & Feelの復元
+          String lafName = lafMap.get(window.props.getProperty("LastLook&Feel"));
+          try {
+            UIManager.setLookAndFeel(lafName);
+            SwingUtilities.updateComponentTreeUI(window.frame);
+          } catch (Exception e) {
+            // TODO: handle exception
+            LogAppender.println("Look & Feelを " + lafName + " に設定できなかった");
+          }
+
+          // 現在選択されているLook & Feelに対応するメニュー内ボタンモデルを選択する処理
+          String className = UIManager.getLookAndFeel().getName();
+          for (Enumeration<AbstractButton> e = window.mntmLafSubGroup.getElements(); e.hasMoreElements();) {
+            AbstractButton button = e.nextElement();
+            if (button.getText().equals(className)) {
+              button.setSelected(true);
+            }
+          }
+
           window.frame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent evt) {
               try {
-                // Windowの位置とサイズをpropsに設定
-                Point location = window.frame.getLocation();
-                Dimension size = window.frame.getSize();
-                window.props.setProperty("PosX", "" + location.getX());
-                window.props.setProperty("PosY", "" + location.getY());
-                window.props.setProperty("SizeW", "" + size.getWidth());
-                window.props.setProperty("SizeH", "" + size.getHeight());
                 window.finalize();
               } catch (Throwable e) {
                 e.printStackTrace();
@@ -239,9 +257,20 @@ public class ListWindow {
     this.profilePath.mkdir();
     this.csvPath = new File(this.jarPath + "csv");
 
+    // DefaultTableModelを定義
+    // このまま使用されるのはiniファイルから読み込めず、かつデフォルトiniからも読み込めなかった場合のみ
     DefaultTableModel defaultTableModel;
     String[] columnNames = { "novel ID", "author", "title", "chapters", "last updated" };
     defaultTableModel = new DefaultTableModel(columnNames, 0);
+
+    // 使用可能なLook & Feelを取得
+    LookAndFeelInfo[] lafis = UIManager.getInstalledLookAndFeels();
+    String[] sLafis = new String[lafis.length];
+    lafMap = new HashMap<>();
+    for (int i = 0; i < lafis.length; i++) {
+      sLafis[i] = lafis[i].getName();
+      lafMap.put(sLafis[i], lafis[i].getClassName());
+    }
 
     // 設定ファイル読み込み
     props = new Properties();
@@ -341,6 +370,7 @@ public class ListWindow {
     // });
     // mnNewMenu.add(mntm3);
 
+    // 設定ダイアログを開くメニューアイテム
     JMenuItem menuOpenPrefDialog = new JMenuItem("設定...");
     menuOpenPrefDialog.addActionListener(new ActionListener() {
       // JFrame owner;
@@ -370,6 +400,41 @@ public class ListWindow {
     });
     mnNewMenu.add(menuOpenPrefDialog);
 
+    // Look & Feel切り替えメニューアイテム
+    JMenuItem mntmLaF = new JMenu("Look & Feel");
+
+    mntmLafSubGroup = new ButtonGroup();
+    JRadioButtonMenuItem[] mntmLafSubs = new JRadioButtonMenuItem[sLafis.length];
+    for (int i = 0; i < sLafis.length; i++) {
+
+      mntmLafSubs[i] = new JRadioButtonMenuItem(sLafis[i]);
+
+      int j = i;
+      mntmLafSubs[i].addActionListener(new ActionListener() {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          String className = lafMap.get(sLafis[j]);
+          try {
+            UIManager.setLookAndFeel(className);
+            SwingUtilities.updateComponentTreeUI(frame);
+            // LogAppender.println("Look & Feelを " + className + " に設定した");
+            props.setProperty("LastLook&Feel", className);
+          } catch (ClassNotFoundException | InstantiationException | IllegalAccessException
+              | UnsupportedLookAndFeelException e1) {
+            // LogAppender.println("Look & Feelを " + className + " に設定できなかった");
+            e1.printStackTrace();
+          }
+        }
+      });
+      mntmLafSubGroup.add(mntmLafSubs[i]);
+
+      mntmLaF.add(mntmLafSubs[i]);
+    }
+
+    mnNewMenu.add(mntmLaF);
+
+    // 全巻更新日時表示ラベル & 更新チェック実行ボタン
     JPanel rootPanel = new JPanel();
     rootPanel.setLayout(new BoxLayout(rootPanel, BoxLayout.Y_AXIS));
     frame.getContentPane().add(rootPanel, BorderLayout.CENTER);
@@ -525,10 +590,20 @@ public class ListWindow {
 
   /**
    * アプレット終了時の処理 設定ファイルを保存
+   * Macではアプリケーションウィンドウのクローズボックスのクリックではなく、cmd-QでJavaVMを終了させると 実行されないので注意 -
+   * 重要な情報の保存など、確実に実行させたい処理はここに書くべきではない
    */
   @Override
   protected void finalize() throws Throwable {
     this.convertCanceled = true;
+
+    // Windowの位置とサイズをpropsに設定
+    Point location = this.frame.getLocation();
+    Dimension size = this.frame.getSize();
+    this.props.setProperty("PosX", "" + location.getX());
+    this.props.setProperty("PosY", "" + location.getY());
+    this.props.setProperty("SizeW", "" + size.getWidth());
+    this.props.setProperty("SizeH", "" + size.getHeight());
 
     // テーブルの列幅を取得してpropsに設定
     DefaultTableColumnModel defaultTableColumnModel = (DefaultTableColumnModel) this.table.getColumnModel();
@@ -540,6 +615,10 @@ public class ListWindow {
       propName = "WidthColumn" + idx;
       this.props.setProperty(propName, "" + width);
     }
+
+    // 使用中のLook & Feelを取得してpropsに設定
+    String className = UIManager.getLookAndFeel().getName();
+    props.setProperty("LastLook&Feel", className);
 
     // 設定ファイル更新
     FileOutputStream fos = new FileOutputStream(this.jarPath + this.propFileName);
