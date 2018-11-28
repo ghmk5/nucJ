@@ -16,7 +16,6 @@ import java.awt.event.FocusListener;
 import java.io.File;
 import java.io.IOException;
 import java.text.NumberFormat;
-import java.util.Properties;
 
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
@@ -41,6 +40,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import com.github.ghmk5.info.Properties;
 import com.github.hmdev.info.BookInfo;
 import com.github.hmdev.info.SectionInfo;
 import com.github.hmdev.swing.NarrowTitledBorder;
@@ -1192,7 +1192,7 @@ public class DialogConverterSettings extends JDialog {
     tab4InnerPanel7.setLayout(new BoxLayout(tab4InnerPanel7, BoxLayout.X_AXIS));
     tab4InnerPanel7.setBorder(new NarrowTitledBorder("行頭字下げ"));
     tab4RootPanel.add(tab4InnerPanel7);
-    jCheckForceIndent = new JCheckBox("有効     ");
+    jCheckForceIndent = new JCheckBox("有効       ");
     jCheckForceIndent.setToolTipText("行頭が「『―”（〈〔【と全角空白以外なら行頭に全角空白を追加します 半角空白のみは全角に置き換えます");
     jCheckForceIndent.setFocusPainted(false);
     jCheckForceIndent.setBorder(padding2);

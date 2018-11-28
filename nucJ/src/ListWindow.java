@@ -17,13 +17,13 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -57,6 +57,7 @@ import javax.swing.table.TableRowSorter;
 
 import com.github.ghmk5.info.NovelList;
 import com.github.ghmk5.info.NovelMeta;
+import com.github.ghmk5.info.Properties;
 import com.github.ghmk5.swing.DialogConverterSettings;
 import com.github.hmdev.converter.AozoraEpub3Converter;
 import com.github.hmdev.info.ProfileInfo;
@@ -94,8 +95,9 @@ public class ListWindow {
 
   /** 設定ファイル */
   public Properties props;
+
   /** 設定ファイル名 */
-  String propFileName = "NucJ.ini";
+  String propFileName = "nucJ.ini";
 
   /** jarファイルのあるパス文字列 "/"含む */
   String jarPath = null;
@@ -155,6 +157,7 @@ public class ListWindow {
           } catch (Exception e1) {
             LogAppender.println("ウィンドウ位置の復元に失敗した");
           }
+
           // iniファイルに保存してあったウィンドウサイズの復元
           try {
             int w = (int) Float.parseFloat(window.props.getProperty("SizeW"));
@@ -163,7 +166,9 @@ public class ListWindow {
           } catch (Exception e2) {
             LogAppender.println("ウィンドウサイズの復元に失敗した");
           }
-          // iniファイルに保存してあったテーブルカラム幅の復元
+          // window.frame.setSize(600, 655);
+
+          // テーブルカラム幅の復元
           try {
             DefaultTableColumnModel defaultTableColumnModel = (DefaultTableColumnModel) window.table.getColumnModel();
             int numCulmns = defaultTableColumnModel.getColumnCount();
@@ -181,7 +186,7 @@ public class ListWindow {
           }
 
           // 終了処理
-          // Macではアプリケーションウィンドウのクローズボックスをクリックするのではなく、cmd-QでJavaVMを終了させると
+          // Macではアプリケーションウィンドウのクローズボックスのクリックではなく、cmd-QでJavaVMを終了させると
           // 実行されないので注意 - 重要な情報の保存など、確実に実行させたい処理はここに書くべきではない
           window.frame.addWindowListener(new WindowAdapter() {
             @Override
@@ -222,6 +227,7 @@ public class ListWindow {
    */
   private void initialize() {
 
+    // 文字表示のアンチエイリアス有効化-Windowsでのみ必要
     System.setProperty("awt.useSystemAAFontSettings", "on");
     System.setProperty("swing.aatext", "true");
 
@@ -239,11 +245,20 @@ public class ListWindow {
 
     // 設定ファイル読み込み
     props = new Properties();
+
     try {
       FileInputStream fos = new FileInputStream(this.jarPath + this.propFileName);
       props.load(fos);
       fos.close();
     } catch (Exception e) {
+      InputStream iStream = this.getClass().getResourceAsStream("defaults/nucJ_default.ini");
+      try {
+        props.load(iStream);
+        iStream.close();
+      } catch (IOException e1) {
+        LogAppender.println("デフォルト設定ファイル defaults/nucJ_default.ini のロードに失敗した");
+        e1.printStackTrace();
+      }
     }
 
     String path = props.getProperty("LastDir");
@@ -346,7 +361,7 @@ public class ListWindow {
         try {
           // 設定ファイル更新
           FileOutputStream fos = new FileOutputStream(jarPath + propFileName);
-          props.store(fos, "NucJ Parameters");
+          props.store(fos, "nucJ Parameters");
           fos.close();
         } catch (Exception e1) {
           e1.printStackTrace();
@@ -528,7 +543,7 @@ public class ListWindow {
 
     // 設定ファイル更新
     FileOutputStream fos = new FileOutputStream(this.jarPath + this.propFileName);
-    this.props.store(fos, "NucJ Parameters");
+    this.props.store(fos, "nucJ Parameters");
     fos.close();
 
     File csvFile = new File(csvPath.getCanonicalPath(), csvFileName);
