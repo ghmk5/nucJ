@@ -79,6 +79,9 @@ public class DialogConverterSettings extends JDialog {
   Dimension text300 = new Dimension(300, 20);
   Dimension combo3 = new Dimension(text3.width + 20, 20);
 
+  /** 出力先選択ダイアログ表示イベントactionPerformed(null)で明示的に呼び出す。 */
+  DstPathChooserListener dstPathChooser;
+
   // 設定パラメータを保持するGUIオブジェクト
   JComboBox jComboTitle;
   JCheckBox jCheckPubFirst;
@@ -103,7 +106,7 @@ public class DialogConverterSettings extends JDialog {
   JRadioButton jRadioVertical;
   JRadioButton jRadioHorizontal;
   JCheckBox jCheckNoIllust;
-  JCheckBox jCheckConfirm;
+  public JCheckBox jCheckConfirm;
   JTextField jTextDispW;
   JTextField jTextDispH;
   JTextField jTextCoverW;
@@ -208,6 +211,7 @@ public class DialogConverterSettings extends JDialog {
   JLabel label;// 使い回し用ラベル
 
   public Boolean approved; // Applyボタンがクリックされたらtrue 親ウィンドウが直接この値をみて処理する
+  File currentPath = null; // 前回使用した出力先ディレクトリ
 
   /**
    * Create the dialog.
@@ -437,6 +441,9 @@ public class DialogConverterSettings extends JDialog {
     tab1InnerPanel4.add(jCheckOverWrite);
 
     // "変換"タブ内 "出力先"グループ
+
+    dstPathChooser = new DstPathChooserListener(this);
+
     JPanel tab1InnerPanel5 = new JPanel();
     tab1InnerPanel5.setLayout(new BoxLayout(tab1InnerPanel5, BoxLayout.X_AXIS));
     tab1InnerPanel5.setMinimumSize(panelSize);
@@ -484,7 +491,7 @@ public class DialogConverterSettings extends JDialog {
     jButtonDstPath.setBorder(padding3);
     jButtonDstPath.setIcon(new ImageIcon(this.getClass().getResource("/images/dst_path.png")));
     jButtonDstPath.setFocusPainted(false);
-    // jButtonDstPath.addActionListener(dstPathChooser);
+    jButtonDstPath.addActionListener(dstPathChooser);
     tab1InnerPanel5.add(jButtonDstPath);
 
     // "変換"タブ内 "入力文字コード"グループ & "組方向"グループ
@@ -1811,7 +1818,7 @@ public class DialogConverterSettings extends JDialog {
     public void actionPerformed(ActionEvent e) {
       File path = null;
       String dstPath = null;
-      File currentPath = new File(props.getProperty("LastDir"));
+      currentPath = new File(props.getProperty("LastDir"));
       Object obj = jCheckSamePath.isSelected() ? jComboDstPath.getSelectedItem() : jComboDstPath.getEditor().getItem();
       if (obj != null)
         dstPath = obj.toString();
@@ -2000,8 +2007,14 @@ public class DialogConverterSettings extends JDialog {
     }
 
     public void actionPerformed(ActionEvent e) {
-      // TODO GUIオブジェクトの状態をプロファイルに書き出す処理
-      testString = "dialog closed by pressing OK button";
+
+      // jComboDstPath.getSelectedItem() と jComboDstPath.getEditor().getItem()
+      // String selectedItem = (String) jComboDstPath.getSelectedItem();
+      // String getEditorGetItem = (String) jComboDstPath.getEditor().getItem();
+      // System.out.println("selectedItem: " + selectedItem);
+      // System.out.println("getEditorGetItem: " + getEditorGetItem);
+
+      testString = "変換設定が更新されました";
       approved = true;
       setProperties(props);
       dispose();
@@ -2016,7 +2029,7 @@ public class DialogConverterSettings extends JDialog {
     }
 
     public void actionPerformed(ActionEvent e) {
-      testString = "dialog closed by pressing cancel button";
+      testString = "キャンセルされました。変換設定は変更されません";
       approved = false;
       dispose();
     }
@@ -2382,6 +2395,7 @@ public class DialogConverterSettings extends JDialog {
     props.setProperty("TitlePageWrite", this.jCheckTitlePage.isSelected() ? "1" : "");
     if (this.jRadioTitleNormal.isSelected()) {
       props.setProperty("TitlePage", "" + BookInfo.TITLE_NORMAL);
+      // props.setProperty("TitlePageNormal", "1");
     } else if (this.jRadioTitleMiddle.isSelected()) {
       props.setProperty("TitlePage", "" + BookInfo.TITLE_MIDDLE);
     } else if (this.jRadioTitleHorizontal.isSelected()) {
@@ -2517,6 +2531,36 @@ public class DialogConverterSettings extends JDialog {
     // props.setProperty("ReplaceCover",
     // this.jConfirmDialog.jCheckReplaceCover.isSelected() ? "1" : "");
     // TODO 変換実行部分ができたらここを復帰させる
+
+    // 出力先と履歴保存
+    try {
+      this.props.setProperty("SamePath", this.jCheckSamePath.isSelected() ? "1" : "");
+      String dstPath = this.jComboDstPath.getEditor().getItem().toString().trim();
+      if (dstPath.equals("") && jComboDstPath.getSelectedItem() != null)
+        dstPath = this.jComboDstPath.getSelectedItem().toString().trim();
+      this.props.setProperty("DstPath", "" + dstPath);
+      // 履歴
+      String dstPathList = this.props.getProperty("DstPathList");
+      if (dstPathList == null)
+        dstPathList = dstPath;
+      else {
+        // 最大10件
+        dstPathList = dstPath;
+        int count = Math.min(10, this.jComboDstPath.getItemCount());
+        for (int i = 0; i < count; i++) {
+          String item = (String) this.jComboDstPath.getItemAt(i);
+          if (!dstPath.equals(item))
+            dstPathList += "," + item;
+        }
+        if (dstPathList.startsWith(","))
+          dstPathList = dstPathList.substring(1);
+      }
+      this.props.setProperty("DstPathList", dstPathList);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    this.props.setProperty("LastDir", this.currentPath == null ? "" : this.currentPath.getAbsolutePath());
 
     props.setProperty("EncType", "" + this.jComboEncType.getSelectedIndex());
     props.setProperty("OverWrite", this.jCheckOverWrite.isSelected() ? "1" : "");

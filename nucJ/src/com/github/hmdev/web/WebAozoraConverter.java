@@ -14,7 +14,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -40,7 +39,7 @@ public class WebAozoraConverter {
   final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 
   /** Singletonインスタンス格納 keyはFQDN */
-  static HashMap<String, WebAozoraConverter> converters = new HashMap<String, WebAozoraConverter>();
+  static HashMap<String, WebAozoraConverter> converters = new HashMap<>();
 
   // 設定ファイルから読み込むパラメータ
   /**
@@ -86,6 +85,8 @@ public class WebAozoraConverter {
   boolean canceled = false;
   // 更新有りフラグ
   boolean updated = false;
+  // 読み込んだ小説のメタデータ
+  NovelMeta novelMeta;
 
   ////////////////////////////////////////////////////////////////
   /** fqdnに対応したインスタンスを生成してキャッシュして変換実行 */
@@ -122,7 +123,7 @@ public class WebAozoraConverter {
           File extractInfoFile = new File(configPath.getAbsolutePath() + "/" + fqdn + "/extract.txt");
           if (!extractInfoFile.isFile())
             return;
-          this.queryMap = new HashMap<ExtractId, ExtractInfo[]>();
+          this.queryMap = new HashMap<>();
           String line;
           BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(extractInfoFile), "UTF-8"));
           try {
@@ -146,7 +147,7 @@ public class WebAozoraConverter {
           }
 
           // 置換情報
-          this.replaceMap = new HashMap<ExtractId, Vector<String[]>>();
+          this.replaceMap = new HashMap<>();
           File replaceInfoFile = new File(configPath.getAbsolutePath() + "/" + fqdn + "/replace.txt");
           if (replaceInfoFile.isFile()) {
             br = new BufferedReader(new InputStreamReader(new FileInputStream(replaceInfoFile), "UTF-8"));
@@ -159,7 +160,7 @@ public class WebAozoraConverter {
                   ExtractId extractId = ExtractId.valueOf(values[0]);
                   Vector<String[]> vecReplace = this.replaceMap.get(extractId);
                   if (vecReplace == null) {
-                    vecReplace = new Vector<String[]>();
+                    vecReplace = new Vector<>();
                     this.replaceMap.put(extractId, vecReplace);
                   }
                   vecReplace.add(new String[] { values[1], values.length == 2 ? "" : values[2] });
@@ -190,6 +191,10 @@ public class WebAozoraConverter {
 
   public boolean isUpdated() {
     return this.updated;
+  }
+
+  public NovelMeta getNovelMeta() {
+    return this.novelMeta;
   }
 
   ////////////////////////////////////////////////////////////////
@@ -304,38 +309,9 @@ public class WebAozoraConverter {
 
       // パスならlist.txtの情報を元にキャッシュ後に青空txt変換して改ページで繋げて出力
       Document doc = Jsoup.parse(cacheFile, null);
-      // TODO ここのdocを引数にしてNobelMetaが作れるか？
 
-      NovelMeta novelMeta = new NovelMeta(doc, urlString);
-      LogAppender.println("URL: " + novelMeta.url);
-      LogAppender.println("タイトル: " + novelMeta.title);
-      LogAppender.println("作品ID: " + novelMeta.novelID);
-      LogAppender.println("著者: " + novelMeta.author);
-      LogAppender.println("著者ID: " + novelMeta.authorID);
-
-      for (Integer chapterIdx : novelMeta.sectionIdxMap.keySet()) {
-        String chapterTitle = novelMeta.chapterTitleMap.get(chapterIdx);
-        if (chapterTitle != null) {
-          LogAppender.println(chapterTitle);
-        } else {
-          LogAppender.println("(章分けなし)");
-        }
-        ArrayList<Integer> sectionIdxs = novelMeta.sectionIdxMap.get(chapterIdx);
-        for (Integer sectionIdx : sectionIdxs) {
-          String[] sectionInfo = novelMeta.sectionInfoMap.get(sectionIdx);
-          String sectionTitle = sectionInfo[0];
-          String sectionUrl = sectionInfo[1];
-          String published = sectionInfo[2];
-          String updated = sectionInfo[3];
-          String outStr = " " + sectionTitle + " URL:" + sectionUrl + " 初出:" + published;
-          if (!updated.equals("yyyy/mm/dd hh:mm")) {
-            outStr += " 改稿: ";
-            outStr += updated;
-          }
-          LogAppender.println(outStr);
-        }
-      }
-      LogAppender.println("========");
+      // 読み込んだDocumentからNovelMetaのインスタンスを生成
+      this.novelMeta = new NovelMeta(doc, urlString);
 
       // 表紙画像
       Elements images = getExtractElements(doc, this.queryMap.get(ExtractId.COVER_IMG));
@@ -391,7 +367,7 @@ public class WebAozoraConverter {
       String preChapterTitle = "";
 
       // 各話のURL(フルパス)を格納
-      Vector<String> chapterHrefs = new Vector<String>();
+      Vector<String> chapterHrefs = new Vector<>();
 
       Elements hrefs = getExtractElements(doc, this.queryMap.get(ExtractId.HREF));
       if (hrefs == null && this.queryMap.containsKey(ExtractId.HREF)) {
@@ -496,7 +472,7 @@ public class WebAozoraConverter {
         // 更新されていない最後の話数 0～
         int lastNoModifiedChapterIdx = -1;
         if (this.convertModifiedOnly) {
-          modifiedChapterIdx = new HashSet<Integer>();
+          modifiedChapterIdx = new HashSet<>();
         }
 
         int chapterIdx = 0;
@@ -602,7 +578,7 @@ public class WebAozoraConverter {
           // 最新話数指定
           if (this.beforeChapter > 0) {
             int idx = chapterHrefs.size() - 1;
-            modifiedChapterIdx = new HashSet<Integer>();
+            modifiedChapterIdx = new HashSet<>();
             for (int i = 0; i < this.beforeChapter; i++) {
               modifiedChapterIdx.add(idx--);
             }
@@ -700,7 +676,7 @@ public class WebAozoraConverter {
   /** 更新情報の生成と保存 */
   private HashSet<String> createNoUpdateUrls(File updateInfoFile, String urlString, String listBaseUrl,
       String contentsUpdate, Elements hrefs, Elements updates) throws IOException {
-    HashMap<String, String> updateStringMap = new HashMap<String, String>();
+    HashMap<String, String> updateStringMap = new HashMap<>();
 
     if (hrefs == null || updates == null || hrefs.size() != updates.size()) {
 
@@ -755,7 +731,7 @@ public class WebAozoraConverter {
       }
     }
 
-    HashSet<String> noUpdateUrls = new HashSet<String>();
+    HashSet<String> noUpdateUrls = new HashSet<>();
     int i = -1;
     for (Element href : hrefs) {
       i++;
@@ -1192,7 +1168,7 @@ public class WebAozoraConverter {
       Elements elements = doc.select(extractInfo.query);
       if (elements == null || elements.size() == 0)
         continue;
-      Vector<String> vecString = new Vector<String>();
+      Vector<String> vecString = new Vector<>();
       if (extractInfo.idx == null) {
         for (Element element : elements) {
           String html = element.html();

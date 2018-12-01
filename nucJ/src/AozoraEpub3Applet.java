@@ -474,7 +474,8 @@ public class AozoraEpub3Applet extends JApplet {
     ImageIcon tocIcon = new ImageIcon(AozoraEpub3Applet.class.getResource("images/toc.png"));
     ImageIcon styleIcon = new ImageIcon(AozoraEpub3Applet.class.getResource("images/style.png"));
     ImageIcon webIcon = new ImageIcon(AozoraEpub3Applet.class.getResource("images/web.png"));
-    ImageIcon charIcon = new ImageIcon(AozoraEpub3Applet.class.getResource("images/char.png"));
+    // ImageIcon charIcon = new
+    // ImageIcon(AozoraEpub3Applet.class.getResource("images/char.png"));
 
     ButtonGroup buttonGroup;
 
@@ -2427,8 +2428,8 @@ public class AozoraEpub3Applet extends JApplet {
     String selectedProfileFileName = this.props.getProperty("ProfileFileName");
 
     // 並び順取得
-    Vector<File> propFiles = new Vector<File>();
-    HashSet<String> profileFileNameMap = new HashSet<String>();
+    Vector<File> propFiles = new Vector<>();
+    HashSet<String> profileFileNameMap = new HashSet<>();
     if (this.props.containsKey("ProfileList")) {
       for (String fileName : this.props.getProperty("ProfileList").split(",")) {
         File file = new File(profilePath.getPath() + "/" + fileName);
@@ -2893,7 +2894,7 @@ public class AozoraEpub3Applet extends JApplet {
       switch (state) {
       case JFileChooser.APPROVE_OPTION:
 
-        Vector<File> vecFiles = new Vector<File>();
+        Vector<File> vecFiles = new Vector<>();
         Vector<String> vecUrlString = null;
         Vector<File> vecUrlSrcFile = null;
         File dstPath = null;
@@ -2901,7 +2902,7 @@ public class AozoraEpub3Applet extends JApplet {
           for (File file : fileChooser.getSelectedFiles()) {
             if (file.getName().toLowerCase().endsWith(".url")) {
               if (vecUrlString == null)
-                vecUrlString = new Vector<String>();
+                vecUrlString = new Vector<>();
               vecUrlString.add(readInternetShortCut(file));
               vecUrlSrcFile.add(file);
               dstPath = file.getParentFile();
@@ -3072,11 +3073,11 @@ public class AozoraEpub3Applet extends JApplet {
     if (isRunning())
       return false;
     try {
-      Vector<File> vecFiles = new Vector<File>();
+      Vector<File> vecFiles = new Vector<>();
       // Web変換対象URLを格納
-      Vector<String> vecUrlString = new Vector<String>();
+      Vector<String> vecUrlString = new Vector<>();
       // ショートカットファイルを格納(同名の表紙取得に利用)
-      Vector<File> vecUrlSrcFile = new Vector<File>();
+      Vector<File> vecUrlSrcFile = new Vector<>();
       File dstPath = null;
 
       if (transfer.isDataFlavorSupported(DataFlavor.stringFlavor)) {
@@ -3093,7 +3094,7 @@ public class AozoraEpub3Applet extends JApplet {
           // Linux等 ファイルのパスでファイルがあれば変換
           try {
             String[] fileNames = urlString.split("\n");
-            vecFiles = new Vector<File>();
+            vecFiles = new Vector<>();
             for (String path : fileNames) {
               File file = new File(URLDecoder.decode(path.substring(7).trim(), "UTF-8"));
               if (file.exists()) {
@@ -4979,7 +4980,7 @@ public class AozoraEpub3Applet extends JApplet {
     // 引数にファイルが指定されていたら変換実行
     for (String fileName : args) {
       File file = new File(fileName);
-      Vector<File> vecFiles = new Vector<File>();
+      Vector<File> vecFiles = new Vector<>();
       if (file.exists())
         vecFiles.add(file);
       if (vecFiles.size() > 0) {
