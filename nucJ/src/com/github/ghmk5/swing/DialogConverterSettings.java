@@ -435,6 +435,9 @@ public class DialogConverterSettings extends JDialog {
     jCheckAutoFileName = new JCheckBox("出力ファイル名に表題利用", true);
     jCheckAutoFileName.setFocusPainted(false);
     tab1InnerPanel4.add(jCheckAutoFileName);
+
+    // TODO ここに"なろう系サイトの場合は小説IDをファイル名にする"のチェックボックスが入れられないか？
+
     // ファイルの上書き許可
     jCheckOverWrite = new JCheckBox("出力ファイル上書き", true);
     jCheckOverWrite.setFocusPainted(false);

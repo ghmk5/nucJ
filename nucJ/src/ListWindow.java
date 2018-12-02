@@ -153,6 +153,7 @@ public class ListWindow {
   private JTextField urlTextField;
   NovelList novelList;
   File csvPath;
+  File csvFile;
   String csvFileName = "NovelList.csv";
   RowSorter<TableModel> sorter;
   String dateLastChecked; // 最後に更新チェックした日時 Propertyとして保存するのでString
@@ -461,7 +462,7 @@ public class ListWindow {
 
     mnNewMenu.add(mntmLaF);
 
-    // 全巻更新日時表示ラベル & 更新チェック実行ボタン
+    // 前回日時表示ラベル & 更新チェック実行ボタン
     JPanel rootPanel = new JPanel();
     rootPanel.setLayout(new BoxLayout(rootPanel, BoxLayout.Y_AXIS));
     frame.getContentPane().add(rootPanel, BorderLayout.CENTER);
@@ -605,7 +606,7 @@ public class ListWindow {
       LogAppender.println("小説リストCSVファイルの保存ディレクトリを生成しました");
     } else {
       try {
-        File csvFile = new File(csvPath.getCanonicalPath(), csvFileName);
+        csvFile = new File(csvPath.getCanonicalPath(), csvFileName);
         if (csvFile.isFile()) {
           novelList = new NovelList(csvFile);
           table.setModel(novelList.getTableModel());
@@ -666,16 +667,15 @@ public class ListWindow {
     this.props.store(fos, "nucJ Parameters");
     fos.close();
 
-    File csvFile = new File(csvPath.getCanonicalPath(), csvFileName);
+    csvFile = new File(csvPath.getCanonicalPath(), csvFileName);
     writeCSV(csvFile, novelList);
 
     super.finalize();
   }
 
   // 変換実行
-  private Runnable execConvert() {
+  private Runnable execConvert(String urlString) {
 
-    urlString = urlTextField.getText();
     if (urlString.length() <= 0) {
       return null;
     }
@@ -703,12 +703,22 @@ public class ListWindow {
       return null;
     }
 
+    // TODO EPUB3に変換する前に分割したり、PageOneでの閲覧用に別途整形したりの処理をここに挟む
+
     // 青空文庫テキストからEPUB3ファイルへの変換実行
     if (aozoraTxt != null && aozoraTxt.isFile()) {
       convertAozoraToEpub3(aozoraTxt, dstPath);
     }
 
-    novelList.novelMetaMap.put(novelMeta.novelID, novelMeta);
+    String novelID = novelMeta.novelID;
+    novelList.novelMetaMap.put(novelID, novelMeta);
+
+    try {
+      writeCSV(csvFile, novelList);
+    } catch (IOException e) {
+      System.out.println("execConvertの中でCSVファイルの書き込みに失敗した");
+      e.printStackTrace();
+    }
 
     return null;
   }
@@ -716,14 +726,65 @@ public class ListWindow {
   /** 青空文庫テキストへの変換 別スレッド実行用SwingWorker */
   class WebConvertWorker extends SwingWorker<Object, Object> {
 
-    public WebConvertWorker() {
-
+    public WebConvertWorker(NovelList novelList, File csvFile) {
     }
 
     @Override
     protected Object doInBackground() throws Exception {
-      execConvert();
+      String urlString;
+      NovelMeta novelMeta;
+      for (String novelID : novelList.novelMetaMap.keySet()) {
+        novelMeta = novelList.novelMetaMap.get(novelID);
+        if (novelMeta.checkFlag) {
+          urlString = novelMeta.url;
+          execConvert(urlString);
+        }
+      }
       return null;
+    }
+
+    @Override
+    protected void done() {
+      try {
+        novelList = new NovelList(csvFile);
+        defaultTableModel = novelList.getTableModel();
+        table.setModel(defaultTableModel);
+      } catch (IOException e) {
+        LogAppender.println("変換後に更新されたはずのCSVファイルの読み込みに失敗した");
+      }
+
+      // テーブルカラム幅の復元
+      try {
+        DefaultTableColumnModel defaultTableColumnModel = (DefaultTableColumnModel) table.getColumnModel();
+        int numCulmns = defaultTableColumnModel.getColumnCount();
+        TableColumn column = null;
+        int savedwidth;
+        for (int idx = 0; idx < numCulmns; idx++) {
+          if (props.getProperty("WidthColumn" + idx) != null) {
+            savedwidth = Integer.parseInt(props.getProperty("WidthColumn" + idx));
+            column = defaultTableColumnModel.getColumn(idx);
+            column.setPreferredWidth(savedwidth);
+          }
+        }
+      } catch (Exception e3) {
+        LogAppender.println("テーブルカラム幅の復元に失敗した");
+      }
+
+      // 更新日時(カラムID=4)降順でソート実行
+      sorter = new TableRowSorter<>(table.getModel());
+      ArrayList sortKeys = new ArrayList<>();
+      sortKeys.add(new RowSorter.SortKey(4, SortOrder.DESCENDING));
+      sorter.setSortKeys(sortKeys);
+      table.setRowSorter(sorter);
+
+      datePrevChecked = lastChkLbl.getText().substring(14);
+      props.setProperty("DatePrevChecked", datePrevChecked);
+      DateTimeFormatter dateTimeformatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+      LocalDateTime ldtNow = LocalDateTime.now();
+      dateLastChecked = dateTimeformatter.format(ldtNow);
+      lastChkLbl.setText("Last Checked: " + dateLastChecked);
+      props.setProperty("DateLastChecked", dateLastChecked);
+
     }
 
   }
@@ -736,9 +797,8 @@ public class ListWindow {
     }
 
     public void actionPerformed(ActionEvent e) {
-      // TODO 現状はコンバータに渡してるだけ リストのデータ周りが実装できたら書く
-      WebConvertWorker webConvertWorker = new WebConvertWorker();
-      webConvertWorker.execute();
+      // TODO リストのデータ周りが実装できたら書く
+      urlString = urlTextField.getText();
     }
   }
 
@@ -752,19 +812,8 @@ public class ListWindow {
     public void actionPerformed(ActionEvent e) {
       // TODO 現状は現在日時を取得してラベルを書き換えてるだけ リストのデータ周りが実装できたら書く
 
-      for (String novelID : novelList.novelMetaMap.keySet()) {
-        NovelMeta novelMeta = novelList.novelMetaMap.get(novelID);
-        String urlString = novelMeta.url;
-        LogAppender.println(novelID + ": " + urlString);
-      }
-
-      datePrevChecked = lastChkLbl.getText().substring(14);
-      props.setProperty("DatePrevChecked", datePrevChecked);
-      DateTimeFormatter dateTimeformatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-      LocalDateTime ldtNow = LocalDateTime.now();
-      dateLastChecked = dateTimeformatter.format(ldtNow);
-      lastChkLbl.setText("Last Checked: " + dateLastChecked);
-      props.setProperty("DateLastChecked", dateLastChecked);
+      WebConvertWorker webConvertWorker = new WebConvertWorker(novelList, csvFile);
+      webConvertWorker.execute();
 
     }
   }

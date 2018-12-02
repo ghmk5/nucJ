@@ -154,7 +154,11 @@ public class NovelMeta {
     this.lastUpdate = hashMap.get("last updated");
     this.checkFlag = Boolean.valueOf(hashMap.get("check flag"));
     this.isChaptered = null;
-    this.numSections = Integer.parseInt(hashMap.get("chapters"));
+    try {
+      this.numSections = Integer.parseInt(hashMap.get("chapters"));
+    } catch (Exception e) {
+      this.numSections = 0;
+    }
     this.chapterTitleMap = null;
     this.sectionIdxMap = null;
     this.sectionInfoMap = null;
