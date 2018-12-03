@@ -15,6 +15,8 @@ import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -48,6 +50,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.JProgressBar;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -147,6 +150,7 @@ public class ListWindow {
   JFrame frame;
   JLabel lastChkLbl;
   JTable table;
+  JProgressBar progressBar;
 
   DefaultTableModel defaultTableModel;
   String urlString;
@@ -582,6 +586,12 @@ public class ListWindow {
     panel4.add(scrollPane);
     rootPanel.add(panel4);
 
+    JPanel panel5 = new JPanel();
+    rootPanel.add(panel5);
+    panel5.setLayout(new BoxLayout(panel5, BoxLayout.Y_AXIS));
+    progressBar = new JProgressBar();
+    panel5.add(progressBar);
+
     // ログ出力先を設定
     LogAppender.setTextArea(logTextArea);
 
@@ -726,23 +736,39 @@ public class ListWindow {
   /** 青空文庫テキストへの変換 別スレッド実行用SwingWorker */
   class WebConvertWorker extends SwingWorker<Object, Object> {
 
+    // コンストラクタ
     public WebConvertWorker(NovelList novelList, File csvFile) {
     }
 
+    // スレッドで実行する処理
     @Override
     protected Object doInBackground() throws Exception {
       String urlString;
       NovelMeta novelMeta;
+      int i = 0;
+      int j = novelList.novelMetaMap.keySet().size();
       for (String novelID : novelList.novelMetaMap.keySet()) {
         novelMeta = novelList.novelMetaMap.get(novelID);
         if (novelMeta.checkFlag) {
           urlString = novelMeta.url;
           execConvert(urlString);
         }
+        // SwingWorkerインスタンスのプロパティprogressに値をセットする
+        // SwingWorkerインスタンスにPropertyChangeListenerをセットすることで、値の変更を監視し、変更が検出されると読み出される
+        i++;
+        setProgress((i * 100) / j);
       }
+      progressBar.setValue(100);
+      wait(2000);
       return null;
     }
 
+    // 途中経過
+    @Override
+    protected void process(List<Object> chunks) {
+    }
+
+    // doInBackgroundで記述したスレッドが終了したら実行する処理
     @Override
     protected void done() {
       try {
@@ -785,6 +811,8 @@ public class ListWindow {
       lastChkLbl.setText("Last Checked: " + dateLastChecked);
       props.setProperty("DateLastChecked", dateLastChecked);
 
+      progressBar.setValue(0);
+
     }
 
   }
@@ -813,6 +841,17 @@ public class ListWindow {
       // TODO 現状は現在日時を取得してラベルを書き換えてるだけ リストのデータ周りが実装できたら書く
 
       WebConvertWorker webConvertWorker = new WebConvertWorker(novelList, csvFile);
+
+      // プログレスバーの処理
+      webConvertWorker.addPropertyChangeListener(new PropertyChangeListener() {
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+          if ("progress".equals(evt.getPropertyName())) {
+            progressBar.setValue((Integer) evt.getNewValue());
+          }
+        }
+      });
+
       webConvertWorker.execute();
 
     }

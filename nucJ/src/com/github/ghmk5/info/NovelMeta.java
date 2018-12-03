@@ -66,7 +66,11 @@ public class NovelMeta {
     Element divAuthor = document.select("div.novel_writername").first();
     this.author = divAuthor.text().replaceAll("^作者：", "");
 
-    this.authorID = new URL(divAuthor.select("a").first().attributes().get("href")).getPath().replaceAll("\\/", "");
+    Element divFooter = document.getElementById("novel_footer");
+    Element element = divFooter.children().first();
+    Element authorMyPageElement = element.children().first();
+    String authorMyPageurlString = authorMyPageElement.childNode(0).attributes().get("href");
+    this.authorID = new URL(authorMyPageurlString).getPath().replaceAll("\\/", "");
 
     this.checkFlag = true;
 
