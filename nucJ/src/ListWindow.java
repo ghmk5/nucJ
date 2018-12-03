@@ -690,10 +690,11 @@ public class ListWindow {
       return null;
     }
 
+    // URLをキャッシュ
     HashMap<String, Object> resultMap = this.cacheURL(urlString, props, webConfigPath);
     NovelMeta novelMeta = (NovelMeta) resultMap.get("novelMeta");
     // Boolean cached = (Boolean) resultMap.get("cached");
-    // Boolean updated = (Boolean) resultMap.get("updated");
+    Boolean updated = (Boolean) resultMap.get("updated");
     File aozoraTxt = (File) resultMap.get("aozoraTxt");
 
     // EPUB3ファイル出力先の設定
@@ -716,18 +717,22 @@ public class ListWindow {
     // TODO EPUB3に変換する前に分割したり、PageOneでの閲覧用に別途整形したりの処理をここに挟む
 
     // 青空文庫テキストからEPUB3ファイルへの変換実行
-    if (aozoraTxt != null && aozoraTxt.isFile()) {
-      convertAozoraToEpub3(aozoraTxt, dstPath);
-    }
+    if (updated || !props.getPropertiesAsBoolean("webConvertUpdated")) {
+      if (aozoraTxt != null && aozoraTxt.isFile()) {
+        convertAozoraToEpub3(aozoraTxt, dstPath);
+      }
 
-    String novelID = novelMeta.novelID;
-    novelList.novelMetaMap.put(novelID, novelMeta);
+      String novelID = novelMeta.novelID;
+      novelList.novelMetaMap.put(novelID, novelMeta);
 
-    try {
-      writeCSV(csvFile, novelList);
-    } catch (IOException e) {
-      System.out.println("execConvertの中でCSVファイルの書き込みに失敗した");
-      e.printStackTrace();
+      try {
+        writeCSV(csvFile, novelList);
+      } catch (IOException e) {
+        System.out.println("execConvertの中でCSVファイルの書き込みに失敗した");
+        e.printStackTrace();
+      }
+    } else {
+      LogAppender.println(novelMeta.novelID + ": 更新がなかったためEPUB3への変換はキャンセルされました");
     }
 
     return null;
@@ -937,6 +942,7 @@ public class ListWindow {
           LogAppender.println(" は変換できませんでした");
       } else {
         aozoraTxt = srcFile;
+        novelMeta = webConverter.getNovelMeta();
         if (webConverter.isUpdated()) {
 
           updated = true;
@@ -959,13 +965,6 @@ public class ListWindow {
           cached = true;
           LogAppender.append(dstPath);
           LogAppender.println(" に キャッシュしました");
-
-          novelMeta = webConverter.getNovelMeta();
-          LogAppender.println("タイトル:   " + novelMeta.title);
-          LogAppender.println("著者:       " + novelMeta.author);
-          LogAppender.println("著者ID:     " + novelMeta.authorID);
-          LogAppender.println("総部分数:   " + novelMeta.numSections.toString());
-          LogAppender.println("最終更新日: " + novelMeta.lastUpdate);
 
         }
       }

@@ -311,7 +311,11 @@ public class WebAozoraConverter {
       Document doc = Jsoup.parse(cacheFile, null);
 
       // 読み込んだDocumentからNovelMetaのインスタンスを生成
-      this.novelMeta = new NovelMeta(doc, urlString);
+      if (urlString.contains("syosetu.com")) {
+        this.novelMeta = new NovelMeta(doc, urlString);
+      } else {
+        this.novelMeta = null;
+      }
 
       // 表紙画像
       Elements images = getExtractElements(doc, this.queryMap.get(ExtractId.COVER_IMG));
