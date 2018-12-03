@@ -695,6 +695,10 @@ public class ListWindow {
     NovelMeta novelMeta = (NovelMeta) resultMap.get("novelMeta");
     // Boolean cached = (Boolean) resultMap.get("cached");
     Boolean updated = (Boolean) resultMap.get("updated");
+    Boolean newlyAdded = false;
+    if (novelList.novelMetaMap.get(novelMeta.novelID) == null) {
+      newlyAdded = true;
+    }
     File aozoraTxt = (File) resultMap.get("aozoraTxt");
 
     // EPUB3ファイル出力先の設定
@@ -717,8 +721,8 @@ public class ListWindow {
     // TODO EPUB3に変換する前に分割したり、PageOneでの閲覧用に別途整形したりの処理をここに挟む
 
     // 青空文庫テキストからEPUB3ファイルへの変換実行
-    if (updated || !props.getPropertiesAsBoolean("webConvertUpdated")) {
-      if (aozoraTxt != null && aozoraTxt.isFile()) {
+    if (updated || newlyAdded) {
+      if (updated && aozoraTxt != null && aozoraTxt.isFile()) {
         convertAozoraToEpub3(aozoraTxt, dstPath);
       }
 
@@ -731,8 +735,9 @@ public class ListWindow {
         System.out.println("execConvertの中でCSVファイルの書き込みに失敗した");
         e.printStackTrace();
       }
+
     } else {
-      LogAppender.println(novelMeta.novelID + ": 更新がなかったためEPUB3への変換はキャンセルされました");
+      LogAppender.println(novelMeta.novelID + ": EPUB3への変換は実行されません");
     }
 
     return null;
@@ -741,27 +746,39 @@ public class ListWindow {
   /** 青空文庫テキストへの変換 別スレッド実行用SwingWorker */
   class WebConvertWorker extends SwingWorker<Object, Object> {
 
-    // コンストラクタ
+    Boolean flgCheckMultiple;
+
+    // リストの更新チェック用コンストラクタ
     public WebConvertWorker(NovelList novelList, File csvFile) {
+      flgCheckMultiple = true;
+    }
+
+    // 新規エントリ追加用のコンストラクタ
+    public WebConvertWorker(NovelList novelList, File csvFile, String urlString) {
+      flgCheckMultiple = false;
     }
 
     // スレッドで実行する処理
     @Override
     protected Object doInBackground() throws Exception {
-      String urlString;
       NovelMeta novelMeta;
-      int i = 0;
-      int j = novelList.novelMetaMap.keySet().size();
-      for (String novelID : novelList.novelMetaMap.keySet()) {
-        novelMeta = novelList.novelMetaMap.get(novelID);
-        if (novelMeta.checkFlag) {
-          urlString = novelMeta.url;
-          execConvert(urlString);
+      if (flgCheckMultiple) {
+        String urlString;
+        int i = 0;
+        int j = novelList.novelMetaMap.keySet().size();
+        for (String novelID : novelList.novelMetaMap.keySet()) {
+          novelMeta = novelList.novelMetaMap.get(novelID);
+          if (novelMeta.checkFlag) {
+            urlString = novelMeta.url;
+            execConvert(urlString);
+          }
+          // SwingWorkerインスタンスのプロパティprogressに値をセットする
+          // SwingWorkerインスタンスにPropertyChangeListenerをセットすることで、値の変更を監視し、変更が検出されると読み出される
+          i++;
+          setProgress((i * 100) / j);
         }
-        // SwingWorkerインスタンスのプロパティprogressに値をセットする
-        // SwingWorkerインスタンスにPropertyChangeListenerをセットすることで、値の変更を監視し、変更が検出されると読み出される
-        i++;
-        setProgress((i * 100) / j);
+      } else {
+        execConvert(urlString);
       }
       progressBar.setValue(100);
       wait(2000);
@@ -830,8 +847,20 @@ public class ListWindow {
     }
 
     public void actionPerformed(ActionEvent e) {
-      // TODO リストのデータ周りが実装できたら書く
       urlString = urlTextField.getText();
+      WebConvertWorker webConvertWorker = new WebConvertWorker(novelList, csvFile, urlString);
+
+      // プログレスバーの処理
+      webConvertWorker.addPropertyChangeListener(new PropertyChangeListener() {
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+          if ("progress".equals(evt.getPropertyName())) {
+            progressBar.setValue((Integer) evt.getNewValue());
+          }
+        }
+      });
+
+      webConvertWorker.execute();
     }
   }
 
@@ -843,7 +872,6 @@ public class ListWindow {
     }
 
     public void actionPerformed(ActionEvent e) {
-      // TODO 現状は現在日時を取得してラベルを書き換えてるだけ リストのデータ周りが実装できたら書く
 
       WebConvertWorker webConvertWorker = new WebConvertWorker(novelList, csvFile);
 
@@ -866,7 +894,7 @@ public class ListWindow {
    * 指定されたURLに目次ページがある小説を指定されたディレクトリにキャッシュし、青空文庫形式テキストに変換する
    * 呼び出しているWebAozoraConverterは青空文庫やアルカディアなどのサイトにも対応しているが、
    * 追加したメタデータを抽出する部分がなろう系にしか対応していないので注意
-   * 
+   *
    * @param urlString
    * @param props
    * @param webConfigPath
