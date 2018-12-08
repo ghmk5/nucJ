@@ -1,5 +1,6 @@
 package com.github.ghmk5.info;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -95,52 +96,65 @@ public class NovelMeta {
     // 各話目次部分を取得 div class = "index_box" で記述される
     Element index = document.select("div.index_box").first();
 
-    for (Element e : index.children()) {
-      // 章は div class="chapter_title" で記述される
-      if (e.tagName() == "div") {
-        String chapterTitle = e.text();
-        chapterIdx++;
-        chapterTitleMap.put(chapterIdx, chapterTitle);
-        this.isChaptered = true;
+    if (index == null) { // 節分けがなく、インデックスページに短編が一つそのまま記載されている場合
+                         // 例: https://ncode.syosetu.com/n6475cv/
+      // System.out.println("no children");
+      // this.chapterTitleMap.put(0, "節タイトルなし");
+      ArrayList<Integer> sectionIdxList = new ArrayList<>();
+      sectionIdxList.add(0);
+      this.sectionIdxMap.put(0, sectionIdxList);
+      String[] sectionInfo = { "節タイトルなし", urlString, "yyyy/mm/dd hh:mm", "yyyy/mm/dd hh:mm" };
+      sectionInfoMap.put(sectionIdx, sectionInfo);
+      numSections++;
+    } else {
 
-        // 節は dl class="novel_sublist2" で記述される
-      } else if (e.tagName() == "dl") {
-        sectionIdx++;
-        numSections++;
-        // 節タイトル
-        String sectionTitle = e.select("dd").text();
+      for (Element e : index.children()) {
+        // 章は div class="chapter_title" で記述される
+        if (e.tagName() == "div") {
+          String chapterTitle = e.text();
+          chapterIdx++;
+          chapterTitleMap.put(chapterIdx, chapterTitle);
+          this.isChaptered = true;
 
-        // 節URL 相対パスで書かれているので絶対パスに変換して取得する
-        String sectionUrl = e.select("a").first().attributes().get("href");
-        sectionUrl = new URL(new URL(url), sectionUrl).toString();
+          // 節は dl class="novel_sublist2" で記述される
+        } else if (e.tagName() == "dl") {
+          sectionIdx++;
+          numSections++;
+          // 節タイトル
+          String sectionTitle = e.select("dd").text();
 
-        String str = e.select("dt.long_update").text();
-        Matcher mDate = pDate.matcher(str);
+          // 節URL 相対パスで書かれているので絶対パスに変換して取得する
+          String sectionUrl = e.select("a").first().attributes().get("href");
+          sectionUrl = new URL(new URL(url), sectionUrl).toString();
 
-        // 節投稿日時
-        String published = "yyyy/mm/dd hh:mm"; // 投稿日時を拾い損なったときの初期値
-        if (mDate.find()) {
-          published = mDate.group();
+          String str = e.select("dt.long_update").text();
+          Matcher mDate = pDate.matcher(str);
+
+          // 節投稿日時
+          String published = "yyyy/mm/dd hh:mm"; // 投稿日時を拾い損なったときの初期値
+          if (mDate.find()) {
+            published = mDate.group();
+          }
+          Matcher mUpdate = pUpdate.matcher(str);
+
+          // 節改稿日時
+          String updated = "yyyy/mm/dd hh:mm"; // 改稿日時を拾い損なったときの初期値
+          if (mUpdate.find()) {
+            Element span = e.select("span").first();
+            updated = span.attributes().get("title");
+          }
+
+          // 節情報をまとめた配列
+          String[] sectionInfo = { sectionTitle, sectionUrl, published, updated };
+          sectionInfoMap.put(sectionIdx, sectionInfo);
+          ArrayList<Integer> sectionIdxList = sectionIdxMap.get(chapterIdx);
+          if (sectionIdxList == null) {
+            sectionIdxList = new ArrayList<>();
+          }
+          sectionIdxList.add(sectionIdx);
+          sectionIdxMap.put(chapterIdx, sectionIdxList);
+          this.lastUpdate = published; // 全てのセクションで代入されるが、その結果最後のセクションの投稿日時が全体の最新更新日時として残るはず
         }
-        Matcher mUpdate = pUpdate.matcher(str);
-
-        // 節改稿日時
-        String updated = "yyyy/mm/dd hh:mm"; // 改稿日時を拾い損なったときの初期値
-        if (mUpdate.find()) {
-          Element span = e.select("span").first();
-          updated = span.attributes().get("title");
-        }
-
-        // 節情報をまとめた配列
-        String[] sectionInfo = { sectionTitle, sectionUrl, published, updated };
-        sectionInfoMap.put(sectionIdx, sectionInfo);
-        ArrayList<Integer> sectionIdxList = sectionIdxMap.get(chapterIdx);
-        if (sectionIdxList == null) {
-          sectionIdxList = new ArrayList<>();
-        }
-        sectionIdxList.add(sectionIdx);
-        sectionIdxMap.put(chapterIdx, sectionIdxList);
-        this.lastUpdate = published; // 全てのセクションで代入されるが、その結果最後のセクションの投稿日時が全体の最新更新日時として残るはず
       }
     }
 
@@ -170,11 +184,14 @@ public class NovelMeta {
 
   public static void main(String[] args) throws IOException {
 
-    String url = "https://ncode.syosetu.com/n2710db/";
+    // String url = "https://ncode.syosetu.com/n2710db/";
+    String url = "file://Users/mk5/Library/Caches/AozoraEpub3Cache/ncode.syosetu.com/n6475cv/";
+    File srcFile = new File("/Users/mk5/Library/Caches/AozoraEpub3Cache/ncode.syosetu.com/n6475cv/index.html");
     // String url = "https://ncode.syosetu.com/n8725k/";
 
     // 作品情報と目次を出力してみるテスト
-    Document document = Jsoup.connect(url).get();
+    // Document document = Jsoup.connect(url).get();
+    Document document = Jsoup.parse(srcFile, "UTF-8");
     NovelMeta novelMeta = new NovelMeta(document, url);
     System.out.println("URL: " + novelMeta.url);
     System.out.println("タイトル: " + novelMeta.title);
