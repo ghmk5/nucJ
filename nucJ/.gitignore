@@ -25,8 +25,9 @@ hs_err_pid*
 /.DS_Store
 cache/
 csv/
-profiles/
 memo/
+profiles/
+test_output/
 /AozoraEpub3-master.zip
 /README.md
 /README_Changes.txt
