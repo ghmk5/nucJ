@@ -15,6 +15,8 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang.StringUtils;
 
+import com.github.ghmk5.util.FileName;
+
 /** 青空文庫テキストの本文およびタイトル・著者名・章・節などのメタ情報を含んだオブジェクト */
 public class AozoraTxt {
 
@@ -23,6 +25,10 @@ public class AozoraTxt {
   String title;
   String author;
   String summary;
+  String lineOfDateConverted;
+  String lineOfOriginalTextURL;
+  String lineOfOriginalTextURLForViewer;
+
   ArrayList<AozoraChapter> listOfChapters;
   // ArrayList<AozoraSection> listOfSections;
 
@@ -96,7 +102,9 @@ public class AozoraTxt {
 
     boolean flgChapterTitle = false;// 章タイトルを読んでいる間はtrue したがって最初はfalse
     boolean flgSectionTitle = false;// 節内を読んでいる間はtrue したがって最初はfalse
-    boolean flgDateTag = false;
+    boolean flgDateTag = false; // 投稿改稿日時行を読んでいる間はtrue
+    boolean flgHeadNote = false; // 節の頭注を読んでいる間はtrue
+    boolean flgFootNote = false; // 節の脚注を読んでいる間はtrue
 
     int chapterIdx = 0;
     String chapterTitle;
@@ -148,6 +156,9 @@ public class AozoraTxt {
           sectionIdx++;
           sectionTitle = StringUtils.chomp(line);
           currentSection = new AozoraSection(sectionIdx, chapterIdx, sectionTitle);
+
+          flgHeadNote = false;
+          flgFootNote = false;
         }
       } else if (flgDateTag) { // タグ行を含め、投稿改稿日時部分を読んでいる
         if (!matcharTagLine.find()) { // タグ行ではない = 投稿改稿日時の行
@@ -156,9 +167,35 @@ public class AozoraTxt {
           if (matcherDateUpdated.find())
             currentSection.setDateUpdated(matcherDateUpdated.group(1));
         }
-      } else {
-        currentSection.addSentence(line);
+      } else { // 上記どれでもなければ節内部 節内注釈を含む
+
+        // 節内頭注脚注の検出 区切り線で囲まれていれば注釈
+        // AozoraSection.bodyのインデックスが若ければ頭注、そうでなければ脚注
+        if (line.equals("［＃区切り線］")) {
+          if (!flgHeadNote && currentSection.body.size() == 1) { // いちおうこれで検出できるみたいだが、<10とかの方がいいかもしれない
+            flgHeadNote = true;
+          } else if (flgHeadNote) {
+            flgHeadNote = false;
+          } else {
+            flgFootNote = true; // 脚注の後ろには区切り線が入らない
+          }
+        }
+
+        matcharTagLine = pTagLine.matcher(line);
+        if (!flgHeadNote && !flgFootNote) {
+          if (!matcharTagLine.find())
+            currentSection.addSentence(line);
+        } else {
+          if (!matcharTagLine.find()) {
+            if (flgHeadNote)
+              currentSection.headNote.add(line);
+            if (flgFootNote)
+              currentSection.footNote.add(line);
+          }
+        }
+
         currentSection.setLength(currentSection.getLength() + line.length());
+
       }
 
       if (matcherChapterTagEnds.find())
@@ -174,6 +211,30 @@ public class AozoraTxt {
     this.listOfChapters.add(currentChapter);
 
     bufferedReader.close();
+
+    AozoraChapter lastChapter = this.listOfChapters.get(this.listOfChapters.size() - 1);
+    ArrayList<AozoraSection> listOfSectionsFromLastChapter = lastChapter.getListOfSections();
+    AozoraSection lastSection = listOfSectionsFromLastChapter.get(listOfSectionsFromLastChapter.size() - 1);
+    ArrayList<String> bodyOfLastSection = lastSection.getBodyAsList();
+    lineOfDateConverted = bodyOfLastSection.get(bodyOfLastSection.size() - 1);
+    bodyOfLastSection.remove(bodyOfLastSection.size() - 1);
+    lineOfOriginalTextURL = bodyOfLastSection.get(bodyOfLastSection.size() - 1);
+    bodyOfLastSection.remove(bodyOfLastSection.size() - 1);
+    lastSection.setBodyAsList(bodyOfLastSection);
+    listOfSectionsFromLastChapter.remove(listOfSectionsFromLastChapter.size() - 1);
+    listOfSectionsFromLastChapter.add(lastSection);
+    lastChapter.setListOfSections(listOfSectionsFromLastChapter);
+    this.listOfChapters.remove(this.listOfChapters.size() - 1);
+    this.listOfChapters.add(lastChapter);
+
+    Pattern pOriginalTextURL = Pattern.compile("(https?://([^/]+/)+)\"");
+    Matcher mOriginalTextURL = pOriginalTextURL.matcher(lineOfOriginalTextURL);
+    if (mOriginalTextURL.find()) {
+      lineOfOriginalTextURLForViewer = "底本： " + mOriginalTextURL.group(1);
+    } else {
+      lineOfOriginalTextURLForViewer = "エラー：ビューワ用の底本行が取得できませんでした";
+    }
+
   }
 
   /**
@@ -283,7 +344,12 @@ public class AozoraTxt {
 
       for (AozoraSection aozoraSection : aozoraChapter.getListOfSections()) {
         if (currentLength + aozoraSection.length > volumeLength) {
-          //  規定容量に到達したvolumeをリストに追加・volumeインクリメント・新規volumeを生成
+          // 各巻の巻末に変換日時と底本の行を追加
+          contentsAsListForEPUB3.add(lineOfOriginalTextURL + "\n");
+          contentsAsListForEPUB3.add(lineOfDateConverted + "\n");
+          contentsAsListForViewer.add(lineOfOriginalTextURLForViewer + "\n");
+          contentsAsListForViewer.add(lineOfDateConverted + "\n");
+          // 規定容量に到達したvolumeをリストに追加・volumeインクリメント・新規volumeを生成
           volumesAsListForEPUB3.add(contentsAsListForEPUB3);
           contentsAsListForEPUB3 = new ArrayList<>();
           volumesAsListForViewer.add(contentsAsListForViewer);
@@ -305,7 +371,7 @@ public class AozoraTxt {
         dateLine = "［＃ここから地から１字上げ］\n［＃ここから１段階小さな文字］\n" + aozoraSection.datePublished + " 公開";
         if (aozoraSection.getDateUpdated() != null)
           dateLine += "　" + aozoraSection.getDateUpdated() + " 改稿";
-        dateLine += "\n［＃ここで小さな文字終わり］\n［＃ここで字上げ終わり］\n";
+        dateLine += "\n［＃ここで小さな文字終わり］\n［＃ここで字上げ終わり］\n\n";
         contentsAsListForEPUB3.add(dateLine);
 
         dateLine = "［＃ここから地から１字上げ］\n" + aozoraSection.datePublished + " 公開";
@@ -314,8 +380,22 @@ public class AozoraTxt {
         dateLine += "\n［＃ここで字上げ終わり］\n\n";
         contentsAsListForViewer.add(dateLine);
 
+        // 節頭注があれば追加
+        if (aozoraSection.getEmptyLinesTreatedHeadNote(allowSingleEmptyLine, successiveEmptyLinesLimit).size() > 0) {
+          contentsAsListForEPUB3.add("\n［＃区切り線］\n［＃ここから２字下げ］\n［＃ここから２字上げ］\n［＃ここから１段階小さな文字］\n\n");
+          contentsAsListForViewer.add("\n［＃ここから４字下げ］\n＊＊＊\n");
+          for (String line : aozoraSection.getEmptyLinesTreatedHeadNote(allowSingleEmptyLine,
+              successiveEmptyLinesLimit)) {
+            contentsAsListForEPUB3.add(line + "\n");
+            contentsAsListForViewer.add(line + "\n");
+          }
+          contentsAsListForEPUB3.add("\n［＃ここで小さな文字終わり］\n［＃ここで字上げ終わり］\n［＃ここで字下げ終わり］\n［＃区切り線］\n\n\n");
+          contentsAsListForViewer.add("＊＊＊\n［＃ここで字下げ終わり］\n\n\n");
+        }
+
         // 本文を追加
         for (String line : aozoraSection.getEmptyLinesTreatedBody(allowSingleEmptyLine, successiveEmptyLinesLimit)) {
+
           contentsAsListForEPUB3.add(line + "\n");
 
           // ビューワーに解釈できないタグの行を除く処理 字上げ 文字サイズ
@@ -328,8 +408,32 @@ public class AozoraTxt {
               && !mTagSetSmallEnd.find())
             contentsAsListForViewer.add(line + "\n");
         }
+
+        // 節脚注があれば追加
+        if (aozoraSection.getEmptyLinesTreatedFootNote(allowSingleEmptyLine, successiveEmptyLinesLimit).size() > 0) {
+          contentsAsListForEPUB3.add("\n\n［＃区切り線］\n［＃ここから２字下げ］\n［＃ここから２字上げ］\n［＃ここから１段階小さな文字］\n\n");
+          contentsAsListForViewer.add("\n\n［＃ここから４字下げ］\n＊＊＊\n");
+          for (String line : aozoraSection.getEmptyLinesTreatedFootNote(allowSingleEmptyLine,
+              successiveEmptyLinesLimit)) {
+            contentsAsListForEPUB3.add(line + "\n");
+            contentsAsListForViewer.add(line + "\n");
+          }
+          contentsAsListForEPUB3.add("［＃ここで小さな文字終わり］\n［＃ここで字上げ終わり］\n［＃ここで字下げ終わり］\n");
+          contentsAsListForViewer.add("［＃ここで字下げ終わり］\n");
+        }
+
+        contentsAsListForEPUB3.add("［＃改ページ］\n");
+        contentsAsListForViewer.add("［＃改ページ］\n");
+
       }
     }
+
+    // 最終巻の巻末に変換日時と底本の行を追加
+    contentsAsListForEPUB3.add(lineOfOriginalTextURL + "\n");
+    contentsAsListForEPUB3.add(lineOfDateConverted + "\n");
+    contentsAsListForViewer.add(lineOfOriginalTextURL + "\n");
+    contentsAsListForViewer.add(lineOfDateConverted + "\n");
+
     volumesAsListForEPUB3.add(contentsAsListForEPUB3);
     volumesAsListForViewer.add(contentsAsListForViewer);
 
@@ -356,6 +460,7 @@ public class AozoraTxt {
     if (flagOutputForViewer) {
       for (ArrayList<String> contentsAsList : volumesAsListForViewer) {
         fileNameForViewer = "[" + this.author + "] " + this.title + " " + String.format("%02d", volumeNumber) + ".txt";
+        fileNameForViewer = FileName.replaceToMultiByte(fileNameForViewer);
         if (!dstPathForViewer.endsWith("/"))
           dstPathForViewer += "/";
         dstFileForViewer = new File(dstPathForViewer + fileNameForViewer);
@@ -468,24 +573,28 @@ public class AozoraTxt {
       this.idx = idx;
     }
 
-    public void setLength(int length) {
-      this.length = length;
-    }
-
-    public void setTitle(String title) {
-      this.title = title;
-    }
-
     public int getIdx() {
       return this.idx;
+    }
+
+    public void setLength(int length) {
+      this.length = length;
     }
 
     public int getLength() {
       return this.length;
     }
 
+    public void setTitle(String title) {
+      this.title = title;
+    }
+
     public String getTitle() {
       return this.title;
+    }
+
+    public void setListOfSections(ArrayList<AozoraSection> listOfSections) {
+      this.listOfSections = listOfSections;
     }
 
     public ArrayList<AozoraSection> getListOfSections() {
@@ -504,6 +613,8 @@ public class AozoraTxt {
     String datePublished;
     String dateUpdated;
     ArrayList<String> body;
+    ArrayList<String> headNote;
+    ArrayList<String> footNote;
 
     /**
      * @param idx
@@ -519,6 +630,8 @@ public class AozoraTxt {
       this.chapterIdx = chapterIdx;
       this.title = title;
       this.body = new ArrayList<>();
+      this.headNote = new ArrayList<>();
+      this.footNote = new ArrayList<>();
     }
 
     /**
@@ -537,6 +650,8 @@ public class AozoraTxt {
       this.chapterIdx = chapterIdx;
       this.title = title;
       this.body = body;
+      this.headNote = new ArrayList<>();
+      this.footNote = new ArrayList<>();
     }
 
     public void addSentence(String sentence) {
@@ -576,7 +691,86 @@ public class AozoraTxt {
     }
 
     /**
-     * 空行調整をした本文を返す
+     * パラグラフのリストを受け取り、空行調整して返す。先頭と末尾の空行は除かれる
+     * 
+     * @param allowSingleEmptyLine
+     *          この値がtrueのとき、本文中の単一の空行をそのまま残す パラグラフ毎に空行を挟んでいる作品用
+     *          successiveEmptyLinesLimitと合わせて用いることにより、単一の空行は削除し、連続した空行を一つにまとめることができる
+     * @param successiveEmptyLinesLimit
+     *          連続した空行の最大数 この数を超えて連続する空行はこの数まで減らされる
+     * @return 要素として行を持つArrayList 要素末尾に改行コードは付かない
+     */
+    public ArrayList<String> treatEmptyLines(ArrayList<String> srcList, boolean allowSingleEmptyLine,
+        int successiveEmptyLinesLimit) {
+
+      if (srcList.size() == 0) {
+        return srcList;
+      }
+
+      ArrayList<String> emptyLinesTreatedList = new ArrayList<>();
+
+      int successiveEmptyLinesCount = 0; // ポインタ直前までの連続した空行の数
+
+      Pattern patternEmptyLine = Pattern.compile("^[　 \t]+$");
+      Matcher matcher;
+
+      for (String line : srcList) {
+        matcher = patternEmptyLine.matcher(line);
+        if (line.equals("") || matcher.find()) {
+          if (allowSingleEmptyLine) {
+            if (successiveEmptyLinesCount == 0) {
+              emptyLinesTreatedList.add("");
+            } else if (successiveEmptyLinesCount < successiveEmptyLinesLimit) {
+              emptyLinesTreatedList.add("");
+            }
+          } else {
+            if (successiveEmptyLinesCount > 0 && successiveEmptyLinesCount < successiveEmptyLinesLimit) {
+              emptyLinesTreatedList.add("");
+            } else if (successiveEmptyLinesCount == successiveEmptyLinesLimit) {
+              emptyLinesTreatedList.add("");
+            }
+          }
+          successiveEmptyLinesCount++;
+        } else {
+          if (successiveEmptyLinesCount > 1 && successiveEmptyLinesCount <= successiveEmptyLinesLimit
+              && !allowSingleEmptyLine) {
+            emptyLinesTreatedList.add(""); // 単一空行を許さない場合で連続空行が許容数以下のとき、最初の空行が削られてるので補完
+          }
+          emptyLinesTreatedList.add(line); // 文字列を出力
+          successiveEmptyLinesCount = 0;
+        }
+      }
+
+      // 先頭の空行を除去
+      boolean isEmpty = true;
+      while (isEmpty) {
+        String line = emptyLinesTreatedList.get(0);
+        matcher = patternEmptyLine.matcher(line);
+        if (line.equals("") || matcher.find()) {
+          emptyLinesTreatedList.remove(0);
+        } else {
+          isEmpty = false;
+        }
+      }
+
+      // 末尾の空行を除去
+      isEmpty = true;
+      while (isEmpty) {
+        int lastIdx = emptyLinesTreatedList.size() - 1;
+        String line = emptyLinesTreatedList.get(lastIdx);
+        matcher = patternEmptyLine.matcher(line);
+        if (line.equals("") || matcher.find()) {
+          emptyLinesTreatedList.remove(lastIdx);
+        } else {
+          isEmpty = false;
+        }
+      }
+
+      return emptyLinesTreatedList;
+    }
+
+    /**
+     * treatEmptyLinesにより空行調整をした本文を返す
      * 
      * @param allowSingleEmptyLine
      *          この値がtrueのとき、本文中の単一の空行をそのまま残す パラグラフ毎に空行を挟んでいる作品用
@@ -587,41 +781,46 @@ public class AozoraTxt {
      */
     public ArrayList<String> getEmptyLinesTreatedBody(boolean allowSingleEmptyLine, int successiveEmptyLinesLimit) {
 
-      ArrayList<String> emptyLinesTreatedBody = new ArrayList<>();
-
-      int successiveEmptyLinesCount = 0; // ポインタ直前までの連続した空行の数
-
-      Pattern patternEmptyLine = Pattern.compile("^[　 \t]+$");
-      Matcher matcher;
-
-      for (String line : this.getBodyAsList()) {
-        matcher = patternEmptyLine.matcher(line);
-        if (line.equals("") || matcher.find()) {
-          if (allowSingleEmptyLine) {
-            if (successiveEmptyLinesCount == 0) {
-              emptyLinesTreatedBody.add("");
-            } else if (successiveEmptyLinesCount < successiveEmptyLinesLimit) {
-              emptyLinesTreatedBody.add("");
-            }
-          } else {
-            if (successiveEmptyLinesCount > 0 && successiveEmptyLinesCount < successiveEmptyLinesLimit) {
-              emptyLinesTreatedBody.add("");
-            } else if (successiveEmptyLinesCount == successiveEmptyLinesLimit) {
-              emptyLinesTreatedBody.add("");
-            }
-          }
-          successiveEmptyLinesCount++;
-        } else {
-          if (successiveEmptyLinesCount > 1 && successiveEmptyLinesCount <= successiveEmptyLinesLimit
-              && !allowSingleEmptyLine) {
-            emptyLinesTreatedBody.add(""); // 単一空行を許さない場合で連続空行が許容数以下のとき、最初の空行が削られてるので補完
-          }
-          emptyLinesTreatedBody.add(line); // 文字列を出力
-          successiveEmptyLinesCount = 0;
-        }
-      }
+      ArrayList<String> emptyLinesTreatedBody = this.treatEmptyLines(this.body, allowSingleEmptyLine,
+          successiveEmptyLinesLimit);
 
       return emptyLinesTreatedBody;
+    }
+
+    /**
+     * treatEmptyLinesにより空行調整をした節の頭注を返す
+     * 
+     * @param allowSingleEmptyLine
+     *          この値がtrueのとき、本文中の単一の空行をそのまま残す パラグラフ毎に空行を挟んでいる作品用
+     *          successiveEmptyLinesLimitと合わせて用いることにより、単一の空行は削除し、連続した空行を一つにまとめることができる
+     * @param successiveEmptyLinesLimit
+     *          連続した空行の最大数 この数を超えて連続する空行はこの数まで減らされる
+     * @return 要素として行を持つArrayList 要素末尾に改行コードは付かない
+     */
+    public ArrayList<String> getEmptyLinesTreatedHeadNote(boolean allowSingleEmptyLine, int successiveEmptyLinesLimit) {
+
+      ArrayList<String> emptyLinesTreatedHeadNote = this.treatEmptyLines(this.headNote, allowSingleEmptyLine,
+          successiveEmptyLinesLimit);
+
+      return emptyLinesTreatedHeadNote;
+    }
+
+    /**
+     * treatEmptyLinesにより空行調整をした節の脚注を返す
+     * 
+     * @param allowSingleEmptyLine
+     *          この値がtrueのとき、本文中の単一の空行をそのまま残す パラグラフ毎に空行を挟んでいる作品用
+     *          successiveEmptyLinesLimitと合わせて用いることにより、単一の空行は削除し、連続した空行を一つにまとめることができる
+     * @param successiveEmptyLinesLimit
+     *          連続した空行の最大数 この数を超えて連続する空行はこの数まで減らされる
+     * @return 要素として行を持つArrayList 要素末尾に改行コードは付かない
+     */
+    public ArrayList<String> getEmptyLinesTreatedFootNote(boolean allowSingleEmptyLine, int successiveEmptyLinesLimit) {
+
+      ArrayList<String> emptyLinesTreatedFootNote = this.treatEmptyLines(this.footNote, allowSingleEmptyLine,
+          successiveEmptyLinesLimit);
+
+      return emptyLinesTreatedFootNote;
     }
 
     public String getDatePublished() {
@@ -638,6 +837,22 @@ public class AozoraTxt {
 
     public void setDateUpdated(String dateUpdated) {
       this.dateUpdated = dateUpdated;
+    }
+
+    public ArrayList<String> getHeadNoteAsList() {
+      return this.headNote;
+    }
+
+    public void setHeadNote(ArrayList<String> headNoteAsList) {
+      this.headNote = headNoteAsList;
+    }
+
+    public ArrayList<String> getFootNoteAsList() {
+      return this.footNote;
+    }
+
+    public void setFootNote(ArrayList<String> footNoteAsList) {
+      this.footNote = footNoteAsList;
     }
 
   }

@@ -18,6 +18,7 @@ import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -76,6 +77,7 @@ import com.github.ghmk5.info.NovelList;
 import com.github.ghmk5.info.NovelMeta;
 import com.github.ghmk5.info.Properties;
 import com.github.ghmk5.swing.DialogConverterSettings;
+import com.github.ghmk5.txt.AozoraTxt;
 import com.github.hmdev.converter.AozoraEpub3Converter;
 import com.github.hmdev.image.ImageInfoReader;
 import com.github.hmdev.info.BookInfo;
@@ -170,6 +172,8 @@ public class ListWindow {
 
   Font mplus2mMediumFont;
   Font mplus2mBoldFont;
+
+  FileOutputStream fos;
 
   // イニシャライザ
   {
@@ -422,7 +426,7 @@ public class ListWindow {
         dialogConverterSettings.setVisible(true);
         try {
           // 設定ファイル更新
-          FileOutputStream fos = new FileOutputStream(jarPath + propFileName);
+          fos = new FileOutputStream(jarPath + propFileName);
           props.store(fos, "nucJ Parameters");
           fos.close();
         } catch (Exception e1) {
@@ -629,8 +633,16 @@ public class ListWindow {
           table.setRowSorter(sorter);
 
         } else {
+          // 起動時にCSVファイルが無かったときの処理
           LogAppender.println("保存済み小説リストCSVファイルが見つかりません: " + csvFile.getCanonicalPath());
           LogAppender.println("小説リストCSVファイル保存パス: " + csvPath.getCanonicalPath());
+          LogAppender.println("新しく作成します");
+          fos = new FileOutputStream(csvFile);
+          OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8");
+          BufferedWriter bw = new BufferedWriter(osw);
+          bw.write(
+              "\"novel ID\",\"author\",\"title\",\"chapters\",\"last updated\",\"check flag\",\"URL\",\"author ID\"\n");
+          bw.close();
         }
       } catch (IOException e1) {
         LogAppender.println("保存済み小説リストCSVファイルの読み込みに失敗しました");
@@ -673,7 +685,7 @@ public class ListWindow {
     props.setProperty("LastLook&Feel", className);
 
     // 設定ファイル更新
-    FileOutputStream fos = new FileOutputStream(this.jarPath + this.propFileName);
+    fos = new FileOutputStream(this.jarPath + this.propFileName);
     this.props.store(fos, "nucJ Parameters");
     fos.close();
 
@@ -684,7 +696,7 @@ public class ListWindow {
   }
 
   // 変換実行
-  private Runnable execConvert(String urlString) {
+  private Runnable execConvert(String urlString) throws IOException {
 
     if (urlString.length() <= 0) {
       return null;
@@ -720,24 +732,47 @@ public class ListWindow {
 
     // TODO EPUB3に変換する前に分割したり、PageOneでの閲覧用に別途整形したりの処理をここに挟む
 
+    // 紛らわしいが、ここまでで使われてるaozoraTxtはクラスAozoraTxtのインスタンスではなく、File("converted.txt")である
+    // (クラスAozoraTxtを書く前に作ったの部分なので)
+    // クラスAozoraTxtはこの直後に初めて出てくる
+
+    AozoraTxt aozoraBook = new AozoraTxt(aozoraTxt, "UTF-8");
+
+    // テスト用にパラメータ決め打ちでとりあえず動かしてみる用 うまく動くようなら設定パネル追加とpropsへの保存・読み込み部分を作る
+    String dstPathForViewer = "/Users/mk5/Desktop/testOutDir/forViewer";
+    String dstPathForEPUB3 = aozoraTxt.getParent();
+    int volumeLength = 175000;
+    boolean forceChapterwise = false;
+    boolean flagOutputForViewer = true;
+    boolean flagOutputForEPUB3 = true;
+    boolean allowSingleEmptyLine = false;
+    int successiveEmptyLinesLimit = 1;
+
+    ArrayList<File> srcFiles = aozoraBook.split(dstPathForViewer, dstPathForEPUB3, volumeLength, forceChapterwise,
+        flagOutputForViewer, flagOutputForEPUB3, allowSingleEmptyLine, successiveEmptyLinesLimit);
+
     // 青空文庫テキストからEPUB3ファイルへの変換実行
-    if (updated || newlyAdded) {
-      if (updated && aozoraTxt != null && aozoraTxt.isFile()) {
-        convertAozoraToEpub3(aozoraTxt, dstPath);
+    for (File srcFile : srcFiles) {
+      // // ここに今まで使ってた変換部分が入る
+
+      if (updated || newlyAdded) {
+        if (updated && srcFile != null && srcFile.isFile()) {
+          convertAozoraToEpub3(srcFile, dstPath);
+        }
+
+        String novelID = novelMeta.novelID;
+        novelList.novelMetaMap.put(novelID, novelMeta);
+
+        try {
+          writeCSV(csvFile, novelList);
+        } catch (IOException e) {
+          System.out.println("execConvertの中でCSVファイルの書き込みに失敗した");
+          e.printStackTrace();
+        }
+
+      } else {
+        LogAppender.println(novelMeta.novelID + ": EPUB3への変換は実行されません");
       }
-
-      String novelID = novelMeta.novelID;
-      novelList.novelMetaMap.put(novelID, novelMeta);
-
-      try {
-        writeCSV(csvFile, novelList);
-      } catch (IOException e) {
-        System.out.println("execConvertの中でCSVファイルの書き込みに失敗した");
-        e.printStackTrace();
-      }
-
-    } else {
-      LogAppender.println(novelMeta.novelID + ": EPUB3への変換は実行されません");
     }
 
     return null;
@@ -1708,8 +1743,8 @@ public class ListWindow {
    */
   private void writeCSV(File csvFile, NovelList novelList) throws IOException {
     CSVWriter csvWriter;
-    FileOutputStream fileOutputStream = new FileOutputStream(csvFile);
-    Writer writer = new OutputStreamWriter(fileOutputStream, "UTF-8");
+    fos = new FileOutputStream(csvFile);
+    Writer writer = new OutputStreamWriter(fos, "UTF-8");
     csvWriter = new CSVWriter(writer, ',', '"', "\n");
     List<String[]> outStrList = new ArrayList<>();
     String[] header = { "novel ID", "author", "title", "chapters", "last updated", "check flag", "URL", "author ID" };

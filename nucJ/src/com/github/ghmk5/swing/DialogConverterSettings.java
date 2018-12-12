@@ -1744,6 +1744,15 @@ public class DialogConverterSettings extends JDialog {
     tab7InnerPanel5.add(jCheckWebModifiedTail);
     tab7InnerPanel5.add(new JLabel(")"));
 
+    // "分割"タブ
+    JPanel tab8RootPanel = new JPanel();
+    tab8RootPanel.setLayout(new BoxLayout(tab8RootPanel, BoxLayout.Y_AXIS));
+    tabbedpane.addTab("分割", tab8RootPanel);
+
+    // "分割"タブ内 ""グループ
+    JPanel tab8InnerPanel1 = new JPanel();
+    tab8RootPanel.add(tab8InnerPanel1);
+
     loadProperties(props);
 
   }
