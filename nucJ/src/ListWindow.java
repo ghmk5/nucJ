@@ -78,6 +78,7 @@ import com.github.ghmk5.info.NovelMeta;
 import com.github.ghmk5.info.Properties;
 import com.github.ghmk5.swing.DialogConverterSettings;
 import com.github.ghmk5.txt.AozoraTxt;
+import com.github.ghmk5.util.Utils;
 import com.github.hmdev.converter.AozoraEpub3Converter;
 import com.github.hmdev.image.ImageInfoReader;
 import com.github.hmdev.info.BookInfo;
@@ -412,7 +413,7 @@ public class ListWindow {
       // JFrame owner;
 
       public void actionPerformed(ActionEvent e) {
-        dialogConverterSettings = new DialogConverterSettings(frame, props);
+        dialogConverterSettings = new DialogConverterSettings(frame, props, "global");
         dialogConverterSettings.addWindowListener(new WindowAdapter() {
           @Override
           public void windowClosed(WindowEvent e) {
@@ -538,6 +539,40 @@ public class ListWindow {
 
     // テーブルのコンテキストメニュー
     JPopupMenu tableContextMenu = new JPopupMenu();
+
+    JMenuItem openDialogConverterSettings = new JMenuItem("individual converter settings...");
+    openDialogConverterSettings.addActionListener(new ActionListener() {
+
+      // 複数選択時は挙動を変えるようなことができるか？
+      // int[] selection = table.getSelectedRows();
+
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        // TODO メニューの型枠を作るのに既存のダイアログをはめ込んである ここ用のダイアログができたら差し替える
+        dialogConverterSettings = new DialogConverterSettings(frame, props, "title");
+        dialogConverterSettings.addWindowListener(new WindowAdapter() {
+          @Override
+          public void windowClosed(WindowEvent e) {
+            LogAppender.println(dialogConverterSettings.testString);
+            if (dialogConverterSettings.approved)
+              props = dialogConverterSettings.props;
+          }
+        });
+        dialogConverterSettings.setLocationRelativeTo(frame);
+        dialogConverterSettings.setModal(true);
+        dialogConverterSettings.setVisible(true);
+        try {
+          // 設定ファイル更新
+          fos = new FileOutputStream(jarPath + propFileName);
+          props.store(fos, "nucJ Parameters");
+          fos.close();
+        } catch (Exception e1) {
+          e1.printStackTrace();
+        }
+      }
+    });
+    tableContextMenu.add(openDialogConverterSettings);
+
     JMenuItem tglChkFlg = new JMenuItem("toggle update check flag");
     tglChkFlg.addActionListener(new ActionListener() {
       @Override
@@ -701,6 +736,28 @@ public class ListWindow {
     if (urlString.length() <= 0) {
       return null;
     }
+
+    // 作品個別のpropertyをロード
+    String novelWiseDstPath = Utils.getNovelWiseDstPath(urlString, props.getProperty("CachePath"));
+    Properties novelWiseProps = new Properties();
+    try {
+      FileInputStream fos = new FileInputStream(novelWiseDstPath + "convert.ini");
+      novelWiseProps.load(fos);
+      fos.close();
+    } catch (Exception e1) {
+      novelWiseProps = props;
+      LogAppender.append("作品ID ");
+      LogAppender.append(new File(novelWiseDstPath).getName().toString());
+      LogAppender.append(" の作品別変換設定ファイルが見つかりません。デフォルト値を使用します\n");
+    }
+
+    // propsの記録内容と保存先を、個別の変換設定に必要な部分とそれ以外とに分ける
+    // 変換設定以外の値は現行のnucJ.iniをそのまま使う
+    // 変換設定関連はグローバル値と作品個別の値とに分け、グローバル値はnucJ.iniと同じ場所のconvert.iniに保存し、
+    // 作品別の変換設定値は作品別キャッシュディレクトリのconvert.iniに保存する
+    // グローバル値はメニューバーから呼び出す設定パネルで設定し、個別値はテーブルコンテキストメニューから呼び出すパネルで設定する
+    // メニューバーから呼び出す設定パネルは、個別値が存在する(優先される)部分とそうでない部分(作品個別値が存在しない設定値)を分けて表示する
+    // このすぐ下でthis.cacheURLにpropsを渡しているが、
 
     // URLをキャッシュ
     HashMap<String, Object> resultMap = this.cacheURL(urlString, props, webConfigPath);

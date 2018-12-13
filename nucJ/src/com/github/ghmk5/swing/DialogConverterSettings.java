@@ -6,6 +6,7 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Frame;
 import java.awt.Insets;
@@ -35,6 +36,7 @@ import javax.swing.JRadioButton;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
+import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
@@ -210,26 +212,50 @@ public class DialogConverterSettings extends JDialog {
 
   JLabel label;// 使い回し用ラベル
 
+  String title;
+
   public Boolean approved; // Applyボタンがクリックされたらtrue 親ウィンドウが直接この値をみて処理する
   File currentPath = null; // 前回使用した出力先ディレクトリ
 
   /**
    * Create the dialog.
    */
-  public DialogConverterSettings(Frame owner, Properties props) {
+  public DialogConverterSettings(Frame owner, Properties props, String title) {
     super(owner);
 
     this.props = props;
+    this.title = title;
 
     setResizable(false);
-    setMinimumSize(new Dimension(640, 290));
     setTitle("設定");
 
     getContentPane().setLayout(new BorderLayout());
 
     // メインパネル
+    JPanel mainPanel = new JPanel();
+    mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+    getContentPane().add(mainPanel, BorderLayout.CENTER);
+
+    // 注意書きパネル
+    JPanel labelPanel = new JPanel();
+
+    // 注意書きパネル内 注意書きラベル
+    label = new JLabel();
+    label.setFont(UIManager.getFont("Label.font").deriveFont(Font.BOLD).deriveFont(14.0f));
+    label.setHorizontalAlignment(JLabel.CENTER);
+    if (title.equals("global")) {
+      label.setText("この設定はグローバル値として使用されます。作品個別の設定がある場合、個別値が優先されます");
+    } else if (title.equals("multiple")) {
+      label.setText("この設定は選択された複数の作品に適用されます。グローバル設定より優先されます");
+    } else {
+      // label.setText(title);
+      label.setText("<html><center>この設定は<br>「" + title + "<html>」<br>に適用されます。グローバル設定より優先されます</center><html>");
+    }
+    labelPanel.add(label);
+    mainPanel.add(labelPanel);
+
     JTabbedPane tabbedpane = new JTabbedPane();
-    getContentPane().add(tabbedpane, BorderLayout.CENTER);
+    mainPanel.add(tabbedpane);
 
     // 下部パネル
     JPanel underPanel = new JPanel();
@@ -268,10 +294,7 @@ public class DialogConverterSettings extends JDialog {
     // "変換"タブ内 "表題"グループ
     JPanel tab1InnerPanel1 = new JPanel();
     tab1InnerPanel1 = new JPanel();
-    tab1InnerPanel1.setLayout(new BoxLayout(tab1InnerPanel1, BoxLayout.X_AXIS));
-    tab1InnerPanel1.setMinimumSize(panelSize);
-    tab1InnerPanel1.setMaximumSize(panelSize);
-    tab1InnerPanel1.setPreferredSize(panelSize);
+    tab1InnerPanel1.setLayout(new FlowLayout(FlowLayout.LEFT));
     tab1InnerPanel1.setBorder(padding4H2V);
     tab1RootPanel.add(tab1InnerPanel1);
     JLabel labelTitle = new JLabel("表題: ");
@@ -280,8 +303,8 @@ public class DialogConverterSettings extends JDialog {
     labelInTheBody.setBorder(padding2H);
     tab1InnerPanel1.add(labelInTheBody);
     jComboTitle = new JComboBox(BookInfo.TitleType.titleTypeNames);
+    jComboTitle.setMaximumSize(new Dimension(202, 32767));
     jComboTitle.setFocusable(false);
-    jComboTitle.setMaximumSize(new Dimension(200, 22));
     jComboTitle.setBorder(padding0);
     ((JLabel) jComboTitle.getRenderer()).setBorder(padding2H);
     tab1InnerPanel1.add(jComboTitle);
@@ -298,10 +321,7 @@ public class DialogConverterSettings extends JDialog {
     // "変換"タブ内 "表紙"グループ
     JPanel tab1InnerPanel2 = new JPanel();
     tab1InnerPanel2 = new JPanel();
-    tab1InnerPanel2.setLayout(new BoxLayout(tab1InnerPanel2, BoxLayout.X_AXIS));
-    tab1InnerPanel2.setMinimumSize(panelSize);
-    tab1InnerPanel2.setMaximumSize(panelSize);
-    tab1InnerPanel2.setPreferredSize(panelSize);
+    tab1InnerPanel2.setLayout(new FlowLayout(FlowLayout.LEFT));
     tab1InnerPanel2.setBorder(padding4H2V);
     tab1RootPanel.add(tab1InnerPanel2);
     JLabel labelTab1InnerPanel2 = new JLabel("表紙: ");
@@ -332,7 +352,6 @@ public class DialogConverterSettings extends JDialog {
         jLabelMaxCoverLine.setVisible(visible);
       }
     });
-    tab1InnerPanel2.add(jComboCover);
     // new DropTarget(jComboCover.getEditor().getEditorComponent(),
     // DnDConstants.ACTION_COPY_OR_MOVE,
     // new DropCoverListener(), true);
@@ -353,10 +372,7 @@ public class DialogConverterSettings extends JDialog {
 
     // "変換"タブ内 "ページ出力"グループ
     JPanel tab1InnerPanel3 = new JPanel();
-    tab1InnerPanel3.setLayout(new BoxLayout(tab1InnerPanel3, BoxLayout.X_AXIS));
-    tab1InnerPanel3.setMinimumSize(panelSize);
-    tab1InnerPanel3.setMaximumSize(panelSize);
-    tab1InnerPanel3.setPreferredSize(panelSize);
+    tab1InnerPanel3.setLayout(new FlowLayout(FlowLayout.LEFT));
     tab1InnerPanel3.setBorder(padding4H2V);
     tab1RootPanel.add(tab1InnerPanel3);
     // ページ出力
@@ -417,10 +433,7 @@ public class DialogConverterSettings extends JDialog {
 
     // "変換"タブ内 "拡張子"グループ
     JPanel tab1InnerPanel4 = new JPanel();
-    tab1InnerPanel4.setLayout(new BoxLayout(tab1InnerPanel4, BoxLayout.X_AXIS));
-    tab1InnerPanel4.setMinimumSize(panelSize);
-    tab1InnerPanel4.setMaximumSize(panelSize);
-    tab1InnerPanel4.setPreferredSize(panelSize);
+    tab1InnerPanel4.setLayout(new FlowLayout(FlowLayout.LEFT));
     tab1InnerPanel4.setBorder(padding4H2V);
     tab1RootPanel.add(tab1InnerPanel4);
     JLabel labelExt = new JLabel("拡張子: ");
@@ -448,10 +461,7 @@ public class DialogConverterSettings extends JDialog {
     dstPathChooser = new DstPathChooserListener(this);
 
     JPanel tab1InnerPanel5 = new JPanel();
-    tab1InnerPanel5.setLayout(new BoxLayout(tab1InnerPanel5, BoxLayout.X_AXIS));
-    tab1InnerPanel5.setMinimumSize(panelSize);
-    tab1InnerPanel5.setMaximumSize(panelSize);
-    tab1InnerPanel5.setPreferredSize(panelSize);
+    tab1InnerPanel5.setLayout(new FlowLayout(FlowLayout.LEFT));
     tab1InnerPanel5.setBorder(padding4H2V);
     tab1RootPanel.add(tab1InnerPanel5);
     JLabel labeldstPath = new JLabel("出力先: ");
@@ -467,10 +477,11 @@ public class DialogConverterSettings extends JDialog {
       }
     });
     jComboDstPath = new JComboBox();
+    jComboDstPath.setMaximumSize(new Dimension(300, 32767));
     jComboDstPath.setToolTipText("出力先を指定します。変換時に履歴に追加されます");
     jComboDstPath.setEditable(false);
     jComboDstPath.setForeground(Color.gray);
-    jComboDstPath.setPreferredSize(new Dimension(260, 24));
+    jComboDstPath.setPreferredSize(new Dimension(380, 24));
 
     // jComboDstPathにパスを追加
     // vecDstPath.add("[入力ファイルと同じ場所]");
@@ -499,14 +510,12 @@ public class DialogConverterSettings extends JDialog {
 
     // "変換"タブ内 "入力文字コード"グループ & "組方向"グループ
     JPanel tab1InnerPanel6 = new JPanel();
-    tab1InnerPanel6.setLayout(new BoxLayout(tab1InnerPanel6, BoxLayout.X_AXIS));
-    tab1InnerPanel6.setMinimumSize(panelSize);
-    tab1InnerPanel6.setMaximumSize(panelSize);
-    tab1InnerPanel6.setPreferredSize(panelSize);
+    tab1InnerPanel6.setLayout(new FlowLayout(FlowLayout.LEFT));
     tab1InnerPanel6.setBorder(padding4H2V);
     tab1RootPanel.add(tab1InnerPanel6);
     // "入力文字コード"グループ
     JPanel charCodePanel = new JPanel();
+    charCodePanel.setMaximumSize(new Dimension(250, 32767));
     charCodePanel.setLayout(new FlowLayout(FlowLayout.LEFT));
     tab1InnerPanel6.setBorder(padding0);
     tab1InnerPanel6.add(charCodePanel);
@@ -522,6 +531,7 @@ public class DialogConverterSettings extends JDialog {
 
     // "組方向"グループ
     JPanel typeSettingMethodPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+    typeSettingMethodPanel.setMaximumSize(new Dimension(200, 32767));
     // typeSettingMethodPanel.setPreferredSize(panelSize);
     tab1InnerPanel6.setBorder(padding0);
     // 縦書き横書き
@@ -552,25 +562,30 @@ public class DialogConverterSettings extends JDialog {
 
     // "画像1"タブ
     JPanel tab2RootPanel = new JPanel();
-    tab2RootPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 1, 0));
     tabbedpane.addTab("画像1", new ImageIcon(this.getClass().getResource("/images/image.png")), tab2RootPanel);
+    tab2RootPanel.setLayout(new BoxLayout(tab2RootPanel, BoxLayout.Y_AXIS));
+
+    // "画像1"タブ内 第1段パネル
+    JPanel tab2LinePanel1 = new JPanel();
+    tab2LinePanel1.setLayout(new FlowLayout(FlowLayout.LEFT));
+    tab2RootPanel.add(tab2LinePanel1);
 
     // "画像1"タブ内 "画像注記"グループ
     JPanel tab2InnerPanel1 = new JPanel();
     tab2InnerPanel1.setLayout(new BoxLayout(tab2InnerPanel1, BoxLayout.X_AXIS));
     tab2InnerPanel1.setBorder(new NarrowTitledBorder("画像注記"));
-    tab2RootPanel.add(tab2InnerPanel1);
+    tab2LinePanel1.add(tab2InnerPanel1);
     jCheckNoIllust = new JCheckBox("挿絵除外 ");
     jCheckNoIllust.setFocusPainted(false);
     jCheckNoIllust.setToolTipText("テキストの画像注記は表紙と外字画像以外はePubに格納されません");
     jCheckNoIllust.setBorder(padding2);
     tab2InnerPanel1.add(jCheckNoIllust);
 
-    // "画像1"タブ内 "画面サイズ"グループ
+    // "画像1"タブ内 "画面・表紙サイズ"グループ
     JPanel tab2InnerPanel2 = new JPanel();
     tab2InnerPanel2.setLayout(new BoxLayout(tab2InnerPanel2, BoxLayout.X_AXIS));
     tab2InnerPanel2.setBorder(new NarrowTitledBorder("画面・表紙サイズ"));
-    tab2RootPanel.add(tab2InnerPanel2);
+    tab2LinePanel1.add(tab2InnerPanel2);
     JLabel labelHView = new JLabel(" 画面: 横");
     tab2InnerPanel2.add(labelHView);
     jTextDispW = new JTextField("600");
@@ -596,7 +611,6 @@ public class DialogConverterSettings extends JDialog {
     labelpx.setBorder(padding2H);
     tab2InnerPanel2.add(labelpx);
 
-    // "画像1"タブ内 "画面・表紙サイズ"グループ
     JLabel labelCoverW = new JLabel("  表紙: 横");
     tab2InnerPanel2.add(labelCoverW);
     jTextCoverW = new JTextField("600");
@@ -622,11 +636,11 @@ public class DialogConverterSettings extends JDialog {
     labelPx.setBorder(padding2H);
     tab2InnerPanel2.add(labelPx);
 
-    // "画像1"タブ内 "画像倍率"グループ
+    // "画像1"タブ内 "画像表示倍率"グループ
     JPanel tab2InnerPanel3 = new JPanel();
     tab2InnerPanel3.setLayout(new BoxLayout(tab2InnerPanel3, BoxLayout.X_AXIS));
     tab2InnerPanel3.setBorder(new NarrowTitledBorder("画像表示倍率"));
-    tab2RootPanel.add(tab2InnerPanel3);
+    tab2LinePanel1.add(tab2InnerPanel3);
     jCheckImageScale = new JCheckBox("有効 ", true);
     jCheckImageScale.setToolTipText("画面の解像度に合わせて画像の幅を％指定します。画像キャプションがはみ出る場合も指定してください");
     jCheckImageScale.setFocusPainted(false);
@@ -648,11 +662,17 @@ public class DialogConverterSettings extends JDialog {
     JLabel labelPowers = new JLabel("倍");
     tab2InnerPanel3.add(labelPowers);
 
+    // "画像1"タブ内 第2段パネル
+    JPanel tab2LinePanel2 = new JPanel();
+    tab2LinePanel2.setLayout(new FlowLayout());
+    tab2LinePanel2.setLayout(new FlowLayout(FlowLayout.LEFT));
+    tab2RootPanel.add(tab2LinePanel2);
+
     // "画像1"タブ内 "画像回り込み"グループ
     JPanel tab2InnerPanel4 = new JPanel();
     tab2InnerPanel4.setLayout(new BoxLayout(tab2InnerPanel4, BoxLayout.X_AXIS));
     tab2InnerPanel4.setBorder(new NarrowTitledBorder("画像回り込み (※単ページ化より優先)"));
-    tab2RootPanel.add(tab2InnerPanel4);
+    tab2LinePanel2.add(tab2InnerPanel4);
 
     jCheckImageFloat = new JCheckBox("回り込み有効 ");
     jCheckImageFloat.setToolTipText("画像の実サイズが指定サイズ以下の画像を回り込み設定します");
@@ -700,11 +720,16 @@ public class DialogConverterSettings extends JDialog {
     jComboImageFloatType.setPreferredSize(new Dimension(text4.width + 48, 20));
     tab2InnerPanel4.add(jComboImageFloatType);
 
+    // "画像1"タブ内 第3段パネル
+    JPanel tab2LinePanel3 = new JPanel();
+    tab2LinePanel3.setLayout(new FlowLayout(FlowLayout.LEFT));
+    tab2RootPanel.add(tab2LinePanel3);
+
     // "画像1"タブ内 "画像単ページ化"グループ
     JPanel tab2InnerPanel5 = new JPanel();
     tab2InnerPanel5.setLayout(new BoxLayout(tab2InnerPanel5, BoxLayout.Y_AXIS));
     tab2InnerPanel5.setBorder(new NarrowTitledBorder("画像単ページ化"));
-    tab2RootPanel.add(tab2InnerPanel5);
+    tab2LinePanel3.add(tab2InnerPanel5);
     // 上段
     JPanel panelUpper = new JPanel();
     panelUpper.setLayout(new BoxLayout(panelUpper, BoxLayout.X_AXIS));
@@ -800,7 +825,7 @@ public class DialogConverterSettings extends JDialog {
     JPanel tab2InnerPanel6 = new JPanel();
     tab2InnerPanel6.setLayout(new BoxLayout(tab2InnerPanel6, BoxLayout.X_AXIS));
     tab2InnerPanel6.setBorder(new NarrowTitledBorder("Float指定 (Readerのみ)"));
-    tab2RootPanel.add(tab2InnerPanel6);
+    tab2LinePanel3.add(tab2InnerPanel6);
     jCheckImageFloatPage = new JCheckBox("単ページ画像");
     jCheckImageFloatPage.setToolTipText("単ページ対象の画像をfloat表示します。 xhtmlは分割されません");
     jCheckImageFloatPage.setFocusPainted(false);
@@ -815,14 +840,19 @@ public class DialogConverterSettings extends JDialog {
 
     // "画像2"タブ
     JPanel tab3RootPanel = new JPanel();
-    tab3RootPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 1, 0));
+    tab3RootPanel.setLayout(new BoxLayout(tab3RootPanel, BoxLayout.Y_AXIS));
     tabbedpane.addTab("画像2", new ImageIcon(this.getClass().getResource("/images/image.png")), tab3RootPanel);
+
+    // "画像2"タブ内 第1段パネル
+    JPanel tab3LinePanel1 = new JPanel();
+    tab3LinePanel1.setLayout(new FlowLayout(FlowLayout.LEFT));
+    tab3RootPanel.add(tab3LinePanel1);
 
     // "画像2"タブ内 "全画面表示"グループ
     JPanel tab3InnerPanel1 = new JPanel();
     tab3InnerPanel1.setLayout(new BoxLayout(tab3InnerPanel1, BoxLayout.X_AXIS));
     tab3InnerPanel1.setBorder(new NarrowTitledBorder("全画面表示"));
-    tab3RootPanel.add(tab3InnerPanel1);
+    tab3LinePanel1.add(tab3InnerPanel1);
     jCheckSvgImage = new JCheckBox("SVGタグ出力（画像zipのみ） ");
     jCheckSvgImage.setFocusPainted(false);
     jCheckSvgImage.setToolTipText("画像のみのzipの場合、固定レイアウト＋SVGタグで出力します");
@@ -833,7 +863,7 @@ public class DialogConverterSettings extends JDialog {
     JPanel tab3InnerPanel2 = new JPanel();
     tab3InnerPanel2.setLayout(new BoxLayout(tab3InnerPanel2, BoxLayout.X_AXIS));
     tab3InnerPanel2.setBorder(new NarrowTitledBorder("Jpeg圧縮率"));
-    tab3RootPanel.add(tab3InnerPanel2);
+    tab3LinePanel1.add(tab3InnerPanel2);
     jTextJpegQuality = new JTextField("85");
     jTextJpegQuality.setToolTipText("表紙編集、縮小、回転、余白除去時のJpeg保存時の画質(100が最高画質)");
     jTextJpegQuality.setHorizontalAlignment(JTextField.RIGHT);
@@ -848,7 +878,7 @@ public class DialogConverterSettings extends JDialog {
     JPanel tab3InnerPanel3 = new JPanel();
     tab3InnerPanel3.setLayout(new BoxLayout(tab3InnerPanel3, BoxLayout.X_AXIS));
     tab3InnerPanel3.setBorder(new NarrowTitledBorder("色調整"));
-    tab3RootPanel.add(tab3InnerPanel3);
+    tab3LinePanel1.add(tab3InnerPanel3);
     jCheckGamma = new JCheckBox("ガンマ補正");
     jCheckGamma.setToolTipText("画像の濃さを変更します (濃:0.2～1.8:淡)");
     jCheckGamma.setFocusPainted(false);
@@ -870,11 +900,16 @@ public class DialogConverterSettings extends JDialog {
     jTextGammaValue.addFocusListener(new TextSelectFocusListener(jTextGammaValue));
     tab3InnerPanel3.add(jTextGammaValue);
 
+    // "画像2"タブ内 第2段パネル
+    JPanel tab3LinePanel2 = new JPanel();
+    tab3LinePanel2.setLayout(new FlowLayout(FlowLayout.LEFT));
+    tab3RootPanel.add(tab3LinePanel2);
+
     // "画像2"タブ内 "画像縮小回転"グループ
     JPanel tab3InnerPanel4 = new JPanel();
     tab3InnerPanel4.setLayout(new BoxLayout(tab3InnerPanel4, BoxLayout.X_AXIS));
     tab3InnerPanel4.setBorder(new NarrowTitledBorder("画像縮小回転"));
-    tab3RootPanel.add(tab3InnerPanel4);
+    tab3LinePanel2.add(tab3InnerPanel4);
     ChangeListener resizeChangeLister = new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
         setResizeTextEditable(true);
@@ -924,11 +959,16 @@ public class DialogConverterSettings extends JDialog {
     jComboRotateImage.setPreferredSize(new Dimension(84, 20));
     tab3InnerPanel4.add(jComboRotateImage);
 
+    // "画像2"タブ内 第3段パネル
+    JPanel tab3LinePanel3 = new JPanel();
+    tab3LinePanel3.setLayout(new FlowLayout(FlowLayout.LEFT));
+    tab3RootPanel.add(tab3LinePanel3);
+
     // "画像2"タブ内 "余白除去"グループ
     JPanel tab3InnerPanel5 = new JPanel();
     tab3InnerPanel5.setLayout(new BoxLayout(tab3InnerPanel5, BoxLayout.Y_AXIS));
     tab3InnerPanel5.setBorder(new NarrowTitledBorder("余白除去"));
-    tab3RootPanel.add(tab3InnerPanel5);
+    tab3LinePanel3.add(tab3InnerPanel5);
     JPanel tab3panel5UpperPanel = new JPanel();
     tab3panel5UpperPanel.setLayout(new BoxLayout(tab3panel5UpperPanel, BoxLayout.X_AXIS));
     tab3panel5UpperPanel.setBorder(padding4B);
@@ -1040,14 +1080,19 @@ public class DialogConverterSettings extends JDialog {
 
     // "詳細設定"タブ
     JPanel tab4RootPanel = new JPanel();
-    tab4RootPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 1, 0));
     tabbedpane.addTab("詳細設定", new ImageIcon(this.getClass().getResource("/images/page_setting.png")), tab4RootPanel);
+    tab4RootPanel.setLayout(new BoxLayout(tab4RootPanel, BoxLayout.Y_AXIS));
+
+    // "詳細設定"タブ内 第1段パネル
+    JPanel tab4LinePanel1 = new JPanel();
+    tab4LinePanel1.setLayout(new FlowLayout(FlowLayout.LEFT));
+    tab4RootPanel.add(tab4LinePanel1);
 
     // "詳細設定"タブ内 "文中全角スペースの処理"グループ
     JPanel tab4InnerPanel1 = new JPanel();
     tab4InnerPanel1.setLayout(new BoxLayout(tab4InnerPanel1, BoxLayout.X_AXIS));
     tab4InnerPanel1.setBorder(new NarrowTitledBorder("文中全角スペースの処理"));
-    tab4RootPanel.add(tab4InnerPanel1);
+    tab4LinePanel1.add(tab4InnerPanel1);
     // ピクセル
     label = new JLabel("行末で非表示(");
     label.setBorder(padding2);
@@ -1079,7 +1124,7 @@ public class DialogConverterSettings extends JDialog {
     JPanel tab4InnerPanel2 = new JPanel();
     tab4InnerPanel2.setLayout(new BoxLayout(tab4InnerPanel2, BoxLayout.X_AXIS));
     tab4InnerPanel2.setBorder(new NarrowTitledBorder("「○○」に「××」の注記"));
-    tab4RootPanel.add(tab4InnerPanel2);
+    tab4LinePanel1.add(tab4InnerPanel2);
     ButtonGroup btnGrpNotice = new ButtonGroup();
     jRadioChukiRuby0 = new JRadioButton("非表示", true);
     jRadioChukiRuby0.setFocusPainted(false);
@@ -1102,11 +1147,16 @@ public class DialogConverterSettings extends JDialog {
     tab4InnerPanel2.add(jRadioChukiRuby2);
     btnGrpNotice.add(jRadioChukiRuby2);
 
+    // "詳細設定"タブ内 第2段パネル
+    JPanel tab4LinePanel2 = new JPanel();
+    tab4LinePanel2.setLayout(new FlowLayout(FlowLayout.LEFT));
+    tab4RootPanel.add(tab4LinePanel2);
+
     // "詳細設定"タブ内 "自動縦中横"グループ
     JPanel tab4InnerPanel3 = new JPanel();
     tab4InnerPanel3.setLayout(new BoxLayout(tab4InnerPanel3, BoxLayout.X_AXIS));
     tab4InnerPanel3.setBorder(new NarrowTitledBorder("自動縦中横"));
-    tab4RootPanel.add(tab4InnerPanel3);
+    tab4LinePanel2.add(tab4InnerPanel3);
     // 半角2文字縦書き
     jCheckAutoYoko = new JCheckBox("有効 ", true);
     jCheckAutoYoko.setFocusPainted(false);
@@ -1142,7 +1192,7 @@ public class DialogConverterSettings extends JDialog {
     JPanel tab4InnerPanel4 = new JPanel();
     tab4InnerPanel4.setLayout(new BoxLayout(tab4InnerPanel4, BoxLayout.X_AXIS));
     tab4InnerPanel4.setBorder(new NarrowTitledBorder("コメントブロック出力"));
-    tab4RootPanel.add(tab4InnerPanel4);
+    tab4LinePanel2.add(tab4InnerPanel4);
     // 半角2文字縦書き
     jCheckCommentPrint = new JCheckBox("コメント出力 ");
     jCheckCommentPrint.setToolTipText("コメント行の間を出力します");
@@ -1156,11 +1206,16 @@ public class DialogConverterSettings extends JDialog {
     jCheckCommentConvert.setBorder(padding2);
     tab4InnerPanel4.add(jCheckCommentConvert);
 
+    // "詳細設定"タブ内 第3段パネル
+    JPanel tab4LinePanel3 = new JPanel();
+    tab4LinePanel3.setLayout(new FlowLayout(FlowLayout.LEFT));
+    tab4RootPanel.add(tab4LinePanel3);
+
     // "詳細設定"タブ内 "栞用ID"グループ
     JPanel tab4InnerPanel5 = new JPanel();
     tab4InnerPanel5.setLayout(new BoxLayout(tab4InnerPanel5, BoxLayout.X_AXIS));
     tab4InnerPanel5.setBorder(new NarrowTitledBorder("栞用ID"));
-    tab4RootPanel.add(tab4InnerPanel5);
+    tab4LinePanel3.add(tab4InnerPanel5);
     jCheckMarkId = new JCheckBox("各行に出力");
     jCheckMarkId.setToolTipText("Kobo向けの栞を記憶するためのIDを各行に設定します");
     jCheckMarkId.setFocusPainted(false);
@@ -1171,7 +1226,7 @@ public class DialogConverterSettings extends JDialog {
     JPanel tab4InnerPanel6 = new JPanel();
     tab4InnerPanel6.setLayout(new BoxLayout(tab4InnerPanel6, BoxLayout.X_AXIS));
     tab4InnerPanel6.setBorder(new NarrowTitledBorder("空行除去"));
-    tab4RootPanel.add(tab4InnerPanel6);
+    tab4LinePanel3.add(tab4InnerPanel6);
     jComboxRemoveEmptyLine = new JComboBox(new String[] { "0", "1", "2", "3", "4", "5" });
     jComboxRemoveEmptyLine.setToolTipText("空行の行数を減らします 見出し行の後ろ3行以内は1行残します");
     jComboxRemoveEmptyLine.setFocusable(false);
@@ -1201,18 +1256,23 @@ public class DialogConverterSettings extends JDialog {
     JPanel tab4InnerPanel7 = new JPanel();
     tab4InnerPanel7.setLayout(new BoxLayout(tab4InnerPanel7, BoxLayout.X_AXIS));
     tab4InnerPanel7.setBorder(new NarrowTitledBorder("行頭字下げ"));
-    tab4RootPanel.add(tab4InnerPanel7);
+    tab4LinePanel3.add(tab4InnerPanel7);
     jCheckForceIndent = new JCheckBox("有効       ");
     jCheckForceIndent.setToolTipText("行頭が「『―”（〈〔【と全角空白以外なら行頭に全角空白を追加します 半角空白のみは全角に置き換えます");
     jCheckForceIndent.setFocusPainted(false);
     jCheckForceIndent.setBorder(padding2);
     tab4InnerPanel7.add(jCheckForceIndent);
 
+    // "詳細設定"タブ内 第4段パネル
+    JPanel tab4LinePanel4 = new JPanel();
+    tab4LinePanel4.setLayout(new FlowLayout(FlowLayout.LEFT));
+    tab4RootPanel.add(tab4LinePanel4);
+
     // "詳細設定"タブ内 "強制改ページ"グループ
     JPanel tab4InnerPanel8 = new JPanel();
     tab4InnerPanel8.setLayout(new BoxLayout(tab4InnerPanel8, BoxLayout.X_AXIS));
     tab4InnerPanel8.setBorder(new NarrowTitledBorder("強制改ページ"));
-    tab4RootPanel.add(tab4InnerPanel8);
+    tab4LinePanel4.add(tab4InnerPanel8);
 
     jCheckPageBreak = new JCheckBox("有効", true);
     jCheckPageBreak.setToolTipText("指定サイズを超えた時点で強制改ページ(ブロック注記の外側のみ)");
@@ -1247,8 +1307,6 @@ public class DialogConverterSettings extends JDialog {
     jComboxPageBreakEmptyLine.setSelectedIndex(1);
     jComboxPageBreakEmptyLine.setFocusable(false);
     jComboxPageBreakEmptyLine.setBorder(padding0);
-    jComboxPageBreakEmptyLine.setMaximumSize(text5);
-    jComboxPageBreakEmptyLine.setPreferredSize(text5);
     ((JLabel) jComboxPageBreakEmptyLine.getRenderer()).setBorder(padding2);
     tab4InnerPanel8.add(jComboxPageBreakEmptyLine);
     label = new JLabel("行以上 ");
@@ -1282,14 +1340,19 @@ public class DialogConverterSettings extends JDialog {
 
     // "目次"タブ
     JPanel tab5RootPanel = new JPanel();
-    tab5RootPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 1, 0));
     tabbedpane.addTab("目次", new ImageIcon(this.getClass().getResource("/images/toc.png")), tab5RootPanel);
+    tab5RootPanel.setLayout(new BoxLayout(tab5RootPanel, BoxLayout.Y_AXIS));
+
+    // "目次"タブ内 第1段パネル
+    JPanel tab5LinePanel1 = new JPanel();
+    tab5LinePanel1.setLayout(new FlowLayout(FlowLayout.LEFT));
+    tab5RootPanel.add(tab5LinePanel1);
 
     // "目次"タブ内 "目次設定"グループ
     JPanel tab5InnerPanel1 = new JPanel();
     tab5InnerPanel1.setLayout(new BoxLayout(tab5InnerPanel1, BoxLayout.Y_AXIS));
     tab5InnerPanel1.setBorder(new NarrowTitledBorder("目次設定"));
-    tab5RootPanel.add(tab5InnerPanel1);
+    tab5LinePanel1.add(tab5InnerPanel1);
     JPanel tab5Inner1UpperPanel = new JPanel();
     tab5Inner1UpperPanel.setLayout(new BoxLayout(tab5Inner1UpperPanel, BoxLayout.X_AXIS));
 
@@ -1356,11 +1419,16 @@ public class DialogConverterSettings extends JDialog {
 
     tab5InnerPanel1.add(tab5Inner1LowerPanel);
 
+    // "目次"タブ内 第2段パネル
+    JPanel tab5LinePanel2 = new JPanel();
+    tab5LinePanel2.setLayout(new FlowLayout(FlowLayout.LEFT));
+    tab5RootPanel.add(tab5LinePanel2);
+
     // "目次"タブ内 "目次抽出"グループ
     JPanel tab5InnerPanel2 = new JPanel();
     tab5InnerPanel2.setLayout(new BoxLayout(tab5InnerPanel2, BoxLayout.Y_AXIS));
     tab5InnerPanel2.setBorder(new NarrowTitledBorder("目次抽出"));
-    tab5RootPanel.add(tab5InnerPanel2);
+    tab5LinePanel2.add(tab5InnerPanel2);
 
     JPanel tab5Inner2UpperPanel = new JPanel();
     tab5Inner2UpperPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 1, 0));
@@ -1460,14 +1528,19 @@ public class DialogConverterSettings extends JDialog {
 
     // "スタイル"タブ
     JPanel tab6RootPanel = new JPanel();
-    tab6RootPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 1, 0));
     tabbedpane.addTab("スタイル", new ImageIcon(this.getClass().getResource("/images/style.png")), tab6RootPanel);
+    tab6RootPanel.setLayout(new BoxLayout(tab6RootPanel, BoxLayout.Y_AXIS));
+
+    // "スタイル"タブ内 第1段パネル
+    JPanel tab6LinePanel1 = new JPanel();
+    tab6LinePanel1.setLayout(new FlowLayout(FlowLayout.LEFT));
+    tab6RootPanel.add(tab6LinePanel1);
 
     // "スタイル"タブ内 "行の高さ"グループ
     JPanel tab6InnerPanel1 = new JPanel();
     tab6InnerPanel1.setLayout(new BoxLayout(tab6InnerPanel1, BoxLayout.X_AXIS));
     tab6InnerPanel1.setBorder(new NarrowTitledBorder("行の高さ"));
-    tab6RootPanel.add(tab6InnerPanel1);
+    tab6LinePanel1.add(tab6InnerPanel1);
     jComboLineHeight = new JComboBox(new String[] { "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0" });
     jComboLineHeight.setBorder(padding0);
     jComboLineHeight.setMaximumSize(combo3);
@@ -1484,7 +1557,7 @@ public class DialogConverterSettings extends JDialog {
     JPanel tab6InnerPanel2 = new JPanel();
     tab6InnerPanel2.setLayout(new BoxLayout(tab6InnerPanel2, BoxLayout.X_AXIS));
     tab6InnerPanel2.setBorder(new NarrowTitledBorder("文字サイズ"));
-    tab6RootPanel.add(tab6InnerPanel2);
+    tab6LinePanel1.add(tab6InnerPanel2);
     jComboFontSize = new JComboBox(
         new String[] { "75", "80", "85", "90", "95", "100", "105", "110", "115", "120", "125" });
     jComboFontSize.setToolTipText("標準フォントからの倍率を設定します");
@@ -1503,7 +1576,7 @@ public class DialogConverterSettings extends JDialog {
     JPanel tab6InnerPanel3 = new JPanel();
     tab6InnerPanel3.setLayout(new BoxLayout(tab6InnerPanel3, BoxLayout.X_AXIS));
     tab6InnerPanel3.setBorder(new NarrowTitledBorder("太字ゴシック表示"));
-    tab6RootPanel.add(tab6InnerPanel3);
+    tab6LinePanel1.add(tab6InnerPanel3);
     jCheckBoldUseGothic = new JCheckBox("太字注記", false);
     jCheckBoldUseGothic.setToolTipText("太字注記を太字ゴシックで表示します");
     jCheckBoldUseGothic.setFocusPainted(false);
@@ -1516,11 +1589,16 @@ public class DialogConverterSettings extends JDialog {
     jCheckGothicUseBold.setBorder(padding2);
     tab6InnerPanel3.add(jCheckGothicUseBold);
 
+    // "スタイル"タブ内 第3段パネル
+    JPanel tab6LinePanel2 = new JPanel();
+    tab6LinePanel2.setLayout(new FlowLayout(FlowLayout.LEFT));
+    tab6RootPanel.add(tab6LinePanel2);
+
     // "スタイル"タブ内 余白設定グループ パネル内に子パネル2枚を横に並べる
     // "スタイル"タブ内 余白設定グループ 左パネル
     JPanel tab6InnerPanel4 = new JPanel();
     tab6InnerPanel4.setLayout(new BoxLayout(tab6InnerPanel4, BoxLayout.X_AXIS));
-    tab6RootPanel.add(tab6InnerPanel4);
+    tab6LinePanel2.add(tab6InnerPanel4);
 
     JPanel tab6Inner1LeftPanel = new JPanel();
     tab6Inner1LeftPanel.setLayout(new BoxLayout(tab6Inner1LeftPanel, BoxLayout.X_AXIS));
@@ -1589,11 +1667,16 @@ public class DialogConverterSettings extends JDialog {
     tab6Inner1RightPanel.add(jRadioBodyMarginUnit1);
     group.add(jRadioBodyMarginUnit1);
 
+    // "スタイル"タブ内 第3段パネル
+    JPanel tab6LinePanel3 = new JPanel();
+    tab6LinePanel3.setLayout(new FlowLayout(FlowLayout.LEFT));
+    tab6RootPanel.add(tab6LinePanel3);
+
     // "スタイル"タブ内 "濁点/半濁点文字"グループ
     JPanel tab6InnerPanel5 = new JPanel();
     tab6InnerPanel5.setLayout(new BoxLayout(tab6InnerPanel5, BoxLayout.X_AXIS));
     tab6InnerPanel5.setBorder(new NarrowTitledBorder("濁点/半濁点文字"));
-    tab6RootPanel.add(tab6InnerPanel5);
+    tab6LinePanel3.add(tab6InnerPanel5);
     ButtonGroup btnGrpInscMark = new ButtonGroup();
     jRadioDakutenType0 = new JRadioButton("そのまま");
     jRadioDakutenType0.setToolTipText("結合文字は通常の文字に変換されます");
@@ -1618,7 +1701,7 @@ public class DialogConverterSettings extends JDialog {
     JPanel tab6InnerPanel6 = new JPanel();
     tab6InnerPanel6.setLayout(new BoxLayout(tab6InnerPanel6, BoxLayout.X_AXIS));
     tab6InnerPanel6.setBorder(new NarrowTitledBorder("IVS出力(Kobo,Kindle非対応)"));
-    tab6RootPanel.add(tab6InnerPanel6);
+    tab6LinePanel3.add(tab6InnerPanel6);
     jCheckIvsBMP = new JCheckBox("英数字用(U+FE00-FE0E)", false);
     jCheckIvsBMP.setToolTipText("英数字、絵文字向けのIVSを出力します");
     jCheckIvsBMP.setFocusPainted(false);
@@ -1632,14 +1715,19 @@ public class DialogConverterSettings extends JDialog {
 
     // "Web"タブ
     JPanel tab7RootPanel = new JPanel();
-    tab7RootPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 1, 0));
     tabbedpane.addTab("Web", new ImageIcon(this.getClass().getResource("/images/web.png")), tab7RootPanel);
+    tab7RootPanel.setLayout(new BoxLayout(tab7RootPanel, BoxLayout.Y_AXIS));
+
+    // "Web"タブ内 第1段パネル
+    JPanel tab7LinePanel1 = new JPanel();
+    tab7LinePanel1.setLayout(new FlowLayout(FlowLayout.LEFT));
+    tab7RootPanel.add(tab7LinePanel1);
 
     // "Web"タブ内 "取得間隔"グループ
     JPanel tab7InnerPanel1 = new JPanel();
     tab7InnerPanel1.setLayout(new BoxLayout(tab7InnerPanel1, BoxLayout.X_AXIS));
     tab7InnerPanel1.setBorder(new NarrowTitledBorder("取得設定"));
-    tab7RootPanel.add(tab7InnerPanel1);
+    tab7LinePanel1.add(tab7InnerPanel1);
     label = new JLabel("取得間隔");
     label.setBorder(padding2);
     label.setToolTipText("Web小説の取得間隔を設定します");
@@ -1660,7 +1748,7 @@ public class DialogConverterSettings extends JDialog {
     JPanel tab7InnerPanel2 = new JPanel();
     tab7InnerPanel2.setLayout(new BoxLayout(tab7InnerPanel2, BoxLayout.X_AXIS));
     tab7InnerPanel2.setBorder(new NarrowTitledBorder("キャッシュ保存パス"));
-    tab7RootPanel.add(tab7InnerPanel2);
+    tab7LinePanel1.add(tab7InnerPanel2);
     jTextCachePath = new JTextField("cache");
     jTextCachePath.setToolTipText("キャッシュファイルを保存するパスです。フルパスまたは起動パスからの相対パスを指定します");
     jTextCachePath.setMaximumSize(text300);
@@ -1674,11 +1762,16 @@ public class DialogConverterSettings extends JDialog {
     jButtonCachePath.addActionListener(new CachePathChooserListener(jButtonCachePath));
     tab7InnerPanel2.add(jButtonCachePath);
 
+    // "Web"タブ内 第2段パネル
+    JPanel tab7LinePanel2 = new JPanel();
+    tab7LinePanel2.setLayout(new FlowLayout(FlowLayout.LEFT));
+    tab7RootPanel.add(tab7LinePanel2);
+
     // "Web"タブ内 "更新判定"グループ
     JPanel tab7InnerPanel3 = new JPanel();
     tab7InnerPanel3.setLayout(new BoxLayout(tab7InnerPanel3, BoxLayout.X_AXIS));
     tab7InnerPanel3.setBorder(new NarrowTitledBorder("更新判定"));
-    tab7RootPanel.add(tab7InnerPanel3);
+    tab7LinePanel2.add(tab7InnerPanel3);
     jTextWebModifiedExpire = new JTextField("24");
     jTextWebModifiedExpire.setToolTipText("この時間以内に取得したキャッシュを更新分として処理します");
     jTextWebModifiedExpire.setHorizontalAlignment(JTextField.RIGHT);
@@ -1696,7 +1789,7 @@ public class DialogConverterSettings extends JDialog {
     JPanel tab7InnerPanel4 = new JPanel();
     tab7InnerPanel4.setLayout(new BoxLayout(tab7InnerPanel4, BoxLayout.X_AXIS));
     tab7InnerPanel4.setBorder(new NarrowTitledBorder("ePub出力設定"));
-    tab7RootPanel.add(tab7InnerPanel4);
+    tab7LinePanel2.add(tab7InnerPanel4);
     jCheckWebConvertUpdated = new JCheckBox("更新時のみ出力");
     jCheckWebConvertUpdated.setToolTipText("新規追加または一覧ページで更新がある場合のみePubファイルを出力します");
     jCheckWebConvertUpdated.setFocusPainted(false);
@@ -1707,7 +1800,7 @@ public class DialogConverterSettings extends JDialog {
     JPanel tab7InnerPanel5 = new JPanel();
     tab7InnerPanel5.setLayout(new BoxLayout(tab7InnerPanel5, BoxLayout.X_AXIS));
     tab7InnerPanel5.setBorder(new NarrowTitledBorder("変換対象"));
-    tab7RootPanel.add(tab7InnerPanel5);
+    tab7LinePanel2.add(tab7InnerPanel5);
     jCheckWebBeforeChapter = new JCheckBox("最新");
     jCheckWebBeforeChapter.setToolTipText("最新話から指定話数のみ出力します。追加更新分のみの出力がある場合はそれに追加されます");
     jCheckWebBeforeChapter.setFocusPainted(false);
@@ -1755,6 +1848,7 @@ public class DialogConverterSettings extends JDialog {
 
     loadProperties(props);
 
+    pack();
   }
 
   ////////////////////////////////////////////////////////////////
