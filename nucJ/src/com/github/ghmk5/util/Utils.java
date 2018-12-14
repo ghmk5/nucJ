@@ -6,7 +6,7 @@ import com.github.hmdev.util.CharUtils;
 
 /**
  * 汎用性が低く雑多なメソッドを格納するクラス
- * 
+ *
  * @author mk5
  *
  */
@@ -17,7 +17,7 @@ public class Utils {
 
   /**
    * cachePathとURLから作品個別のキャッシュパスを生成する
-   * 
+   *
    * @param urlString
    * @param cachePathString
    * @return
@@ -41,6 +41,11 @@ public class Utils {
       dstPath += urlParentPath;
     else
       dstPath += urlFilePath + "_converted/";
+
+    // Windows環境だと\と/が混在するので統一 -- Fileのコンストラクタはセパレータの混在を許容する模様
+    dstPath = new File(dstPath).toString();
+    if (!dstPath.endsWith(File.separator))
+      dstPath += File.separator;
 
     return dstPath;
   }

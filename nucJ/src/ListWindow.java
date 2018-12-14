@@ -306,9 +306,9 @@ public class ListWindow {
     props = new Properties();
 
     try {
-      FileInputStream fos = new FileInputStream(this.jarPath + this.propFileName);
-      props.load(fos);
-      fos.close();
+      FileInputStream fis = new FileInputStream(this.jarPath + this.propFileName);
+      props.load(fis);
+      fis.close();
     } catch (Exception e) {
       InputStream iStream = this.getClass().getResourceAsStream("defaults/nucJ_default.ini");
       try {
@@ -544,12 +544,54 @@ public class ListWindow {
     openDialogConverterSettings.addActionListener(new ActionListener() {
 
       // 複数選択時は挙動を変えるようなことができるか？
-      // int[] selection = table.getSelectedRows();
 
       @Override
       public void actionPerformed(ActionEvent e) {
-        // TODO メニューの型枠を作るのに既存のダイアログをはめ込んである ここ用のダイアログができたら差し替える
-        dialogConverterSettings = new DialogConverterSettings(frame, props, "title");
+
+        String title;
+        int numEntriesSelected = table.getSelectedRowCount();
+        String individualPropsFilePath;
+
+        // 選択された作品のIDを取得
+        ArrayList<String> listNovelIDsToBePropped = new ArrayList<>();
+        if (numEntriesSelected > 1) {
+          title = "multiple";
+          int[] selection = table.getSelectedRows();
+          for (int idx : selection) {
+            idx = table.convertRowIndexToModel(idx);
+            listNovelIDsToBePropped.add((String) table.getModel().getValueAt(idx, 0));
+          }
+        } else if (numEntriesSelected == 1) {
+          int idx = table.getSelectedRow();
+          idx = table.convertRowIndexToModel(idx);
+          title = (String) table.getModel().getValueAt(idx, 2);
+          listNovelIDsToBePropped.add((String) table.getModel().getValueAt(idx, 0));
+        } else {
+          return;
+        }
+
+        // 既存設定の読み込み
+        Properties individualProps = new Properties();
+        for (String novelID : listNovelIDsToBePropped) {
+          urlString = novelList.novelMetaMap.get(novelID).url;
+          individualPropsFilePath = Utils.getNovelWiseDstPath(urlString, cachePath.toString());
+          try {
+            FileInputStream fis = new FileInputStream(individualPropsFilePath + "convert.ini");
+            individualProps.load(fis);
+            fis.close();
+            if (listNovelIDsToBePropped.size() > 1) {
+              LogAppender.println("複数作品に対する変換設定のテンプレートとして、「" + novelList.novelMetaMap.get(novelID).title + "」の値を表示します");
+            } else {
+              LogAppender.println("選択された作品の保存済み個別設定を表示します");
+            }
+            break;
+          } catch (Exception e1) {
+            LogAppender.println("選択された作品の保存済み個別設定が見つかりません。グローバル値を表示します");
+            individualProps = props;
+          }
+        }
+
+        dialogConverterSettings = new DialogConverterSettings(frame, individualProps, title);
         dialogConverterSettings.addWindowListener(new WindowAdapter() {
           @Override
           public void windowClosed(WindowEvent e) {
@@ -561,13 +603,20 @@ public class ListWindow {
         dialogConverterSettings.setLocationRelativeTo(frame);
         dialogConverterSettings.setModal(true);
         dialogConverterSettings.setVisible(true);
-        try {
-          // 設定ファイル更新
-          fos = new FileOutputStream(jarPath + propFileName);
-          props.store(fos, "nucJ Parameters");
-          fos.close();
-        } catch (Exception e1) {
-          e1.printStackTrace();
+
+        for (String novelID : listNovelIDsToBePropped) {
+          String urlString = novelList.novelMetaMap.get(novelID).url;
+          try {
+            // 設定ファイル更新
+            urlString = novelList.novelMetaMap.get(novelID).url;
+            individualPropsFilePath = Utils.getNovelWiseDstPath(urlString, cachePath.toString());
+            // System.out.println(individualPropsFilePath);
+            fos = new FileOutputStream(individualPropsFilePath + "convert.ini");
+            props.store(fos, "converter Parameters");
+            fos.close();
+          } catch (Exception e1) {
+            e1.printStackTrace();
+          }
         }
       }
     });
