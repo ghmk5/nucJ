@@ -37,7 +37,7 @@ public class AozoraTxt {
 
   /**
    * 青空文庫テキストの本文およびタイトル・著者名・章・節などのメタ情報を含んだオブジェクト
-   * 
+   *
    * @param aozoraTxtFile
    *          WebAozoraConverterが生成したconverted.txt
    * @param charCode
@@ -212,21 +212,26 @@ public class AozoraTxt {
 
     bufferedReader.close();
 
-    AozoraChapter lastChapter = this.listOfChapters.get(this.listOfChapters.size() - 1);
-    ArrayList<AozoraSection> listOfSectionsFromLastChapter = lastChapter.getListOfSections();
-    AozoraSection lastSection = listOfSectionsFromLastChapter.get(listOfSectionsFromLastChapter.size() - 1);
-    ArrayList<String> bodyOfLastSection = lastSection.getBodyAsList();
-    lineOfDateConverted = bodyOfLastSection.get(bodyOfLastSection.size() - 1);
-    bodyOfLastSection.remove(bodyOfLastSection.size() - 1);
-    lineOfOriginalTextURL = bodyOfLastSection.get(bodyOfLastSection.size() - 1);
-    bodyOfLastSection.remove(bodyOfLastSection.size() - 1);
-    lastSection.setBodyAsList(bodyOfLastSection);
-    listOfSectionsFromLastChapter.remove(listOfSectionsFromLastChapter.size() - 1);
-    listOfSectionsFromLastChapter.add(lastSection);
-    lastChapter.setListOfSections(listOfSectionsFromLastChapter);
-    this.listOfChapters.remove(this.listOfChapters.size() - 1);
-    this.listOfChapters.add(lastChapter);
-
+    // 変換日時・底本行の取得
+    int lastIdxOflastSection = this.listOfChapters.get(chapterIdx).getListOfSections().size() - 1;
+    ArrayList<String> footNote = this.listOfChapters.get(chapterIdx).getListOfSections()
+        .get(lastIdxOflastSection).footNote;
+    if (footNote.size() == 0) {
+      ArrayList<String> bodyOfLastSection = this.listOfChapters.get(chapterIdx).getListOfSections()
+          .get(lastIdxOflastSection).getBodyAsList();
+      lineOfDateConverted = bodyOfLastSection.get(bodyOfLastSection.size() - 1);
+      bodyOfLastSection.remove(bodyOfLastSection.size() - 1);
+      lineOfOriginalTextURL = bodyOfLastSection.get(bodyOfLastSection.size() - 1);
+      bodyOfLastSection.remove(bodyOfLastSection.size() - 1);
+      this.listOfChapters.get(chapterIdx).getListOfSections().get(lastIdxOflastSection)
+          .setBodyAsList(bodyOfLastSection);
+    } else {
+      lineOfDateConverted = footNote.get(footNote.size() - 1);
+      footNote.remove(footNote.size() - 1);
+      lineOfOriginalTextURL = footNote.get(footNote.size() - 1);
+      footNote.remove(footNote.size() - 1);
+      this.listOfChapters.get(chapterIdx).getListOfSections().get(lastIdxOflastSection).footNote = footNote;
+    }
     Pattern pOriginalTextURL = Pattern.compile("(https?://([^/]+/)+)\"");
     Matcher mOriginalTextURL = pOriginalTextURL.matcher(lineOfOriginalTextURL);
     if (mOriginalTextURL.find()) {
@@ -239,7 +244,7 @@ public class AozoraTxt {
 
   /**
    * タイトルを返す
-   * 
+   *
    * @return String title
    */
   public String getTitle() {
@@ -248,7 +253,7 @@ public class AozoraTxt {
 
   /**
    * 著者名を返す
-   * 
+   *
    * @return String author
    */
   public String getAuthor() {
@@ -257,7 +262,7 @@ public class AozoraTxt {
 
   /**
    * 章のリストを返す
-   * 
+   *
    * @return ArrayList<AozoraChapter> listOfChapters
    */
   public ArrayList<AozoraChapter> getListOfChapters() {
@@ -266,7 +271,7 @@ public class AozoraTxt {
 
   /**
    * 分割した青空文庫テキストファイルを保存し、EPUB3変換用ファイルのリストを返す
-   * 
+   *
    * @param dstPathForViewer
    *          ビューワー閲覧用ファイルの保存パス
    * @param dstPathForEPUB3
@@ -431,7 +436,7 @@ public class AozoraTxt {
     // 最終巻の巻末に変換日時と底本の行を追加
     contentsAsListForEPUB3.add(lineOfOriginalTextURL + "\n");
     contentsAsListForEPUB3.add(lineOfDateConverted + "\n");
-    contentsAsListForViewer.add(lineOfOriginalTextURL + "\n");
+    contentsAsListForViewer.add(lineOfOriginalTextURLForViewer + "\n");
     contentsAsListForViewer.add(lineOfDateConverted + "\n");
 
     volumesAsListForEPUB3.add(contentsAsListForEPUB3);
@@ -519,7 +524,7 @@ public class AozoraTxt {
 
   /**
    * 章のリストをセットする
-   * 
+   *
    * @param listOfChapters
    */
   public void setListOfChapters(ArrayList<AozoraChapter> listOfChapters) {
@@ -556,7 +561,7 @@ public class AozoraTxt {
      *          章タイトル defaultChapterの場合は"defaultChapterTitle"
      * @param listOfSections
      *          ArrayList<AozoraSection>
-     * 
+     *
      */
     public AozoraChapter(int idx, String title, ArrayList<AozoraSection> listOfSections) {
       this.idx = idx;
@@ -692,7 +697,7 @@ public class AozoraTxt {
 
     /**
      * パラグラフのリストを受け取り、空行調整して返す。先頭と末尾の空行は除かれる
-     * 
+     *
      * @param allowSingleEmptyLine
      *          この値がtrueのとき、本文中の単一の空行をそのまま残す パラグラフ毎に空行を挟んでいる作品用
      *          successiveEmptyLinesLimitと合わせて用いることにより、単一の空行は削除し、連続した空行を一つにまとめることができる
@@ -771,7 +776,7 @@ public class AozoraTxt {
 
     /**
      * treatEmptyLinesにより空行調整をした本文を返す
-     * 
+     *
      * @param allowSingleEmptyLine
      *          この値がtrueのとき、本文中の単一の空行をそのまま残す パラグラフ毎に空行を挟んでいる作品用
      *          successiveEmptyLinesLimitと合わせて用いることにより、単一の空行は削除し、連続した空行を一つにまとめることができる
@@ -789,7 +794,7 @@ public class AozoraTxt {
 
     /**
      * treatEmptyLinesにより空行調整をした節の頭注を返す
-     * 
+     *
      * @param allowSingleEmptyLine
      *          この値がtrueのとき、本文中の単一の空行をそのまま残す パラグラフ毎に空行を挟んでいる作品用
      *          successiveEmptyLinesLimitと合わせて用いることにより、単一の空行は削除し、連続した空行を一つにまとめることができる
@@ -807,7 +812,7 @@ public class AozoraTxt {
 
     /**
      * treatEmptyLinesにより空行調整をした節の脚注を返す
-     * 
+     *
      * @param allowSingleEmptyLine
      *          この値がtrueのとき、本文中の単一の空行をそのまま残す パラグラフ毎に空行を挟んでいる作品用
      *          successiveEmptyLinesLimitと合わせて用いることにより、単一の空行は削除し、連続した空行を一つにまとめることができる
