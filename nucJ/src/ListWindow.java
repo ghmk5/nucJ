@@ -43,6 +43,7 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
@@ -1897,15 +1898,31 @@ public class ListWindow {
 
     AozoraTxt aozoraBook = new AozoraTxt(aozoraTxt, "UTF-8");
 
-    // テスト用にパラメータ決め打ちでとりあえず動かしてみる用 うまく動くようなら設定パネル追加とpropsへの保存・読み込み部分を作る
-    String dstPathForViewer = "D:\\drop\\forViewer\\";
-    String dstPathForEPUB3 = aozoraTxt.getParent();
-    int volumeLength = 175000;
-    boolean forceChapterwise = false;
+    // 分割関連パラメータの設定
     boolean flagOutputForViewer = true;
     boolean flagOutputForEPUB3 = true;
-    boolean allowSingleEmptyLine = false;
-    int successiveEmptyLinesLimit = 1;
+    String dstPathForViewer = props.getProperty("ViewerDstPath");
+    if (dstPathForViewer.equals("") || dstPathForViewer == null || !(new File(dstPathForViewer).exists())) {
+      JFileChooser fileChooser = new JFileChooser(currentPath);
+      fileChooser.setDialogTitle("ビューワ用ファイルの出力先を選択");
+      fileChooser.setApproveButtonText("選択");
+      fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+      int state = fileChooser.showOpenDialog(frame);
+      switch (state) {
+      case JFileChooser.APPROVE_OPTION:
+        dstPathForViewer = fileChooser.getSelectedFile().getAbsolutePath();
+      case JFileChooser.CANCEL_OPTION:
+        LogAppender.println("ビューワ用ファイルの出力先が得られないため処理を中止します");
+        return null;
+      }
+    }
+    // 紛らわしいが、これ↓はEPUB3ファイルそのものの出力先ではなく、EPUB3変換の元になる分割された青空文庫テキストの出力先
+    String dstPathForEPUB3 = aozoraTxt.getParent();
+    int volumeLength = Integer.parseInt(props.getProperty("VolumeLength"));
+    // TODO 値の正当性検査
+    boolean forceChapterwise = props.getPropertiesAsBoolean("SplitChapterWise");
+    boolean allowSingleEmptyLine = props.getPropertiesAsBoolean("AllowSingleEmptyLine");
+    int successiveEmptyLinesLimit = Integer.parseInt(props.getProperty("SuccessiveEmptyLinesLimit"));
 
     ArrayList<File> srcFiles = aozoraBook.split(dstPathForViewer, dstPathForEPUB3, volumeLength, forceChapterwise,
         flagOutputForViewer, flagOutputForEPUB3, allowSingleEmptyLine, successiveEmptyLinesLimit);
