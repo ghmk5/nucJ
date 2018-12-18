@@ -230,6 +230,9 @@ public class ListWindow {
           String lafName = lafMap.get(window.props.getProperty("LastLook&Feel"));
           try {
             UIManager.setLookAndFeel(lafName);
+            // ここを通るとテーブル選択強調色がデフォルトに戻るので以下一行を挟んである。L&Fの選択によっては余分かもしれない
+            // なお、なぜかNumbusでは効かないのみならず、一度Numbusを選ぶと他のL&Fでも効かなくなる模様
+            UIManager.put("Table.selectionBackground", UIManager.getColor("EditorPane.selectionBackground"));
             SwingUtilities.updateComponentTreeUI(window.frame);
           } catch (Exception e) {
             LogAppender.println("Look & Feelを " + lafName + " に設定できなかった");
@@ -455,6 +458,8 @@ public class ListWindow {
           String className = lafMap.get(sLafis[j]);
           try {
             UIManager.setLookAndFeel(className);
+            // どうやら一度Numbusを選ぶと以下一行が効かなくなるらしい。なにが起きているのか不明
+            UIManager.put("Table.selectionBackground", UIManager.getColor("EditorPane.selectionBackground"));
             SwingUtilities.updateComponentTreeUI(frame);
             // LogAppender.println("Look & Feelを " + className + " に設定した");
             props.setProperty("LastLook&Feel", className);
@@ -614,6 +619,7 @@ public class ListWindow {
             props.store(fos, "converter Parameters");
             fos.close();
           } catch (Exception e1) {
+            LogAppender.println("個別設定値の保存でエラーが発生しました。設定の変更は保存されていません");
             e1.printStackTrace();
           }
         }
@@ -625,7 +631,6 @@ public class ListWindow {
     tglChkFlg.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        // TODO ここ書き換える必要があるはず(ソート済みだとIDがずれてるはず)
         int[] selection = table.getSelectedRows();
         for (int i = 0; i < selection.length; i++) {
           String novelID = (String) table.getValueAt(selection[i], 0);
@@ -1918,8 +1923,14 @@ public class ListWindow {
     }
     // 紛らわしいが、これ↓はEPUB3ファイルそのものの出力先ではなく、EPUB3変換の元になる分割された青空文庫テキストの出力先
     String dstPathForEPUB3 = aozoraTxt.getParent();
-    int volumeLength = Integer.parseInt(props.getProperty("VolumeLength"));
-    // TODO 値の正当性検査
+    Integer volumeLength = Integer.parseInt(props.getProperty("VolumeLength"));
+    // TODO volumeLength値の正当性検査
+    int length = aozoraBook.getLength();
+    if (volumeLength == null || volumeLength == 0) {
+      // "一巻あたりの文字数上限が設定されていません"
+    } else if ((length / volumeLength) > 20) {
+      // "設定されている一巻あたりの文字数に従うと、全#{}巻になります。続行しますか？"
+    }
     boolean forceChapterwise = props.getPropertiesAsBoolean("SplitChapterWise");
     boolean allowSingleEmptyLine = props.getPropertiesAsBoolean("AllowSingleEmptyLine");
     int successiveEmptyLinesLimit = Integer.parseInt(props.getProperty("SuccessiveEmptyLinesLimit"));
