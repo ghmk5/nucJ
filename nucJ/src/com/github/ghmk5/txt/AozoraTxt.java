@@ -28,6 +28,7 @@ public class AozoraTxt {
   String lineOfDateConverted;
   String lineOfOriginalTextURL;
   String lineOfOriginalTextURLForViewer;
+  int length;
 
   ArrayList<AozoraChapter> listOfChapters;
   // ArrayList<AozoraSection> listOfSections;
@@ -49,6 +50,7 @@ public class AozoraTxt {
     InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream, charCode);
 
     this.bufferedReader = new BufferedReader(inputStreamReader);
+    this.length = 0;
 
     // 第一行からタイトル、第二行から著者名を取得
     this.title = bufferedReader.readLine();
@@ -140,6 +142,7 @@ public class AozoraTxt {
             currentChapter.addSection(currentSection);
             currentChapter.setLength(currentChapter.getLength() + currentSection.getLength());
           }
+          this.length += currentChapter.getLength();
           chapterIdx++;
           chapterTitle = StringUtils.chomp(line);
           currentChapter = new AozoraChapter(chapterIdx, chapterTitle);
@@ -207,6 +210,7 @@ public class AozoraTxt {
 
     }
 
+    this.length += currentChapter.getLength();
     currentChapter.addSection(currentSection);
     this.listOfChapters.add(currentChapter);
 
@@ -258,6 +262,15 @@ public class AozoraTxt {
    */
   public String getAuthor() {
     return this.author;
+  }
+
+  /**
+   * 全体の長さ(文字数)を返す
+   * 
+   * @return int length
+   */
+  public int getLength() {
+    return this.length;
   }
 
   /**
@@ -707,6 +720,8 @@ public class AozoraTxt {
      */
     public ArrayList<String> treatEmptyLines(ArrayList<String> srcList, boolean allowSingleEmptyLine,
         int successiveEmptyLinesLimit) {
+
+      // TODO successiveEmptyLinesLimitが0だったときの動作検証
 
       if (srcList.size() == 0) {
         return srcList;
