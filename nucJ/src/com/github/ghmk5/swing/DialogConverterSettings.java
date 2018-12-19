@@ -3,7 +3,6 @@ package com.github.ghmk5.swing;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -41,11 +40,13 @@ import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 import com.github.ghmk5.info.Properties;
 import com.github.hmdev.info.BookInfo;
 import com.github.hmdev.info.SectionInfo;
 import com.github.hmdev.swing.NarrowTitledBorder;
+import com.github.hmdev.util.LogAppender;
 
 public class DialogConverterSettings extends JDialog {
 
@@ -297,136 +298,132 @@ public class DialogConverterSettings extends JDialog {
 
     // タブパネル内部
 
-    // if (title.equals("global")) {
-    // "全般"タブ
-    JPanel tab0RootPanel = new JPanel();
-    tabbedpane.addTab("全般", new ImageIcon(this.getClass().getResource("/images/web.png")), tab0RootPanel);
-    tab0RootPanel.setLayout(new BoxLayout(tab0RootPanel, BoxLayout.Y_AXIS));
+    if (title.equals("global")) {
+      // "全般"タブ(メニューバー "File"メニューの"設定"から呼ばれたときのみ表示する)
+      JPanel tab0RootPanel = new JPanel();
+      tabbedpane.addTab("全般", new ImageIcon(this.getClass().getResource("/images/web.png")), tab0RootPanel);
+      tab0RootPanel.setLayout(new BoxLayout(tab0RootPanel, BoxLayout.Y_AXIS));
 
-    // "全般"タブ内 第1段パネル
-    JPanel tab0LinePanel1 = new JPanel();
-    tab0LinePanel1.setLayout(new FlowLayout(FlowLayout.LEFT));
-    tab0RootPanel.add(tab0LinePanel1);
+      // "全般"タブ内 第1段パネル
+      JPanel tab0LinePanel1 = new JPanel();
+      tab0LinePanel1.setLayout(new FlowLayout(FlowLayout.LEFT));
+      tab0RootPanel.add(tab0LinePanel1);
 
-    // "全般"タブ内 "取得間隔"グループ
-    JPanel tab0InnerPanel1 = new JPanel();
-    tab0InnerPanel1.setLayout(new BoxLayout(tab0InnerPanel1, BoxLayout.X_AXIS));
-    tab0InnerPanel1.setBorder(new NarrowTitledBorder("取得設定"));
-    tab0LinePanel1.add(tab0InnerPanel1);
-    label = new JLabel("取得間隔");
-    label.setBorder(padding2);
-    label.setToolTipText("Web小説の取得間隔を設定します");
-    tab0InnerPanel1.add(label);
-    jTextWebInterval = new JTextField("0.5");
-    jTextWebInterval.setToolTipText(label.getToolTipText());
-    jTextWebInterval.setHorizontalAlignment(JTextField.RIGHT);
-    jTextWebInterval.setInputVerifier(new FloatInputVerifier(0.5f, 0, 60));
-    jTextWebInterval.setMaximumSize(text3);
-    jTextWebInterval.setPreferredSize(text3);
-    jTextWebInterval.addFocusListener(new TextSelectFocusListener(jTextWebInterval));
-    tab0InnerPanel1.add(jTextWebInterval);
-    label = new JLabel("秒");
-    label.setBorder(padding1);
-    tab0InnerPanel1.add(label);
+      // "全般"タブ内 "取得間隔"グループ
+      JPanel tab0InnerPanel1 = new JPanel();
+      tab0InnerPanel1.setLayout(new BoxLayout(tab0InnerPanel1, BoxLayout.X_AXIS));
+      tab0InnerPanel1.setBorder(new NarrowTitledBorder("取得設定"));
+      tab0LinePanel1.add(tab0InnerPanel1);
+      label = new JLabel("取得間隔");
+      label.setBorder(padding2);
+      label.setToolTipText("Web小説の取得間隔を設定します");
+      tab0InnerPanel1.add(label);
+      jTextWebInterval = new JTextField("0.5");
+      jTextWebInterval.setToolTipText(label.getToolTipText());
+      jTextWebInterval.setHorizontalAlignment(JTextField.RIGHT);
+      jTextWebInterval.setInputVerifier(new FloatInputVerifier(0.5f, 0, 60));
+      jTextWebInterval.setMaximumSize(text3);
+      jTextWebInterval.setPreferredSize(text3);
+      jTextWebInterval.addFocusListener(new TextSelectFocusListener(jTextWebInterval));
+      tab0InnerPanel1.add(jTextWebInterval);
+      label = new JLabel("秒");
+      label.setBorder(padding1);
+      tab0InnerPanel1.add(label);
 
-    // "全般"タブ内 "キャッシュ保存先"グループ
-    JPanel tab0InnerPanel2 = new JPanel();
-    tab0InnerPanel2.setLayout(new BoxLayout(tab0InnerPanel2, BoxLayout.X_AXIS));
-    tab0InnerPanel2.setBorder(new NarrowTitledBorder("キャッシュ保存パス"));
-    tab0LinePanel1.add(tab0InnerPanel2);
-    jTextCachePath = new JTextField("cache");
-    jTextCachePath.setToolTipText("キャッシュファイルを保存するパスです。フルパスまたは起動パスからの相対パスを指定します");
-    jTextCachePath.setMaximumSize(text300);
-    jTextCachePath.setPreferredSize(text300);
-    jTextCachePath.addFocusListener(new TextSelectFocusListener(jTextCachePath));
-    tab0InnerPanel2.add(jTextCachePath);
-    JButton jButtonCachePath = new JButton("選択");
-    jButtonCachePath.setBorder(padding2);
-    jButtonCachePath.setIcon(new ImageIcon(this.getClass().getResource("/images/dst_path.png")));
-    jButtonCachePath.setFocusPainted(false);
-    jButtonCachePath.addActionListener(new CachePathChooserListener(jButtonCachePath));
-    tab0InnerPanel2.add(jButtonCachePath);
+      // "全般"タブ内 "更新判定"グループ
+      JPanel tab0InnerPanel3 = new JPanel();
+      tab0InnerPanel3.setLayout(new BoxLayout(tab0InnerPanel3, BoxLayout.X_AXIS));
+      tab0InnerPanel3.setBorder(new NarrowTitledBorder("更新判定"));
+      tab0LinePanel1.add(tab0InnerPanel3);
+      jTextWebModifiedExpire = new JTextField("24");
+      jTextWebModifiedExpire.setToolTipText("この時間以内に取得したキャッシュを更新分として処理します");
+      jTextWebModifiedExpire.setHorizontalAlignment(JTextField.RIGHT);
+      jTextWebModifiedExpire.setInputVerifier(new NumberVerifier(24, 0, 9999));
+      jTextWebModifiedExpire.setMaximumSize(text4);
+      jTextWebModifiedExpire.setPreferredSize(text4);
+      jTextWebModifiedExpire.addFocusListener(new TextSelectFocusListener(jTextWebModifiedExpire));
+      tab0InnerPanel3.add(jTextWebModifiedExpire);
+      label = new JLabel("時間以内");
+      label.setBorder(padding1);
+      label.setToolTipText(jTextWebModifiedExpire.getToolTipText());
+      tab0InnerPanel3.add(label);
 
-    // "全般"タブ内 第2段パネル
-    JPanel tab0LinePanel2 = new JPanel();
-    tab0LinePanel2.setLayout(new FlowLayout(FlowLayout.LEFT));
-    tab0RootPanel.add(tab0LinePanel2);
+      // "全般"タブ内 "キャッシュ保存先"グループ
+      JPanel tab0InnerPanel2 = new JPanel();
+      tab0InnerPanel2.setLayout(new BoxLayout(tab0InnerPanel2, BoxLayout.X_AXIS));
+      tab0InnerPanel2.setBorder(new NarrowTitledBorder("キャッシュ保存パス"));
+      tab0LinePanel1.add(tab0InnerPanel2);
+      jTextCachePath = new JTextField("cache");
+      jTextCachePath.setToolTipText("キャッシュファイルを保存するパスです。フルパスまたは起動パスからの相対パスを指定します");
+      jTextCachePath.setMaximumSize(text300);
+      jTextCachePath.setPreferredSize(text300);
+      jTextCachePath.addFocusListener(new TextSelectFocusListener(jTextCachePath));
+      tab0InnerPanel2.add(jTextCachePath);
+      JButton jButtonCachePath = new JButton("選択");
+      jButtonCachePath.setBorder(padding2);
+      jButtonCachePath.setIcon(new ImageIcon(this.getClass().getResource("/images/dst_path.png")));
+      jButtonCachePath.setFocusPainted(false);
+      jButtonCachePath.addActionListener(new CachePathChooserListener(jButtonCachePath));
+      tab0InnerPanel2.add(jButtonCachePath);
 
-    // "全般"タブ内 "更新判定"グループ
-    JPanel tab0InnerPanel3 = new JPanel();
-    tab0InnerPanel3.setLayout(new BoxLayout(tab0InnerPanel3, BoxLayout.X_AXIS));
-    tab0InnerPanel3.setBorder(new NarrowTitledBorder("更新判定"));
-    tab0LinePanel2.add(tab0InnerPanel3);
-    jTextWebModifiedExpire = new JTextField("24");
-    jTextWebModifiedExpire.setToolTipText("この時間以内に取得したキャッシュを更新分として処理します");
-    jTextWebModifiedExpire.setHorizontalAlignment(JTextField.RIGHT);
-    jTextWebModifiedExpire.setInputVerifier(new NumberVerifier(24, 0, 9999));
-    jTextWebModifiedExpire.setMaximumSize(text4);
-    jTextWebModifiedExpire.setPreferredSize(text4);
-    jTextWebModifiedExpire.addFocusListener(new TextSelectFocusListener(jTextWebModifiedExpire));
-    tab0InnerPanel3.add(jTextWebModifiedExpire);
-    label = new JLabel("時間以内");
-    label.setBorder(padding1);
-    label.setToolTipText(jTextWebModifiedExpire.getToolTipText());
-    tab0InnerPanel3.add(label);
-
-    // "全般"タブ内 "ePub出力設定"グループ
-    JPanel tab0InnerPanel4 = new JPanel();
-    tab0InnerPanel4.setLayout(new BoxLayout(tab0InnerPanel4, BoxLayout.X_AXIS));
-    tab0InnerPanel4.setBorder(new NarrowTitledBorder("ePub出力設定"));
-    tab0LinePanel2.add(tab0InnerPanel4);
-    jCheckWebConvertUpdated = new JCheckBox("更新時のみ出力");
-    jCheckWebConvertUpdated.setToolTipText("新規追加または一覧ページで更新がある場合のみePubファイルを出力します");
-    jCheckWebConvertUpdated.setFocusPainted(false);
-    jCheckWebConvertUpdated.setBorder(padding2);
-    tab0InnerPanel4.add(jCheckWebConvertUpdated);
-
-    // "全般"タブ内 "変換対象"グループ
-    JPanel tab0InnerPanel5 = new JPanel();
-    tab0InnerPanel5.setLayout(new BoxLayout(tab0InnerPanel5, BoxLayout.X_AXIS));
-    tab0InnerPanel5.setBorder(new NarrowTitledBorder("変換対象"));
-    tab0LinePanel2.add(tab0InnerPanel5);
-    jCheckWebBeforeChapter = new JCheckBox("最新");
-    jCheckWebBeforeChapter.setToolTipText("最新話から指定話数のみ出力します。追加更新分のみの出力がある場合はそれに追加されます");
-    jCheckWebBeforeChapter.setFocusPainted(false);
-    jCheckWebBeforeChapter.setBorder(padding0);
-    jCheckWebBeforeChapter.addChangeListener(new ChangeListener() {
-      public void stateChanged(ChangeEvent e) {
-        jTextWebBeforeChapterCount.setEditable(jCheckWebBeforeChapter.isSelected());
-        jTextWebBeforeChapterCount.repaint();
-      }
-    });
-    tab0InnerPanel5.add(jCheckWebBeforeChapter);
-    jTextWebBeforeChapterCount = new JTextField("1");
-    jTextWebBeforeChapterCount.setToolTipText(jCheckWebBeforeChapter.getToolTipText());
-    jTextWebBeforeChapterCount.setEditable(false);
-    jTextWebBeforeChapterCount.setHorizontalAlignment(JTextField.RIGHT);
-    jTextWebBeforeChapterCount.setInputVerifier(new IntegerInputVerifier(0, 0, 999));
-    jTextWebBeforeChapterCount.setMaximumSize(text3);
-    jTextWebBeforeChapterCount.setPreferredSize(text3);
-    jTextWebBeforeChapterCount.addFocusListener(new TextSelectFocusListener(jTextWebBeforeChapterCount));
-    tab0InnerPanel5.add(jTextWebBeforeChapterCount);
-    label = new JLabel("話 +");
-    label.setBorder(padding1);
-    tab0InnerPanel5.add(label);
-    jCheckWebModifiedOnly = new JCheckBox("更新分");
-    jCheckWebModifiedOnly.setToolTipText("追加更新のあった話のみ変換します");
-    jCheckWebModifiedOnly.setFocusPainted(false);
-    jCheckWebModifiedOnly.setBorder(padding2);
-    tab0InnerPanel5.add(jCheckWebModifiedOnly);
-    tab0InnerPanel5.add(new JLabel("("));
-    jCheckWebModifiedTail = new JCheckBox("連続");
-    jCheckWebModifiedTail.setToolTipText("最新話から連続した更新分のみ変換します。途中話の更新は変換されません");
-    jCheckWebModifiedTail.setFocusPainted(false);
-    jCheckWebModifiedTail.setBorder(padding2);
-    tab0InnerPanel5.add(jCheckWebModifiedTail);
-    tab0InnerPanel5.add(new JLabel(")"));
-    // }
+      /**
+       * 以下"全般"タブ内で廃止した設定項目 コンバータの動作に影響するので設定値は残すが、デフォルト値固定で変更できないようにする //
+       * "全般"タブ内 第2段パネル JPanel tab0LinePanel2 = new JPanel();
+       * tab0LinePanel2.setLayout(new FlowLayout(FlowLayout.LEFT));
+       * tab0RootPanel.add(tab0LinePanel2);
+       * 
+       * // "全般"タブ内 "ePub出力設定"グループ JPanel tab0InnerPanel4 = new JPanel();
+       * tab0InnerPanel4.setLayout(new BoxLayout(tab0InnerPanel4,
+       * BoxLayout.X_AXIS)); tab0InnerPanel4.setBorder(new
+       * NarrowTitledBorder("ePub出力設定")); tab0LinePanel2.add(tab0InnerPanel4);
+       * jCheckWebConvertUpdated = new JCheckBox("更新時のみ出力");
+       * jCheckWebConvertUpdated.setToolTipText("新規追加または一覧ページで更新がある場合のみePubファイルを出力します");
+       * jCheckWebConvertUpdated.setFocusPainted(false);
+       * jCheckWebConvertUpdated.setBorder(padding2);
+       * tab0InnerPanel4.add(jCheckWebConvertUpdated);
+       * 
+       * // "全般"タブ内 "変換対象"グループ JPanel tab0InnerPanel5 = new JPanel();
+       * tab0InnerPanel5.setLayout(new BoxLayout(tab0InnerPanel5,
+       * BoxLayout.X_AXIS)); tab0InnerPanel5.setBorder(new
+       * NarrowTitledBorder("変換対象")); tab0LinePanel2.add(tab0InnerPanel5);
+       * jCheckWebBeforeChapter = new JCheckBox("最新");
+       * jCheckWebBeforeChapter.setToolTipText("最新話から指定話数のみ出力します。追加更新分のみの出力がある場合はそれに追加されます");
+       * jCheckWebBeforeChapter.setFocusPainted(false);
+       * jCheckWebBeforeChapter.setBorder(padding0);
+       * jCheckWebBeforeChapter.addChangeListener(new ChangeListener() { public
+       * void stateChanged(ChangeEvent e) {
+       * jTextWebBeforeChapterCount.setEditable(jCheckWebBeforeChapter.isSelected());
+       * jTextWebBeforeChapterCount.repaint(); } });
+       * tab0InnerPanel5.add(jCheckWebBeforeChapter); jTextWebBeforeChapterCount
+       * = new JTextField("1");
+       * jTextWebBeforeChapterCount.setToolTipText(jCheckWebBeforeChapter.getToolTipText());
+       * jTextWebBeforeChapterCount.setEditable(false);
+       * jTextWebBeforeChapterCount.setHorizontalAlignment(JTextField.RIGHT);
+       * jTextWebBeforeChapterCount.setInputVerifier(new IntegerInputVerifier(0,
+       * 0, 999)); jTextWebBeforeChapterCount.setMaximumSize(text3);
+       * jTextWebBeforeChapterCount.setPreferredSize(text3);
+       * jTextWebBeforeChapterCount.addFocusListener(new
+       * TextSelectFocusListener(jTextWebBeforeChapterCount));
+       * tab0InnerPanel5.add(jTextWebBeforeChapterCount); label = new JLabel("話
+       * +"); label.setBorder(padding1); tab0InnerPanel5.add(label);
+       * jCheckWebModifiedOnly = new JCheckBox("更新分");
+       * jCheckWebModifiedOnly.setToolTipText("追加更新のあった話のみ変換します");
+       * jCheckWebModifiedOnly.setFocusPainted(false);
+       * jCheckWebModifiedOnly.setBorder(padding2);
+       * tab0InnerPanel5.add(jCheckWebModifiedOnly); tab0InnerPanel5.add(new
+       * JLabel("(")); jCheckWebModifiedTail = new JCheckBox("連続");
+       * jCheckWebModifiedTail.setToolTipText("最新話から連続した更新分のみ変換します。途中話の更新は変換されません");
+       * jCheckWebModifiedTail.setFocusPainted(false);
+       * jCheckWebModifiedTail.setBorder(padding2);
+       * tab0InnerPanel5.add(jCheckWebModifiedTail); tab0InnerPanel5.add(new
+       * JLabel(")")); "全般"タブ内で廃止した設定項目 ここまで
+       */
+    }
 
     // "出力"タブ
     JPanel tab1RootPanel = new JPanel();
     tab1RootPanel.setLayout(new BoxLayout(tab1RootPanel, BoxLayout.Y_AXIS));
-    tabbedpane.addTab("出力", tab1RootPanel);
+    tabbedpane.addTab("出力", new ImageIcon(this.getClass().getResource("/images/dst_path.png")), tab1RootPanel);
 
     // "出力"タブ内 "EPUB3出力先"グループ
     epub3DstPathChooser = new EPUB3DstPathChooserListener(this);
@@ -451,24 +448,7 @@ public class DialogConverterSettings extends JDialog {
     jComboEPUB3DstPath.setEditable(false);
     jComboEPUB3DstPath.setForeground(Color.gray);
     jComboEPUB3DstPath.setPreferredSize(new Dimension(380, 24));
-
-    // jComboDstPathにパスを追加
-    // vecDstPath.add("[入力ファイルと同じ場所]");
-    String propValue = props.getProperty("EPUB3DstPathList");
-    String dstPath = props.getProperty("EPUB3DstPath");
-    if (propValue != null && propValue.length() > 0) {
-      for (String listPath : propValue.split(",")) {
-        if (!"".equals(listPath))
-          jComboEPUB3DstPath.addItem(listPath);
-      }
-    }
-    if (dstPath != null && !dstPath.equals("")) {
-      jComboEPUB3DstPath.setSelectedItem(dstPath);
-    }
     tab1InnerPanel1.add(jComboEPUB3DstPath);
-    // propsの内容に応じて必要ならjCheckSamePathの選択を解除
-    if ("".equals(props.getProperty("EPUB3SamePath")))
-      jCheckEPUB3SamePath.setSelected(false);
 
     JButton jButtonEPUB3DstPath = new JButton("選択");
     jButtonEPUB3DstPath.setBorder(padding3);
@@ -500,24 +480,7 @@ public class DialogConverterSettings extends JDialog {
     jComboViewerDstPath.setEditable(false);
     jComboViewerDstPath.setForeground(Color.gray);
     jComboViewerDstPath.setPreferredSize(new Dimension(380, 24));
-
-    // jComboDstPathにパスを追加
-    // vecDstPath.add("[入力ファイルと同じ場所]");
-    propValue = props.getProperty("ViewerDstPathList");
-    dstPath = props.getProperty("ViewerDstPath");
-    if (propValue != null && propValue.length() > 0) {
-      for (String listPath : propValue.split(",")) {
-        if (!"".equals(listPath))
-          jComboViewerDstPath.addItem(listPath);
-      }
-    }
-    if (dstPath != null && !dstPath.equals("")) {
-      jComboViewerDstPath.setSelectedItem(dstPath);
-    }
     tab1InnerPanel2.add(jComboViewerDstPath);
-    // propsの内容に応じて必要ならjCheckSamePathの選択を解除
-    if ("".equals(props.getProperty("ViewerSamePath")))
-      jCheckViewerSamePath.setSelected(false);
 
     JButton jButtonViewerDstPath = new JButton("選択");
     jButtonViewerDstPath.setBorder(padding3);
@@ -629,6 +592,7 @@ public class DialogConverterSettings extends JDialog {
         jLabelMaxCoverLine.setVisible(visible);
       }
     });
+    tab2InnerPanel2.add(jComboCover);
     // new DropTarget(jComboCover.getEditor().getEditorComponent(),
     // DnDConstants.ACTION_COPY_OR_MOVE,
     // new DropCoverListener(), true);
@@ -640,7 +604,7 @@ public class DialogConverterSettings extends JDialog {
     jButtonCover.setBorder(padding3);
     jButtonCover.setIcon(new ImageIcon(DialogConverterSettings.class.getResource("/images/cover.png")));
     jButtonCover.setFocusPainted(false);
-    // jButtonCover.addActionListener(new CoverChooserListener(this));
+    jButtonCover.addActionListener(new CoverChooserListener(this));
     tab2InnerPanel2.add(jButtonCover);
     jCheckCoverHistory = new JCheckBox("表紙履歴利用", true);
     jCheckCoverHistory.setToolTipText("前回の変換(またはスキップ)で設定した表紙を利用します ※履歴は再起動時に初期化されます");
@@ -1413,11 +1377,27 @@ public class DialogConverterSettings extends JDialog {
     jCheckAutoEQ1.setBorder(padding2);
     tab5InnerPanel3.add(jCheckAutoEQ1);
 
+    // "詳細設定"タブ内 "栞用ID"グループ
+    JPanel tab5InnerPanel5 = new JPanel();
+    tab5InnerPanel5.setLayout(new BoxLayout(tab5InnerPanel5, BoxLayout.X_AXIS));
+    tab5InnerPanel5.setBorder(new NarrowTitledBorder("栞用ID"));
+    tab5LinePanel2.add(tab5InnerPanel5);
+    jCheckMarkId = new JCheckBox("各行に出力");
+    jCheckMarkId.setToolTipText("Kobo向けの栞を記憶するためのIDを各行に設定します");
+    jCheckMarkId.setFocusPainted(false);
+    jCheckMarkId.setBorder(padding2);
+    tab5InnerPanel5.add(jCheckMarkId);
+
+    // "詳細設定"タブ内 第3段パネル
+    JPanel tab5LinePanel3 = new JPanel();
+    tab5LinePanel3.setLayout(new FlowLayout(FlowLayout.LEFT));
+    tab5RootPanel.add(tab5LinePanel3);
+
     // "詳細設定"タブ内 "コメント出力"グループ
     JPanel tab5InnerPanel4 = new JPanel();
     tab5InnerPanel4.setLayout(new BoxLayout(tab5InnerPanel4, BoxLayout.X_AXIS));
     tab5InnerPanel4.setBorder(new NarrowTitledBorder("コメントブロック出力"));
-    tab5LinePanel2.add(tab5InnerPanel4);
+    tab5LinePanel3.add(tab5InnerPanel4);
     // 半角2文字縦書き
     jCheckCommentPrint = new JCheckBox("コメント出力 ");
     jCheckCommentPrint.setToolTipText("コメント行の間を出力します");
@@ -1431,51 +1411,38 @@ public class DialogConverterSettings extends JDialog {
     jCheckCommentConvert.setBorder(padding2);
     tab5InnerPanel4.add(jCheckCommentConvert);
 
-    // "詳細設定"タブ内 第3段パネル
-    JPanel tab5LinePanel3 = new JPanel();
-    tab5LinePanel3.setLayout(new FlowLayout(FlowLayout.LEFT));
-    tab5RootPanel.add(tab5LinePanel3);
-
-    // "詳細設定"タブ内 "栞用ID"グループ
-    JPanel tab5InnerPanel5 = new JPanel();
-    tab5InnerPanel5.setLayout(new BoxLayout(tab5InnerPanel5, BoxLayout.X_AXIS));
-    tab5InnerPanel5.setBorder(new NarrowTitledBorder("栞用ID"));
-    tab5LinePanel3.add(tab5InnerPanel5);
-    jCheckMarkId = new JCheckBox("各行に出力");
-    jCheckMarkId.setToolTipText("Kobo向けの栞を記憶するためのIDを各行に設定します");
-    jCheckMarkId.setFocusPainted(false);
-    jCheckMarkId.setBorder(padding2);
-    tab5InnerPanel5.add(jCheckMarkId);
-
     // "詳細設定"タブ内 "空行除去"グループ
-    JPanel tab5InnerPanel6 = new JPanel();
-    tab5InnerPanel6.setLayout(new BoxLayout(tab5InnerPanel6, BoxLayout.X_AXIS));
-    tab5InnerPanel6.setBorder(new NarrowTitledBorder("空行除去"));
-    tab5LinePanel3.add(tab5InnerPanel6);
-    jComboxRemoveEmptyLine = new JComboBox(new String[] { "0", "1", "2", "3", "4", "5" });
-    jComboxRemoveEmptyLine.setToolTipText("空行の行数を減らします 見出し行の後ろ3行以内は1行残します");
-    jComboxRemoveEmptyLine.setFocusable(false);
-    jComboxRemoveEmptyLine.setBorder(padding0);
-    jComboxRemoveEmptyLine.setMaximumSize(new Dimension(96, 20));
-    ((JLabel) jComboxRemoveEmptyLine.getRenderer()).setBorder(padding2);
-    tab5InnerPanel6.add(jComboxRemoveEmptyLine);
-    label = new JLabel("行減らす");
-    label.setBorder(padding2);
-    tab5InnerPanel6.add(label);
-
-    label = new JLabel(" 最大");
-    label.setBorder(padding2);
-    tab5InnerPanel6.add(label);
-    jComboxMaxEmptyLine = new JComboBox(new String[] { "-", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10" });
-    jComboxMaxEmptyLine.setToolTipText("空行の連続を指定行数以下に制限します");
-    jComboxMaxEmptyLine.setFocusable(false);
-    jComboxMaxEmptyLine.setBorder(padding0);
-    jComboxMaxEmptyLine.setMaximumSize(new Dimension(96, 20));
-    jComboxMaxEmptyLine.setPreferredSize(new Dimension(64, 20));
-    tab5InnerPanel6.add(jComboxMaxEmptyLine);
-    label = new JLabel("行");
-    label.setBorder(padding2);
-    tab5InnerPanel6.add(label);
+    // JPanel tab5InnerPanel6 = new JPanel();
+    // tab5InnerPanel6.setLayout(new BoxLayout(tab5InnerPanel6,
+    // BoxLayout.X_AXIS));
+    // tab5InnerPanel6.setBorder(new NarrowTitledBorder("空行除去"));
+    // tab5LinePanel3.add(tab5InnerPanel6);
+    // jComboxRemoveEmptyLine = new JComboBox(new String[] { "0", "1", "2", "3",
+    // "4", "5" });
+    // jComboxRemoveEmptyLine.setToolTipText("空行の行数を減らします 見出し行の後ろ3行以内は1行残します");
+    // jComboxRemoveEmptyLine.setFocusable(false);
+    // jComboxRemoveEmptyLine.setBorder(padding0);
+    // jComboxRemoveEmptyLine.setMaximumSize(new Dimension(96, 20));
+    // ((JLabel) jComboxRemoveEmptyLine.getRenderer()).setBorder(padding2);
+    // tab5InnerPanel6.add(jComboxRemoveEmptyLine);
+    // label = new JLabel("行減らす");
+    // label.setBorder(padding2);
+    // tab5InnerPanel6.add(label);
+    //
+    // label = new JLabel(" 最大");
+    // label.setBorder(padding2);
+    // tab5InnerPanel6.add(label);
+    // jComboxMaxEmptyLine = new JComboBox(new String[] { "-", "1", "2", "3",
+    // "4", "5", "6", "7", "8", "9", "10" });
+    // jComboxMaxEmptyLine.setToolTipText("空行の連続を指定行数以下に制限します");
+    // jComboxMaxEmptyLine.setFocusable(false);
+    // jComboxMaxEmptyLine.setBorder(padding0);
+    // jComboxMaxEmptyLine.setMaximumSize(new Dimension(96, 20));
+    // jComboxMaxEmptyLine.setPreferredSize(new Dimension(64, 20));
+    // tab5InnerPanel6.add(jComboxMaxEmptyLine);
+    // label = new JLabel("行");
+    // label.setBorder(padding2);
+    // tab5InnerPanel6.add(label);
 
     // "詳細設定"タブ内 "行頭字下げ"グループ
     JPanel tab5InnerPanel7 = new JPanel();
@@ -1938,6 +1905,38 @@ public class DialogConverterSettings extends JDialog {
     jCheckIvsSSP.setBorder(padding2);
     tab7InnerPanel6.add(jCheckIvsSSP);
 
+    // jComboEPUB3DstPathにパスを追加
+    String propValue = props.getProperty("EPUB3DstPathList");
+    String dstPath = props.getProperty("EPUB3DstPath");
+    if (propValue != null && propValue.length() > 0) {
+      for (String listPath : propValue.split(",")) {
+        if (!"".equals(listPath))
+          jComboEPUB3DstPath.addItem(listPath);
+      }
+    }
+    if (dstPath != null && !dstPath.equals("")) {
+      jComboEPUB3DstPath.setSelectedItem(dstPath);
+    }
+    // propsの内容に応じて必要ならjCheckSamePathの選択を解除
+    if ("".equals(props.getProperty("EPUB3SamePath")))
+      jCheckEPUB3SamePath.setSelected(false);
+
+    // jComboViewerDstPathにパスを追加
+    propValue = props.getProperty("ViewerDstPathList");
+    dstPath = props.getProperty("ViewerDstPath");
+    if (propValue != null && propValue.length() > 0) {
+      for (String listPath : propValue.split(",")) {
+        if (!"".equals(listPath))
+          jComboViewerDstPath.addItem(listPath);
+      }
+    }
+    if (dstPath != null && !dstPath.equals("")) {
+      jComboViewerDstPath.setSelectedItem(dstPath);
+    }
+    // propsの内容に応じて必要ならjCheckSamePathの選択を解除
+    if ("".equals(props.getProperty("ViewerSamePath")))
+      jCheckViewerSamePath.setSelected(false);
+
     loadProperties(props);
 
     pack();
@@ -2187,15 +2186,37 @@ public class DialogConverterSettings extends JDialog {
     }
   }
 
-  /** コンポーネント内をすべてsetEnabled */
-  private void setEnabledAll(Component c, boolean b) {
-    if (c instanceof JPanel) {
-      for (Component c2 : ((Container) c).getComponents())
-        setEnabledAll(c2, b);
-    } else {// if (!(c instanceof JLabel)) {
-      c.setEnabled(b);
+  /** 表紙選択ボタンイベント */
+  class CoverChooserListener implements ActionListener {
+    Component parent;
+
+    private CoverChooserListener(Component parent) {
+      this.parent = parent;
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      JFileChooser fileChooser = new JFileChooser(currentPath);
+      fileChooser.setDialogTitle("表紙画像を選択");
+      fileChooser.setApproveButtonText("選択");
+      fileChooser.setFileFilter(new FileNameExtensionFilter("表紙画像(jpg,png,gif)", new String[] { "jpg", "png", "gif" }));
+      int state = fileChooser.showOpenDialog(parent);
+      switch (state) {
+      case JFileChooser.APPROVE_OPTION:
+        jComboCover.setSelectedItem(fileChooser.getSelectedFile().getAbsolutePath());
+      }
     }
   }
+
+  // /** コンポーネント内をすべてsetEnabled */
+  // private void setEnabledAll(Component c, boolean b) {
+  // if (c instanceof JPanel) {
+  // for (Component c2 : ((Container) c).getComponents())
+  // setEnabledAll(c2, b);
+  // } else {// if (!(c instanceof JLabel)) {
+  // c.setEnabled(b);
+  // }
+  // }
 
   /** 画像縮小回転可否のチェックボックスをON/OFF */
   private void setResizeTextEditable(boolean enabled) {
@@ -2357,10 +2378,41 @@ public class DialogConverterSettings extends JDialog {
     // 変換前確認
     setPropsSelected(jCheckConfirm, props, "ChkConfirm");
 
+    ////////////////////////////////////////////////////////////////
+    // 全般
+    if (title.equals("global")) {
+      setPropsFloatText(jTextWebInterval, props, "WebInterval");
+      setPropsText(jTextCachePath, props, "CachePath");
+      if ("".equals(jTextCachePath.getText()))
+        jTextCachePath.setText("cache");
+      setPropsNumberText(jTextWebModifiedExpire, props, "WebModifiedExpire"); // "更新判定"
+      // setPropsSelected(jCheckWebConvertUpdated, props, "WebConvertUpdated");
+      // // "更新時のみ出力"
+      // setPropsSelected(jCheckWebBeforeChapter, props, "WebBeforeChapter"); //
+      // "最新"
+      // setPropsIntText(jTextWebBeforeChapterCount, props,
+      // "WebBeforeChapterCount"); // "話(数)"
+      // setPropsSelected(jCheckWebModifiedOnly, props, "WebModifiedOnly"); //
+      // "更新分"
+      // setPropsSelected(jCheckWebModifiedTail, props, "WebModifiedTail"); //
+      // "連続"
+    }
+
+    ////////////////////////////////////////////////////////////////
+    // "出力"タブ
+    // ファイル出力先指定のチェックボックスとコンボボックス2つづつはコンストラクタの最後で以前の値を設定している--設定にpropsのインスタンスが必要なため、だと思う
+    setPropsSelected(jCheckSplitByChapter, props, "SplitChapterWise");
+    setPropsIntText(jTextVolumeLength, props, "VolumeLength");
+    setPropsSelected(jCheckAllowSingleEmptyLine, props, "AllowSingleEmptyLines");
+    setPropsIntText(jTextSuccessiveEmptyLinesLimit, props, "SuccessiveEmptyLinesLimit");
+
+    ////////////////////////////////////////////////////////////////
+    // "変換"タブ
     // 表題
     try {
       jComboTitle.setSelectedIndex(Integer.parseInt(props.getProperty("TitleType")));
     } catch (Exception e) {
+      LogAppender.println("設定ダイアログの表題タイプが復元できなかった");
     }
     setPropsSelected(jCheckPubFirst, props, "PubFirst");
     setPropsSelected(jCheckUseFileName, props, "UseFileName");
@@ -2500,15 +2552,15 @@ public class DialogConverterSettings extends JDialog {
     setPropsSelected(jCheckCommentPrint, props, "CommentPrint");
     setPropsSelected(jCheckCommentConvert, props, "CommentConvert");
     // 空行除去
-    try {
-      jComboxRemoveEmptyLine.setSelectedIndex(Integer.parseInt(props.getProperty("RemoveEmptyLine")));
-    } catch (Exception e) {
-    }
-    propValue = props.getProperty("MaxEmptyLine");
-    try {
-      jComboxMaxEmptyLine.setSelectedIndex(Integer.parseInt(propValue));
-    } catch (Exception e) {
-    }
+    // try {
+    // jComboxRemoveEmptyLine.setSelectedIndex(Integer.parseInt(props.getProperty("RemoveEmptyLine")));
+    // } catch (Exception e) {
+    // }
+    // propValue = props.getProperty("MaxEmptyLine");
+    // try {
+    // jComboxMaxEmptyLine.setSelectedIndex(Integer.parseInt(propValue));
+    // } catch (Exception e) {
+    // }
     // 行頭字下げ追加
     setPropsSelected(jCheckForceIndent, props, "ForceIndent");
     // 強制改ページ
@@ -2600,32 +2652,112 @@ public class DialogConverterSettings extends JDialog {
     setPropsSelected(jCheckIvsBMP, props, "IvsBMP");
     setPropsSelected(jCheckIvsSSP, props, "IvsSSP");
 
-    ////////////////////////////////////////////////////////////////
-    // Web
-    setPropsFloatText(jTextWebInterval, props, "WebInterval");
-    setPropsText(jTextCachePath, props, "CachePath");
-    if ("".equals(jTextCachePath.getText()))
-      jTextCachePath.setText("cache");
-    setPropsNumberText(jTextWebModifiedExpire, props, "WebModifiedExpire");
-    setPropsSelected(jCheckWebConvertUpdated, props, "WebConvertUpdated");
-    setPropsSelected(jCheckWebModifiedOnly, props, "WebModifiedOnly");
-    setPropsSelected(jCheckWebModifiedTail, props, "WebModifiedTail");
-    setPropsSelected(jCheckWebBeforeChapter, props, "WebBeforeChapter");
-    setPropsIntText(jTextWebBeforeChapterCount, props, "WebBeforeChapterCount");
-
-    setPropsSelected(jCheckSplitByChapter, props, "SplitChapterWise");
-    setPropsIntText(jTextVolumeLength, props, "VolumeLength");
-    setPropsSelected(jCheckAllowSingleEmptyLine, props, "AllowSingleEmptyLines");
-    setPropsIntText(jTextSuccessiveEmptyLinesLimit, props, "SuccessiveEmptyLinesLimit");
-
   }
 
   /** アプレットの設定状態をpropsに保存 */
   private void setProperties(Properties props) {
     // アップレット設定の保存
+
+    // "全般"タブ
+    if (title.equals("global")) {
+      props.setProperty("WebInterval", this.jTextWebInterval.getText());
+      props.setProperty("CachePath", this.jTextCachePath.getText());
+      props.setProperty("WebModifiedExpire", this.jTextWebModifiedExpire.getText());
+      // props.setProperty("WebConvertUpdated",
+      // this.jCheckWebConvertUpdated.isSelected() ? "1" : "");
+      // props.setProperty("WebModifiedOnly",
+      // this.jCheckWebModifiedOnly.isSelected() ? "1" : "");
+      // props.setProperty("WebModifiedTail",
+      // this.jCheckWebModifiedTail.isSelected() ? "1" : "");
+      // props.setProperty("WebBeforeChapter",
+      // this.jCheckWebBeforeChapter.isSelected() ? "1" : "");
+      // props.setProperty("WebBeforeChapterCount",
+      // this.jTextWebBeforeChapterCount.getText());
+    }
+
+    // "出力"タブ
+    // EPUB3出力先と履歴保存
+    try {
+      this.props.setProperty("EPUB3SamePath", this.jCheckEPUB3SamePath.isSelected() ? "1" : "");
+      String dstPath = this.jComboEPUB3DstPath.getEditor().getItem().toString().trim();
+      if (dstPath.equals("") && jComboEPUB3DstPath.getSelectedItem() != null)
+        dstPath = this.jComboEPUB3DstPath.getSelectedItem().toString().trim();
+      this.props.setProperty("EPUB3DstPath", "" + dstPath);
+      // 履歴
+      String dstPathList = this.props.getProperty("EPUB3DstPathList");
+      if (dstPathList == null)
+        dstPathList = dstPath;
+      else {
+        // 最大10件
+        dstPathList = dstPath;
+        int count = Math.min(10, this.jComboEPUB3DstPath.getItemCount());
+        for (int i = 0; i < count; i++) {
+          String item = (String) this.jComboEPUB3DstPath.getItemAt(i);
+          if (!dstPath.equals(item))
+            dstPathList += "," + item;
+        }
+        if (dstPathList.startsWith(","))
+          dstPathList = dstPathList.substring(1);
+      }
+      this.props.setProperty("EPUB3DstPathList", dstPathList);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    this.props.setProperty("EPUB3LastDir", this.currentPath == null ? "" : this.currentPath.getAbsolutePath());
+
+    // ビューワ用ファイル出力先と履歴保存
+    try {
+      this.props.setProperty("ViewerSamePath", this.jCheckViewerSamePath.isSelected() ? "1" : "");
+      String dstPath = this.jComboViewerDstPath.getEditor().getItem().toString().trim();
+      if (dstPath.equals("") && jComboViewerDstPath.getSelectedItem() != null)
+        dstPath = this.jComboViewerDstPath.getSelectedItem().toString().trim();
+      this.props.setProperty("ViewerDstPath", "" + dstPath);
+      // 履歴
+      String dstPathList = this.props.getProperty("ViewerDstPathList");
+      if (dstPathList == null)
+        dstPathList = dstPath;
+      else {
+        // 最大10件
+        dstPathList = dstPath;
+        int count = Math.min(10, this.jComboViewerDstPath.getItemCount());
+        for (int i = 0; i < count; i++) {
+          String item = (String) this.jComboViewerDstPath.getItemAt(i);
+          if (!dstPath.equals(item))
+            dstPathList += "," + item;
+        }
+        if (dstPathList.startsWith(","))
+          dstPathList = dstPathList.substring(1);
+      }
+      this.props.setProperty("ViewerDstPathList", dstPathList);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    this.props.setProperty("ViewerLastDir", this.currentPath == null ? "" : this.currentPath.getAbsolutePath());
+
+    props.setProperty("SplitChapterWise", this.jCheckSplitByChapter.isSelected() ? "1" : "");
+    props.setProperty("VolumeLength", this.jTextVolumeLength.getText());
+    props.setProperty("AllowSingleEmptyLines", this.jCheckAllowSingleEmptyLine.isSelected() ? "1" : "");
+    props.setProperty("SuccessiveEmptyLinesLimit", jTextSuccessiveEmptyLinesLimit.getText());
+
+    props.setProperty("EncType", "" + this.jComboEncType.getSelectedIndex());
+    props.setProperty("OverWrite", this.jCheckOverWrite.isSelected() ? "1" : "");
+
+    // "変換"タブ
+    // 表題
     props.setProperty("TitleType", "" + this.jComboTitle.getSelectedIndex());
     props.setProperty("PubFirst", this.jCheckPubFirst.isSelected() ? "1" : "");
     props.setProperty("UseFileName", this.jCheckUseFileName.isSelected() ? "1" : "");
+
+    // 先頭の挿絵と表紙無しのみ記憶
+    props.setProperty("MaxCoverLine", this.jTextMaxCoverLine.getText());
+    if (this.jComboCover.getSelectedIndex() == 0)
+      props.setProperty("Cover", "");
+    else if (this.jComboCover.getSelectedIndex() == 1)
+      props.setProperty("Cover", "" + this.jComboCover.getEditor().getItem().toString().trim());
+    props.setProperty("CoverHistory", this.jCheckCoverHistory.isSelected() ? "1" : "");
+
+    // TODO 記述の順番整理 ここまで見た
+
     props.setProperty("AutoFileName", this.jCheckAutoFileName.isSelected() ? "1" : "");
     // 変換設定
     props.setProperty("MarkId", this.jCheckMarkId.isSelected() ? "1" : "");
@@ -2634,15 +2766,6 @@ public class DialogConverterSettings extends JDialog {
     // props.setProperty("RtL", this.jRadioRtL.isSelected()?"1":"");
     props.setProperty("Ext", "" + this.jComboExt.getEditor().getItem().toString().trim());
     props.setProperty("ChkConfirm", this.jCheckConfirm.isSelected() ? "1" : "");
-
-    // 先頭の挿絵と表紙無しのみ記憶
-    if (this.jComboCover.getSelectedIndex() == 0)
-      props.setProperty("Cover", "");
-    else if (this.jComboCover.getSelectedIndex() == 1)
-      props.setProperty("Cover", "" + this.jComboCover.getEditor().getItem().toString().trim());
-    props.setProperty("CoverHistory", this.jCheckCoverHistory.isSelected() ? "1" : "");
-
-    props.setProperty("MaxCoverLine", this.jTextMaxCoverLine.getText());
 
     // ページ出力
     props.setProperty("CoverPage", this.jCheckCoverPage.isSelected() ? "1" : "");
@@ -2658,6 +2781,8 @@ public class DialogConverterSettings extends JDialog {
     }
     props.setProperty("TocPage", this.jCheckTocPage.isSelected() ? "1" : "");
     props.setProperty("TocVertical", this.jRadioTocV.isSelected() ? "1" : "");
+
+    // "画像1"タブ
     // 挿絵非表示
     props.setProperty("NoIllust", this.jCheckNoIllust.isSelected() ? "1" : "");
     // 画面サイズ
@@ -2720,8 +2845,10 @@ public class DialogConverterSettings extends JDialog {
     props.setProperty("CommentPrint", this.jCheckCommentPrint.isSelected() ? "1" : "");
     props.setProperty("CommentConvert", this.jCheckCommentConvert.isSelected() ? "1" : "");
     // 空行除去
-    props.setProperty("RemoveEmptyLine", "" + this.jComboxRemoveEmptyLine.getSelectedIndex());
-    props.setProperty("MaxEmptyLine", "" + this.jComboxMaxEmptyLine.getSelectedIndex());
+    // props.setProperty("RemoveEmptyLine", "" +
+    // this.jComboxRemoveEmptyLine.getSelectedIndex());
+    // props.setProperty("MaxEmptyLine", "" +
+    // this.jComboxMaxEmptyLine.getSelectedIndex());
     // 行頭字下げ
     props.setProperty("ForceIndent", this.jCheckForceIndent.isSelected() ? "1" : "");
     // 強制改ページ
@@ -2772,86 +2899,11 @@ public class DialogConverterSettings extends JDialog {
     props.setProperty("IvsBMP", this.jCheckIvsBMP.isSelected() ? "1" : "");
     props.setProperty("IvsSSP", this.jCheckIvsSSP.isSelected() ? "1" : "");
 
-    // Web
-    props.setProperty("WebInterval", this.jTextWebInterval.getText());
-    props.setProperty("CachePath", this.jTextCachePath.getText());
-    props.setProperty("WebModifiedExpire", this.jTextWebModifiedExpire.getText());
-    props.setProperty("WebConvertUpdated", this.jCheckWebConvertUpdated.isSelected() ? "1" : "");
-    props.setProperty("WebModifiedOnly", this.jCheckWebModifiedOnly.isSelected() ? "1" : "");
-    props.setProperty("WebModifiedTail", this.jCheckWebModifiedTail.isSelected() ? "1" : "");
-    props.setProperty("WebBeforeChapter", this.jCheckWebBeforeChapter.isSelected() ? "1" : "");
-    props.setProperty("WebBeforeChapterCount", this.jTextWebBeforeChapterCount.getText());
-
     // 確認ダイアログの元画像を残す
     // props.setProperty("ReplaceCover",
     // this.jConfirmDialog.jCheckReplaceCover.isSelected() ? "1" : "");
     // TODO 変換実行部分ができたらここを復帰させる
 
-    // EPUB3出力先と履歴保存
-    try {
-      this.props.setProperty("EPUB3SamePath", this.jCheckEPUB3SamePath.isSelected() ? "1" : "");
-      String dstPath = this.jComboEPUB3DstPath.getEditor().getItem().toString().trim();
-      if (dstPath.equals("") && jComboEPUB3DstPath.getSelectedItem() != null)
-        dstPath = this.jComboEPUB3DstPath.getSelectedItem().toString().trim();
-      this.props.setProperty("EPUB3DstPath", "" + dstPath);
-      // 履歴
-      String dstPathList = this.props.getProperty("EPUB3DstPathList");
-      if (dstPathList == null)
-        dstPathList = dstPath;
-      else {
-        // 最大10件
-        dstPathList = dstPath;
-        int count = Math.min(10, this.jComboEPUB3DstPath.getItemCount());
-        for (int i = 0; i < count; i++) {
-          String item = (String) this.jComboEPUB3DstPath.getItemAt(i);
-          if (!dstPath.equals(item))
-            dstPathList += "," + item;
-        }
-        if (dstPathList.startsWith(","))
-          dstPathList = dstPathList.substring(1);
-      }
-      this.props.setProperty("EPUB3DstPathList", dstPathList);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-    this.props.setProperty("EPUB3LastDir", this.currentPath == null ? "" : this.currentPath.getAbsolutePath());
-
-    // ビューワ用ファイル出力先と履歴保存
-    try {
-      this.props.setProperty("ViewerSamePath", this.jCheckViewerSamePath.isSelected() ? "1" : "");
-      String dstPath = this.jComboViewerDstPath.getEditor().getItem().toString().trim();
-      if (dstPath.equals("") && jComboViewerDstPath.getSelectedItem() != null)
-        dstPath = this.jComboViewerDstPath.getSelectedItem().toString().trim();
-      this.props.setProperty("ViewerDstPath", "" + dstPath);
-      // 履歴
-      String dstPathList = this.props.getProperty("ViewerDstPathList");
-      if (dstPathList == null)
-        dstPathList = dstPath;
-      else {
-        // 最大10件
-        dstPathList = dstPath;
-        int count = Math.min(10, this.jComboViewerDstPath.getItemCount());
-        for (int i = 0; i < count; i++) {
-          String item = (String) this.jComboViewerDstPath.getItemAt(i);
-          if (!dstPath.equals(item))
-            dstPathList += "," + item;
-        }
-        if (dstPathList.startsWith(","))
-          dstPathList = dstPathList.substring(1);
-      }
-      this.props.setProperty("ViewerDstPathList", dstPathList);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-    this.props.setProperty("ViewerLastDir", this.currentPath == null ? "" : this.currentPath.getAbsolutePath());
-
-    props.setProperty("SplitChapterWise", this.jCheckSplitByChapter.isSelected() ? "1" : "");
-    props.setProperty("VolumeLength", this.jTextVolumeLength.getText());
-    props.setProperty("AllowSingleEmptyLine", this.jCheckAllowSingleEmptyLine.isSelected() ? "1" : "");
-    props.setProperty("SuccessiveEmptyLinesLimit", jTextSuccessiveEmptyLinesLimit.getText());
-
-    props.setProperty("EncType", "" + this.jComboEncType.getSelectedIndex());
-    props.setProperty("OverWrite", this.jCheckOverWrite.isSelected() ? "1" : "");
   }
 
 }
