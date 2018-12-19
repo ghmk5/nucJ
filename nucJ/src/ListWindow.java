@@ -131,6 +131,9 @@ public class ListWindow {
   /** グローバル値のプロパティセット */
   public Properties props;
 
+  /** 作品個別値のプロパティセット */
+  public Properties individualProps;
+
   /** グローバル値のプロパティファイル名 */
   String propFileName = "nucJ.ini";
 
@@ -196,7 +199,7 @@ public class ListWindow {
             int y = (int) Float.parseFloat(window.props.getProperty("PosY"));
             window.frame.setLocation(x, y);
           } catch (Exception e1) {
-            LogAppender.println("ウィンドウ位置の復元に失敗した");
+            // LogAppender.println("ウィンドウ位置の復元に失敗した");
           }
 
           // iniファイルに保存してあったウィンドウサイズの復元
@@ -223,7 +226,7 @@ public class ListWindow {
               }
             }
           } catch (Exception e3) {
-            LogAppender.println("テーブルカラム幅の復元に失敗した");
+            // LogAppender.println("テーブルカラム幅の復元に失敗した");
           }
 
           // Look & Feelの復元
@@ -235,7 +238,7 @@ public class ListWindow {
             UIManager.put("Table.selectionBackground", UIManager.getColor("EditorPane.selectionBackground"));
             SwingUtilities.updateComponentTreeUI(window.frame);
           } catch (Exception e) {
-            LogAppender.println("Look & Feelを " + lafName + " に設定できなかった");
+            // LogAppender.println("Look & Feelを " + lafName + " に設定できなかった");
           }
 
           // 現在選択されているLook & Feelに対応するメニュー内ボタンモデルを選択する処理
@@ -315,11 +318,13 @@ public class ListWindow {
       fis.close();
     } catch (Exception e) {
       InputStream iStream = this.getClass().getResourceAsStream("defaults/nucJ_default.ini");
+      System.out.println("初期設定ファイル ./nucJ_default.ini がロードできません。デフォルト値のロードを試みます");
       try {
         props.load(iStream);
         iStream.close();
+        System.out.println("デフォルト設定 ./src/defaults/nucJ_default.ini をロードしました");
       } catch (IOException e1) {
-        LogAppender.println("デフォルト設定ファイル defaults/nucJ_default.ini のロードに失敗した");
+        System.out.println("デフォルト設定ファイル defaults/nucJ_default.ini のロードに失敗した");
         e1.printStackTrace();
       }
     }
@@ -426,7 +431,7 @@ public class ListWindow {
               props = dialogConverterSettings.props;
           }
         });
-        dialogConverterSettings.setLocationRelativeTo(frame);
+        dialogConverterSettings.setLocationRelativeTo(table);
         dialogConverterSettings.setModal(true);
         dialogConverterSettings.setVisible(true);
         try {
@@ -458,7 +463,7 @@ public class ListWindow {
           String className = lafMap.get(sLafis[j]);
           try {
             UIManager.setLookAndFeel(className);
-            // どうやら一度Numbusを選ぶと以下一行が効かなくなるらしい。なにが起きているのか不明
+            // どうやら一度Numbusを選ぶと以下二行が効かなくなるらしい。なにが起きているのか不明
             UIManager.put("Table.selectionBackground", UIManager.getColor("EditorPane.selectionBackground"));
             SwingUtilities.updateComponentTreeUI(frame);
             // LogAppender.println("Look & Feelを " + className + " に設定した");
@@ -575,7 +580,7 @@ public class ListWindow {
         }
 
         // 既存設定の読み込み
-        Properties individualProps = new Properties();
+        individualProps = new Properties();
         for (String novelID : listNovelIDsToBePropped) {
           urlString = novelList.novelMetaMap.get(novelID).url;
           individualPropsFilePath = Utils.getNovelWiseDstPath(urlString, cachePath.toString());
@@ -604,7 +609,7 @@ public class ListWindow {
               props = dialogConverterSettings.props;
           }
         });
-        dialogConverterSettings.setLocationRelativeTo(frame);
+        dialogConverterSettings.setLocationRelativeTo(table);
         dialogConverterSettings.setModal(true);
         dialogConverterSettings.setVisible(true);
 
@@ -1787,22 +1792,45 @@ public class ListWindow {
       return null;
     }
 
-    // テスト用にパラメータ決め打ちでとりあえず動かしてみる用 うまく動くようなら設定パネル追加とpropsへの保存・読み込み部分を作る
-    String dstPathForViewer = "D:\\drop\\forViewer\\";
-    String dstPathForEPUB3 = srcFile.getParent();
-    int volumeLength = 175000;
-    boolean forceChapterwise = false;
+    // 分割関連パラメータの設定
     boolean flagOutputForViewer = true;
     boolean flagOutputForEPUB3 = true;
-    boolean allowSingleEmptyLine = false;
-    int successiveEmptyLinesLimit = 1;
+    String dstPathForViewer = props.getProperty("ViewerDstPath");
+    if (dstPathForViewer.equals("") || dstPathForViewer == null || !(new File(dstPathForViewer).exists())) {
+      JFileChooser fileChooser = new JFileChooser(currentPath);
+      fileChooser.setDialogTitle("ビューワ用ファイルの出力先を選択");
+      fileChooser.setApproveButtonText("選択");
+      fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+      int state = fileChooser.showOpenDialog(frame);
+      switch (state) {
+      case JFileChooser.APPROVE_OPTION:
+        dstPathForViewer = fileChooser.getSelectedFile().getAbsolutePath();
+        break;
+      case JFileChooser.CANCEL_OPTION:
+        LogAppender.println("ビューワ用ファイルの出力先が得られないため処理を中止します");
+        return null;
+      }
+    }
+    // 紛らわしいが、これ↓はEPUB3ファイルそのものの出力先ではなく、EPUB3変換の元になる分割された青空文庫テキストの出力先
+    String dstPathForEPUB3 = srcFile.getParent();
+    Integer volumeLength = Integer.parseInt(props.getProperty("VolumeLength"));
+    // TODO volumeLength値の正当性検査
+    int length = aozoraBook.getLength();
+    if (volumeLength == null || volumeLength == 0) {
+      // "一巻あたりの文字数上限が設定されていません"
+    } else if ((length / volumeLength) > 20) {
+      // "設定されている一巻あたりの文字数に従うと、全#{}巻になります。続行しますか？"
+    }
+    boolean forceChapterwise = props.getPropertiesAsBoolean("SplitChapterWise");
+    boolean allowSingleEmptyLine = props.getPropertiesAsBoolean("AllowSingleEmptyLines");
+    int successiveEmptyLinesLimit = Integer.parseInt(props.getProperty("SuccessiveEmptyLinesLimit"));
 
     ArrayList<File> srcFiles = aozoraBook.split(dstPathForViewer, dstPathForEPUB3, volumeLength, forceChapterwise,
         flagOutputForViewer, flagOutputForEPUB3, allowSingleEmptyLine, successiveEmptyLinesLimit);
 
     // EPUB3ファイル出力先の設定
     String dstPath = null; // = props.getProperty("DstPath");
-    if (props.getPropertiesAsBoolean("SamePath")) {
+    if (props.getPropertiesAsBoolean("EPUB3SamePath")) {
       try {
         dstPath = srcFile.getParentFile().getCanonicalPath();
       } catch (IOException e) {
@@ -1811,7 +1839,7 @@ public class ListWindow {
         e.printStackTrace();
       }
     } else {
-      dstPath = props.getProperty("DstPath");
+      dstPath = props.getProperty("EPUB3DstPath");
     }
     if (dstPath == null) {
       LogAppender.println("EPUB3ファイルの出力先が設定できません。変換処理を中止します");
@@ -1880,7 +1908,7 @@ public class ListWindow {
 
     // EPUB3ファイル出力先の設定
     String dstPath = null; // = props.getProperty("DstPath");
-    if (props.getPropertiesAsBoolean("SamePath")) {
+    if (props.getPropertiesAsBoolean("EPUB3SamePath")) {
       try {
         dstPath = aozoraTxt.getParentFile().getCanonicalPath();
       } catch (IOException e) {
@@ -1889,7 +1917,7 @@ public class ListWindow {
         e.printStackTrace();
       }
     } else {
-      dstPath = props.getProperty("DstPath");
+      dstPath = props.getProperty("EPUB3DstPath");
     }
     if (dstPath == null) {
       return null;
@@ -1932,7 +1960,7 @@ public class ListWindow {
       // "設定されている一巻あたりの文字数に従うと、全#{}巻になります。続行しますか？"
     }
     boolean forceChapterwise = props.getPropertiesAsBoolean("SplitChapterWise");
-    boolean allowSingleEmptyLine = props.getPropertiesAsBoolean("AllowSingleEmptyLine");
+    boolean allowSingleEmptyLine = props.getPropertiesAsBoolean("AllowSingleEmptyLines");
     int successiveEmptyLinesLimit = Integer.parseInt(props.getProperty("SuccessiveEmptyLinesLimit"));
 
     ArrayList<File> srcFiles = aozoraBook.split(dstPathForViewer, dstPathForEPUB3, volumeLength, forceChapterwise,
