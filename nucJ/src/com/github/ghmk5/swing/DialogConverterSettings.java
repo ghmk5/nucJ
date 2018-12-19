@@ -106,8 +106,10 @@ public class DialogConverterSettings extends JDialog {
   JCheckBox jCheckOverWrite;
   JCheckBox jCheckEPUB3SamePath;
   JComboBox jComboEPUB3DstPath;
+  JCheckBox jCheckUseNovelwiseEPUB3Dir;
   JCheckBox jCheckViewerSamePath;
   JComboBox jComboViewerDstPath;
+  JCheckBox jCheckUseNovelwiseViewerDir;
   JCheckBox jCheckSplitByChapter;
   JTextField jTextVolumeLength;
   JCheckBox jCheckAllowSingleEmptyLine;
@@ -371,7 +373,7 @@ public class DialogConverterSettings extends JDialog {
        * "全般"タブ内 第2段パネル JPanel tab0LinePanel2 = new JPanel();
        * tab0LinePanel2.setLayout(new FlowLayout(FlowLayout.LEFT));
        * tab0RootPanel.add(tab0LinePanel2);
-       * 
+       *
        * // "全般"タブ内 "ePub出力設定"グループ JPanel tab0InnerPanel4 = new JPanel();
        * tab0InnerPanel4.setLayout(new BoxLayout(tab0InnerPanel4,
        * BoxLayout.X_AXIS)); tab0InnerPanel4.setBorder(new
@@ -381,7 +383,7 @@ public class DialogConverterSettings extends JDialog {
        * jCheckWebConvertUpdated.setFocusPainted(false);
        * jCheckWebConvertUpdated.setBorder(padding2);
        * tab0InnerPanel4.add(jCheckWebConvertUpdated);
-       * 
+       *
        * // "全般"タブ内 "変換対象"グループ JPanel tab0InnerPanel5 = new JPanel();
        * tab0InnerPanel5.setLayout(new BoxLayout(tab0InnerPanel5,
        * BoxLayout.X_AXIS)); tab0InnerPanel5.setBorder(new
@@ -447,7 +449,7 @@ public class DialogConverterSettings extends JDialog {
     jComboEPUB3DstPath.setToolTipText("出力先を指定します。変換時に履歴に追加されます");
     jComboEPUB3DstPath.setEditable(false);
     jComboEPUB3DstPath.setForeground(Color.gray);
-    jComboEPUB3DstPath.setPreferredSize(new Dimension(380, 24));
+    jComboEPUB3DstPath.setPreferredSize(new Dimension(280, 24));
     tab1InnerPanel1.add(jComboEPUB3DstPath);
 
     JButton jButtonEPUB3DstPath = new JButton("選択");
@@ -456,6 +458,10 @@ public class DialogConverterSettings extends JDialog {
     jButtonEPUB3DstPath.setFocusPainted(false);
     jButtonEPUB3DstPath.addActionListener(epub3DstPathChooser);
     tab1InnerPanel1.add(jButtonEPUB3DstPath);
+
+    jCheckUseNovelwiseEPUB3Dir = new JCheckBox("作品別ディレクトリ使用");
+    jCheckUseNovelwiseEPUB3Dir.setToolTipText("選択したディレクトリの中に作品別ディレクトリを作成します");
+    tab1InnerPanel1.add(jCheckUseNovelwiseEPUB3Dir);
 
     // "出力"タブ内 "ビューワ用ファイル出力先"グループ
     viewerDstPathChooser = new ViewerDstPathChooserListener(this);
@@ -479,7 +485,7 @@ public class DialogConverterSettings extends JDialog {
     jComboViewerDstPath.setToolTipText("出力先を指定します。変換時に履歴に追加されます");
     jComboViewerDstPath.setEditable(false);
     jComboViewerDstPath.setForeground(Color.gray);
-    jComboViewerDstPath.setPreferredSize(new Dimension(380, 24));
+    jComboViewerDstPath.setPreferredSize(new Dimension(280, 24));
     tab1InnerPanel2.add(jComboViewerDstPath);
 
     JButton jButtonViewerDstPath = new JButton("選択");
@@ -488,6 +494,10 @@ public class DialogConverterSettings extends JDialog {
     jButtonViewerDstPath.setFocusPainted(false);
     jButtonViewerDstPath.addActionListener(viewerDstPathChooser);
     tab1InnerPanel2.add(jButtonViewerDstPath);
+
+    jCheckUseNovelwiseViewerDir = new JCheckBox("作品別ディレクトリ使用");
+    jCheckUseNovelwiseViewerDir.setToolTipText("選択したディレクトリの中に作品別ディレクトリを作成します");
+    tab1InnerPanel2.add(jCheckUseNovelwiseViewerDir);
 
     // "出力"タブ内 第3段パネル
     JPanel tab1InnerPanel3 = new JPanel();
@@ -2401,6 +2411,8 @@ public class DialogConverterSettings extends JDialog {
     ////////////////////////////////////////////////////////////////
     // "出力"タブ
     // ファイル出力先指定のチェックボックスとコンボボックス2つづつはコンストラクタの最後で以前の値を設定している--設定にpropsのインスタンスが必要なため、だと思う
+    setPropsSelected(jCheckUseNovelwiseEPUB3Dir, props, "UseNovelwiseDirEPUB3");
+    setPropsSelected(jCheckUseNovelwiseViewerDir, props, "UseNovelwiseDirViewer");
     setPropsSelected(jCheckSplitByChapter, props, "SplitChapterWise");
     setPropsIntText(jTextVolumeLength, props, "VolumeLength");
     setPropsSelected(jCheckAllowSingleEmptyLine, props, "AllowSingleEmptyLines");
@@ -2704,6 +2716,7 @@ public class DialogConverterSettings extends JDialog {
       e.printStackTrace();
     }
     this.props.setProperty("EPUB3LastDir", this.currentPath == null ? "" : this.currentPath.getAbsolutePath());
+    this.props.setProperty("UseNovelwiseDirEPUB3", jCheckUseNovelwiseEPUB3Dir.isSelected() ? "1" : "");
 
     // ビューワ用ファイル出力先と履歴保存
     try {
@@ -2733,6 +2746,7 @@ public class DialogConverterSettings extends JDialog {
       e.printStackTrace();
     }
     this.props.setProperty("ViewerLastDir", this.currentPath == null ? "" : this.currentPath.getAbsolutePath());
+    this.props.setProperty("UseNovelwiseDirViewer", jCheckUseNovelwiseViewerDir.isSelected() ? "1" : "");
 
     props.setProperty("SplitChapterWise", this.jCheckSplitByChapter.isSelected() ? "1" : "");
     props.setProperty("VolumeLength", this.jTextVolumeLength.getText());
