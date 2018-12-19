@@ -16,12 +16,12 @@ public class Properties extends java.util.Properties {
 
   @Override
   public Set<Object> keySet() {
-    return Collections.unmodifiableSet(new TreeSet<Object>(super.keySet()));
+    return Collections.unmodifiableSet(new TreeSet<>(super.keySet()));
   }
 
   @Override
   public synchronized Enumeration<Object> keys() {
-    return Collections.enumeration(new TreeSet<Object>(super.keySet()));
+    return Collections.enumeration(new TreeSet<>(super.keySet()));
   }
 
   /**
