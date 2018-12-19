@@ -286,14 +286,6 @@ public class ListWindow {
     System.setProperty("awt.useSystemAAFontSettings", "on");
     System.setProperty("swing.aatext", "true");
 
-    this.jarPath = "";
-
-    this.cachePath = new File(this.jarPath + "cache");
-    this.webConfigPath = new File(this.jarPath + "web");
-    this.profilePath = new File(this.jarPath + "profiles");
-    this.profilePath.mkdir();
-    this.csvPath = new File(this.jarPath + "csv");
-
     // DefaultTableModelを定義
     // このまま使用されるのはiniファイルから読み込めず、かつデフォルトiniからも読み込めなかった場合のみ
     DefaultTableModel defaultTableModel;
@@ -309,9 +301,17 @@ public class ListWindow {
       lafMap.put(sLafis[i], lafis[i].getClassName());
     }
 
+    // パスを設定
+    this.jarPath = "";
+    this.cachePath = new File(this.jarPath + "cache");
+    this.webConfigPath = new File(this.jarPath + "web");
+    this.profilePath = new File(this.jarPath + "profiles");
+    this.profilePath.mkdir();
+    this.csvPath = new File(this.jarPath + "csv");
+    // キャッシュパスだけは設定変更できるのでイニシャライザの最後で設定する
+
     // 設定ファイル読み込み
     props = new Properties();
-
     try {
       FileInputStream fis = new FileInputStream(this.jarPath + this.propFileName);
       props.load(fis);
@@ -439,7 +439,27 @@ public class ListWindow {
           fos = new FileOutputStream(jarPath + propFileName);
           props.store(fos, "nucJ Parameters");
           fos.close();
+          // キャッシュパスのプロパティからの取り出しを試みる
+          String cachePathString = props.getProperty("CachePath");
+          if (new File(cachePathString).exists()) {
+            if (new File(cachePathString).isDirectory()) {
+              cachePath = new File(cachePathString);
+            } else {
+              LogAppender.println("設定ファイルに記録されたキャッシュパスの名前 " + cachePathString + " は既に他のファイルに使われています。デフォルト値をセットします");
+              cachePath = new File(jarPath + "cache");
+            }
+          } else {
+            LogAppender.println("設定ファイルに記録されたキャッシュパス " + cachePathString + " は存在しません");
+            cachePath = new File(cachePathString);
+            try {
+              cachePath.mkdirs();
+            } catch (Exception e1) {
+              LogAppender.println("キャッシュパス " + cachePathString + " を作成できません。デフォルト値をセットします");
+              cachePath = new File(jarPath + "cache");
+            }
+          }
         } catch (Exception e1) {
+          LogAppender.println("設定ファイル " + jarPath + propFileName + " の更新に失敗しました");
           e1.printStackTrace();
         }
       }
@@ -615,12 +635,13 @@ public class ListWindow {
 
         for (String novelID : listNovelIDsToBePropped) {
           String urlString = novelList.novelMetaMap.get(novelID).url;
+          urlString = novelList.novelMetaMap.get(novelID).url;
+          individualPropsFilePath = Utils.getNovelWiseDstPath(urlString, cachePath.toString());
           try {
             // 設定ファイル更新
-            urlString = novelList.novelMetaMap.get(novelID).url;
-            individualPropsFilePath = Utils.getNovelWiseDstPath(urlString, cachePath.toString());
-            // System.out.println(individualPropsFilePath);
-            fos = new FileOutputStream(individualPropsFilePath + "convert.ini");
+            File propFile = new File(individualPropsFilePath + "convert.ini");
+            LogAppender.println(propFile.getAbsolutePath());
+            fos = new FileOutputStream(propFile);
             props.store(fos, "converter Parameters");
             fos.close();
           } catch (Exception e1) {
@@ -768,6 +789,26 @@ public class ListWindow {
         e1.printStackTrace();
       }
 
+    }
+
+    // キャッシュパスのプロパティからの取り出しを試みる
+    String cachePathString = props.getProperty("CachePath");
+    if (new File(cachePathString).exists()) {
+      if (new File(cachePathString).isDirectory()) {
+        this.cachePath = new File(cachePathString);
+      } else {
+        LogAppender.println("設定ファイルに記録されたキャッシュパスの名前 " + cachePathString + " は既に他のファイルに使われています。デフォルト値をセットします");
+        this.cachePath = new File(this.jarPath + "cache");
+      }
+    } else {
+      LogAppender.println("設定ファイルに記録されたキャッシュパス " + cachePathString + " は存在しません");
+      this.cachePath = new File(cachePathString);
+      try {
+        this.cachePath.mkdirs();
+      } catch (Exception e) {
+        LogAppender.println("キャッシュパス " + cachePathString + " を作成できません。デフォルト値をセットします");
+        this.cachePath = new File(this.jarPath + "cache");
+      }
     }
 
   }
