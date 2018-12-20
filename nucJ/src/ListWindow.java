@@ -422,6 +422,22 @@ public class ListWindow {
       // JFrame owner;
 
       public void actionPerformed(ActionEvent e) {
+        try {
+          FileInputStream fis = new FileInputStream(jarPath + propFileName);
+          props.load(fis);
+          fis.close();
+        } catch (Exception e1) {
+          InputStream iStream = this.getClass().getResourceAsStream("defaults/nucJ_default.ini");
+          System.out.println("初期設定ファイル ./nucJ_default.ini がロードできません。デフォルト値のロードを試みます");
+          try {
+            props.load(iStream);
+            iStream.close();
+            System.out.println("デフォルト設定 ./src/defaults/nucJ_default.ini をロードしました");
+          } catch (IOException e11) {
+            System.out.println("デフォルト設定ファイル defaults/nucJ_default.ini のロードに失敗した");
+            e11.printStackTrace();
+          }
+        }
         dialogConverterSettings = new DialogConverterSettings(frame, props, "global");
         dialogConverterSettings.addWindowListener(new WindowAdapter() {
           @Override
@@ -431,7 +447,7 @@ public class ListWindow {
               props = dialogConverterSettings.props;
           }
         });
-        dialogConverterSettings.setLocationRelativeTo(table);
+        dialogConverterSettings.setLocationRelativeTo(frame);
         dialogConverterSettings.setModal(true);
         dialogConverterSettings.setVisible(true);
         try {
@@ -439,25 +455,6 @@ public class ListWindow {
           fos = new FileOutputStream(jarPath + propFileName);
           props.store(fos, "nucJ Parameters");
           fos.close();
-          // キャッシュパスのプロパティからの取り出しを試みる
-          String cachePathString = props.getProperty("CachePath");
-          if (new File(cachePathString).exists()) {
-            if (new File(cachePathString).isDirectory()) {
-              cachePath = new File(cachePathString);
-            } else {
-              LogAppender.println("設定ファイルに記録されたキャッシュパスの名前 " + cachePathString + " は既に他のファイルに使われています。デフォルト値をセットします");
-              cachePath = new File(jarPath + "cache");
-            }
-          } else {
-            LogAppender.println("設定ファイルに記録されたキャッシュパス " + cachePathString + " は存在しません");
-            cachePath = new File(cachePathString);
-            try {
-              cachePath.mkdirs();
-            } catch (Exception e1) {
-              LogAppender.println("キャッシュパス " + cachePathString + " を作成できません。デフォルト値をセットします");
-              cachePath = new File(jarPath + "cache");
-            }
-          }
         } catch (Exception e1) {
           LogAppender.println("設定ファイル " + jarPath + propFileName + " の更新に失敗しました");
           e1.printStackTrace();
@@ -602,8 +599,9 @@ public class ListWindow {
         // 既存設定の読み込み
         individualProps = new Properties();
         for (String novelID : listNovelIDsToBePropped) {
-          urlString = novelList.novelMetaMap.get(novelID).url;
-          individualPropsFilePath = Utils.getNovelWiseDstPath(urlString, cachePath.toString());
+          String urlString = novelList.novelMetaMap.get(novelID).url;
+          String cachePathString = props.getProperty("CachePath");
+          individualPropsFilePath = Utils.getNovelWiseDstPath(urlString, cachePathString);
           try {
             FileInputStream fis = new FileInputStream(individualPropsFilePath + "convert.ini");
             individualProps.load(fis);
@@ -625,30 +623,30 @@ public class ListWindow {
           @Override
           public void windowClosed(WindowEvent e) {
             LogAppender.println(dialogConverterSettings.testString);
-            if (dialogConverterSettings.approved)
-              props = dialogConverterSettings.props;
+            if (dialogConverterSettings.approved) {
+              individualProps = dialogConverterSettings.props;
+              for (String novelID : listNovelIDsToBePropped) {
+                String urlString = novelList.novelMetaMap.get(novelID).url;
+                urlString = novelList.novelMetaMap.get(novelID).url;
+                String individualPropsFilePath = Utils.getNovelWiseDstPath(urlString, props.getProperty("CachePath"));
+                try {
+                  // 設定ファイル更新
+                  File propFile = new File(individualPropsFilePath + "convert.ini");
+                  LogAppender.println(propFile.getAbsolutePath());
+                  fos = new FileOutputStream(propFile);
+                  individualProps.store(fos, "converter Parameters");
+                  fos.close();
+                } catch (Exception e1) {
+                  LogAppender.println(novelID + " の個別設定値の保存でエラーが発生しました。設定の変更は保存されていません");
+                  e1.printStackTrace();
+                }
+              }
+            }
           }
         });
-        dialogConverterSettings.setLocationRelativeTo(table);
+        dialogConverterSettings.setLocationRelativeTo(frame);
         dialogConverterSettings.setModal(true);
         dialogConverterSettings.setVisible(true);
-
-        for (String novelID : listNovelIDsToBePropped) {
-          String urlString = novelList.novelMetaMap.get(novelID).url;
-          urlString = novelList.novelMetaMap.get(novelID).url;
-          individualPropsFilePath = Utils.getNovelWiseDstPath(urlString, cachePath.toString());
-          try {
-            // 設定ファイル更新
-            File propFile = new File(individualPropsFilePath + "convert.ini");
-            LogAppender.println(propFile.getAbsolutePath());
-            fos = new FileOutputStream(propFile);
-            props.store(fos, "converter Parameters");
-            fos.close();
-          } catch (Exception e1) {
-            LogAppender.println("個別設定値の保存でエラーが発生しました。設定の変更は保存されていません");
-            e1.printStackTrace();
-          }
-        }
       }
     });
     tableContextMenu.add(openDialogConverterSettings);
