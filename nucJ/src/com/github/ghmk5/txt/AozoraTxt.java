@@ -99,7 +99,10 @@ public class AozoraTxt {
     Matcher matcherDatePublished;
     Pattern pDateUpdated = Pattern.compile("([0-9]{4}/[0-9]{2}/[0-9]{2} [0-9]{2}:[0-9]{2}) +改稿");
     Matcher matcherDateUpdated;
-    Pattern pTagLine = Pattern.compile("^［＃[^］]+］$");
+    Pattern pTagLine = Pattern.compile("^［＃[^挿］]+］$"); // 応急措置版 タグ行検出用パターン
+                                                       // 節の頭脚注エリア内でしか使われていない
+    // Pattern pTagLine = Pattern.compile("^［＃[^］]+］$"); //
+    // もとはこうだった。これだと中身が空行だけの脚注要素が発生し、split()で処理が消滅する
     Matcher matcharTagLine;
 
     boolean flgChapterTitle = false;// 章タイトルを読んでいる間はtrue したがって最初はfalse
@@ -266,7 +269,7 @@ public class AozoraTxt {
 
   /**
    * 全体の長さ(文字数)を返す
-   * 
+   *
    * @return int length
    */
   public int getLength() {

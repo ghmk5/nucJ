@@ -965,7 +965,7 @@ public class ListWindow {
     @Override
     protected Object doInBackground() throws Exception {
       int i = 0;
-      int j = 0;
+      int j = this.listOfnovelIDs.size();
       for (String novelID : this.listOfnovelIDs) {
         execReConvert(novelID);
         // SwingWorkerインスタンスのプロパティprogressに値をセットする
