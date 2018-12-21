@@ -905,6 +905,7 @@ public class ListWindow {
     // doInBackgroundで記述したスレッドが終了したら実行する処理
     @Override
     protected void done() {
+      // 更新後の状態をCSVファイルに書き込む
       try {
         novelList = new NovelList(csvFile);
         defaultTableModel = novelList.getTableModel();
@@ -914,22 +915,17 @@ public class ListWindow {
       }
 
       // テーブルカラム幅の復元
-      try {
-        DefaultTableColumnModel defaultTableColumnModel = (DefaultTableColumnModel) table.getColumnModel();
-        int numCulmns = defaultTableColumnModel.getColumnCount();
-        TableColumn column = null;
-        int savedwidth;
-        for (int idx = 0; idx < numCulmns; idx++) {
-          if (props.getProperty("WidthColumn" + idx) != null) {
-            savedwidth = Integer.parseInt(props.getProperty("WidthColumn" + idx));
-            column = defaultTableColumnModel.getColumn(idx);
-            column.setPreferredWidth(savedwidth);
-          }
+      DefaultTableColumnModel defaultTableColumnModel = (DefaultTableColumnModel) table.getColumnModel();
+      int numCulmns = defaultTableColumnModel.getColumnCount();
+      TableColumn column = null;
+      int savedwidth;
+      for (int idx = 0; idx < numCulmns; idx++) {
+        if (props.getProperty("WidthColumn" + idx) != null) {
+          savedwidth = Integer.parseInt(props.getProperty("WidthColumn" + idx));
+          column = defaultTableColumnModel.getColumn(idx);
+          column.setPreferredWidth(savedwidth);
         }
-      } catch (Exception e3) {
-        LogAppender.println("テーブルカラム幅の復元に失敗した");
       }
-
       // 更新日時(カラムID=4)降順でソート実行
       sorter = new TableRowSorter<>(table.getModel());
       ArrayList sortKeys = new ArrayList<>();
@@ -944,6 +940,17 @@ public class ListWindow {
       dateLastChecked = dateTimeformatter.format(ldtNow);
       lastChkLbl.setText("Last Checked: " + dateLastChecked);
       props.setProperty("DateLastChecked", dateLastChecked);
+
+      // 作品個別の設定をセットした(かもしれない)propsをグローバル値に戻す
+      FileInputStream fis;
+      try {
+        fis = new FileInputStream(jarPath + propFileName);
+        props.load(fis);
+        fis.close();
+      } catch (IOException e) {
+        LogAppender.println("Propertiesへのグローバル値のロードに失敗しました");
+        e.printStackTrace();
+      }
 
       progressBar.setValue(0);
 
@@ -986,6 +993,16 @@ public class ListWindow {
     // doInBackgroundで記述したスレッドが終了したら実行する処理
     @Override
     protected void done() {
+      // 作品個別の設定をセットした(かもしれない)propsをグローバル値に戻す
+      FileInputStream fis;
+      try {
+        fis = new FileInputStream(jarPath + propFileName);
+        props.load(fis);
+        fis.close();
+      } catch (IOException e) {
+        LogAppender.println("Propertiesへのグローバル値のロードに失敗しました");
+        e.printStackTrace();
+      }
       progressBar.setValue(0);
 
     }
@@ -1834,7 +1851,7 @@ public class ListWindow {
     // 分割関連パラメータの設定
     boolean flagOutputForViewer = true;
     boolean flagOutputForEPUB3 = true;
-    String dstPathForViewer = props.getProperty("ViewerDstPath");
+    String dstPathForViewer = novelWiseProps.getProperty("ViewerDstPath");
     if (dstPathForViewer.equals("") || dstPathForViewer == null || !(new File(dstPathForViewer).exists())) {
       JFileChooser fileChooser = new JFileChooser(currentPath);
       fileChooser.setDialogTitle("ビューワ用ファイルの出力先を選択");
@@ -1850,7 +1867,7 @@ public class ListWindow {
         return null;
       }
     }
-    if (props.getPropertiesAsBoolean("UseNovelwiseDirViewer")) {
+    if (novelWiseProps.getPropertiesAsBoolean("UseNovelwiseDirViewer")) {
       dstPathForViewer = dstPathForViewer + File.separator + novelID;
       if (new File(dstPathForViewer).exists()) {
         if (!new File(dstPathForViewer).isDirectory()) {
@@ -1863,7 +1880,7 @@ public class ListWindow {
     }
     // 紛らわしいが、これ↓はEPUB3ファイルそのものの出力先ではなく、EPUB3変換の元になる分割された青空文庫テキストの出力先
     String dstPathForEPUB3 = srcFile.getParent();
-    Integer volumeLength = Integer.parseInt(props.getProperty("VolumeLength"));
+    Integer volumeLength = Integer.parseInt(novelWiseProps.getProperty("VolumeLength"));
     // TODO volumeLength値の正当性検査
     int length = aozoraBook.getLength();
     if (volumeLength == null || volumeLength == 0) {
@@ -1871,16 +1888,16 @@ public class ListWindow {
     } else if ((length / volumeLength) > 20) {
       // "設定されている一巻あたりの文字数に従うと、全#{}巻になります。続行しますか？"
     }
-    boolean forceChapterwise = props.getPropertiesAsBoolean("SplitChapterWise");
-    boolean allowSingleEmptyLine = props.getPropertiesAsBoolean("AllowSingleEmptyLines");
-    int successiveEmptyLinesLimit = Integer.parseInt(props.getProperty("SuccessiveEmptyLinesLimit"));
+    boolean forceChapterwise = novelWiseProps.getPropertiesAsBoolean("SplitChapterWise");
+    boolean allowSingleEmptyLine = novelWiseProps.getPropertiesAsBoolean("AllowSingleEmptyLines");
+    int successiveEmptyLinesLimit = Integer.parseInt(novelWiseProps.getProperty("SuccessiveEmptyLinesLimit"));
 
     ArrayList<File> srcFiles = aozoraBook.split(dstPathForViewer, dstPathForEPUB3, volumeLength, forceChapterwise,
         flagOutputForViewer, flagOutputForEPUB3, allowSingleEmptyLine, successiveEmptyLinesLimit);
 
     // EPUB3ファイル出力先の設定
     String dstPath = null; // = props.getProperty("DstPath");
-    if (props.getPropertiesAsBoolean("EPUB3SamePath")) {
+    if (novelWiseProps.getPropertiesAsBoolean("EPUB3SamePath")) {
       try {
         dstPath = srcFile.getParentFile().getCanonicalPath();
       } catch (IOException e) {
@@ -1889,13 +1906,13 @@ public class ListWindow {
         e.printStackTrace();
       }
     } else {
-      dstPath = props.getProperty("EPUB3DstPath");
+      dstPath = novelWiseProps.getProperty("EPUB3DstPath");
     }
     if (dstPath == null) {
       LogAppender.println("EPUB3ファイルの出力先が設定できません。変換処理を中止します");
       return null;
     }
-    if (props.getPropertiesAsBoolean("UseNovelwiseDirEPUB3")) {
+    if (novelWiseProps.getPropertiesAsBoolean("UseNovelwiseDirEPUB3")) {
       dstPath = dstPath + File.separator + novelID;
       if (new File(dstPath).exists()) {
         if (!new File(dstPath).isDirectory()) {
@@ -1995,11 +2012,8 @@ public class ListWindow {
       }
     }
 
-    // TODO EPUB3に変換する前に分割したり、PageOneでの閲覧用に別途整形したりの処理をここに挟む
-
     // 紛らわしいが、ここまでで使われてるaozoraTxtはクラスAozoraTxtのインスタンスではなく、File("converted.txt")である
-    // (クラスAozoraTxtを書く前に作ったの部分なので)
-    // クラスAozoraTxtはこの直後に初めて出てくる
+    // (クラスAozoraTxtを書く前に作ったの部分なので) クラスAozoraTxtはこの直後に初めて出てくる
 
     AozoraTxt aozoraBook = new AozoraTxt(aozoraTxt, "UTF-8");
 
@@ -2070,6 +2084,17 @@ public class ListWindow {
       } else {
         LogAppender.println(novelMeta.novelID + ": EPUB3への変換は実行されません");
       }
+    }
+
+    // 作品個別の設定をセットした(かもしれない)propsをグローバル値に戻す
+    FileInputStream fis;
+    try {
+      fis = new FileInputStream(jarPath + propFileName);
+      props.load(fis);
+      fis.close();
+    } catch (IOException e) {
+      LogAppender.println("Propertiesへのグローバル値のロードに失敗しました");
+      e.printStackTrace();
     }
 
     return null;
