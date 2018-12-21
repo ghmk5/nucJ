@@ -20,7 +20,7 @@ public class Utils {
    *
    * @param urlString
    * @param cachePathString
-   * @return
+   * @return 絶対パス(文字列) 末尾にはセパレータがつく
    */
   public static String getNovelWiseDstPath(String urlString, String cachePathString) {
     String dstPath;
