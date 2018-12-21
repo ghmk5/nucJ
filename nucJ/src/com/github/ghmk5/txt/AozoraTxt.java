@@ -45,7 +45,7 @@ public class AozoraTxt {
    *          InputStreamReaderに与える文字コード識別子
    * @throws IOException
    */
-  public AozoraTxt(File aozoraTxtFile, String charCode) throws IOException {
+  public AozoraTxt(File aozoraTxtFile, String charCode) throws IOException, ArrayIndexOutOfBoundsException {
     FileInputStream fileInputStream = new FileInputStream(aozoraTxtFile);
     InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream, charCode);
 

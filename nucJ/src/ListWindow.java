@@ -1128,19 +1128,35 @@ public class ListWindow {
         webBeforeChapter = Integer.parseInt(props.getProperty("WebBeforeChapter"));
       }
 
+      // 変換済みファイルconverted.txtが既に存在する場合、更新がなかった場合に備えて退避させておく(更新なしだと破壊されるので)
+      String dstDirPath = Utils.getNovelWiseDstPath(urlString, cachePathString);
+      String originalName = "converted.txt";
+      String backupName = "converted.bak.txt";
+      File originalFile = new File(dstDirPath + originalName);
+      File backupFile = new File(dstDirPath + backupName);
+      if (backupFile.exists() && !backupFile.isFile()) {
+        LogAppender.println("「" + novelMeta.title + "」の1次変換済みテキストファイルのバックアップが作成できません。同名のディレクトリが既に存在します");
+        return resultMap;
+      }
+      backupFile.delete();
+      originalFile.renameTo(backupFile);
+
       // キャッシュされたhtmlファイルを青空文庫形式テキストに変換する
       File srcFile = webConverter.convertToAozoraText(urlString, cachePath, webInterval, webModifiedExpire,
           webConvertUpdated, webModifiedOnly, webModifiedTail, webBeforeChapter);
 
       if (srcFile == null) {
-        LogAppender.append(urlString);
-        if (webConverter.isCanceled())
+        if (webConverter.isCanceled()) {
+          LogAppender.append(urlString);
           LogAppender.println(" の変換をキャンセルしました");
-        else
-          LogAppender.println(" は変換できませんでした");
+        } else {
+          // 更新がなかった場合、退避させておいたconverted.txtを復帰させる
+          originalFile.delete();
+          backupFile.renameTo(originalFile);
+          aozoraTxt = originalFile;
+        }
       } else {
         aozoraTxt = srcFile;
-        novelMeta = webConverter.getNovelMeta();
         if (webConverter.isUpdated()) {
 
           updated = true;
@@ -1170,6 +1186,7 @@ public class ListWindow {
       LogAppender.println("Web上データの取得-青空文庫テキストへの変換に失敗しました");
       e1.printStackTrace();
     }
+    novelMeta = webConverter.getNovelMeta();
     resultMap.put("novelMeta", novelMeta);
     resultMap.put("updated", updated);
     resultMap.put("cached", cached);
@@ -1978,11 +1995,17 @@ public class ListWindow {
     NovelMeta novelMeta = (NovelMeta) resultMap.get("novelMeta");
     // Boolean cached = (Boolean) resultMap.get("cached");
     Boolean updated = (Boolean) resultMap.get("updated");
+    if (!updated) {
+      return null;
+    }
     Boolean newlyAdded = false;
     if (novelList.novelMetaMap.get(novelMeta.novelID) == null) {
       newlyAdded = true;
     }
     File aozoraTxt = (File) resultMap.get("aozoraTxt");
+
+    // 以下使用されるpropsは個別値
+    props = novelWiseProps;
 
     // EPUB3ファイル出力先の設定
     String dstPath = null; // = props.getProperty("DstPath");
@@ -2015,6 +2038,8 @@ public class ListWindow {
     // 紛らわしいが、ここまでで使われてるaozoraTxtはクラスAozoraTxtのインスタンスではなく、File("converted.txt")である
     // (クラスAozoraTxtを書く前に作ったの部分なので) クラスAozoraTxtはこの直後に初めて出てくる
 
+    // converted.txtの中身が不正な(更新なしのために破壊された)場合、この行で処理が消滅しているはず
+    // AozoraTxtのコンストラクタがArrayIndexOutOfBoundsExceptionを吐くようにしたのでキャッチできると思うが
     AozoraTxt aozoraBook = new AozoraTxt(aozoraTxt, "UTF-8");
 
     // 分割関連パラメータの設定
