@@ -767,25 +767,32 @@ public class AozoraTxt {
       // 先頭の空行を除去
       boolean isEmpty = true;
       while (isEmpty) {
-        String line = emptyLinesTreatedList.get(0);
+        String line;
+        line = emptyLinesTreatedList.get(0);
         matcher = patternEmptyLine.matcher(line);
         if (line.equals("") || matcher.find()) {
           emptyLinesTreatedList.remove(0);
         } else {
           isEmpty = false;
         }
+        if (emptyLinesTreatedList.size() == 0)
+          break;
       }
 
       // 末尾の空行を除去
-      isEmpty = true;
-      while (isEmpty) {
-        int lastIdx = emptyLinesTreatedList.size() - 1;
-        String line = emptyLinesTreatedList.get(lastIdx);
-        matcher = patternEmptyLine.matcher(line);
-        if (line.equals("") || matcher.find()) {
-          emptyLinesTreatedList.remove(lastIdx);
-        } else {
-          isEmpty = false;
+      if (emptyLinesTreatedList.size() > 0) {
+        isEmpty = true;
+        while (isEmpty) {
+          int lastIdx = emptyLinesTreatedList.size() - 1;
+          String line = emptyLinesTreatedList.get(lastIdx);
+          matcher = patternEmptyLine.matcher(line);
+          if (line.equals("") || matcher.find()) {
+            emptyLinesTreatedList.remove(lastIdx);
+          } else {
+            isEmpty = false;
+          }
+          if (emptyLinesTreatedList.size() < 1)
+            break;
         }
       }
 

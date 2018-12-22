@@ -1909,6 +1909,7 @@ public class ListWindow {
     boolean allowSingleEmptyLine = novelWiseProps.getPropertiesAsBoolean("AllowSingleEmptyLines");
     int successiveEmptyLinesLimit = Integer.parseInt(novelWiseProps.getProperty("SuccessiveEmptyLinesLimit"));
 
+    // 分割実行
     ArrayList<File> srcFiles = aozoraBook.split(dstPathForViewer, dstPathForEPUB3, volumeLength, forceChapterwise,
         flagOutputForViewer, flagOutputForEPUB3, allowSingleEmptyLine, successiveEmptyLinesLimit);
 
