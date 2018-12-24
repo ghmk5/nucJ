@@ -83,6 +83,26 @@ public class DialogConverterSettings extends JDialog {
   Dimension combo3 = new Dimension(text3.width + 20, 20);
 
   // 設定パラメータを保持するGUIオブジェクト
+  // "全般"タブ
+  JTextField jTextWebInterval;
+  JTextField jTextWebModifiedExpire;
+
+  JCheckBox jCheckUseCloud;
+  JTextField jTextCloudPath;
+  JCheckBox jCheckUseCloudForListFile;
+  JCheckBox jCheckUseCloudForCache;
+  JCheckBox jCheckUseCloudForViewer;
+  JCheckBox jCheckUseCloudForEPUB3;
+
+  JTextField jTextCachePath;
+  JCheckBox jCheckConvertToEPUB3;
+  JTextField jTextEPUB3DstPath;
+  JCheckBox jCheckUseNovelwiseEPUB3Dir;
+  JCheckBox jCheckConvertToViewer;
+  JTextField jTextViewerDstPath;
+  JCheckBox jCheckUseNovelwiseViewerDir;
+
+  // "変換"タブ
   JComboBox jComboTitle;
   JCheckBox jCheckPubFirst;
   JCheckBox jCheckUseFileName;
@@ -100,72 +120,84 @@ public class DialogConverterSettings extends JDialog {
   JComboBox jComboExt;
   JCheckBox jCheckAutoFileName;
   JCheckBox jCheckOverWrite;
-  JCheckBox jCheckConvertToEPUB3;
-  JTextField jTextEPUB3DstPath;
-  JCheckBox jCheckUseNovelwiseEPUB3Dir;
-  JCheckBox jCheckConvertToViewer;
-  JTextField jTextViewerDstPath;
-  JCheckBox jCheckUseNovelwiseViewerDir;
+  JComboBox jComboEncType;
+  JRadioButton jRadioVertical;
+  JRadioButton jRadioHorizontal;
+
   JCheckBox jCheckSplitByChapter;
   JTextField jTextVolumeLength;
   JCheckBox jCheckAllowSingleEmptyLine;
   JTextField jTextSuccessiveEmptyLinesLimit;
-
-  JComboBox jComboEncType;
-  JRadioButton jRadioVertical;
-  JRadioButton jRadioHorizontal;
-  JCheckBox jCheckNoIllust;
   public JCheckBox jCheckConfirm;
+
+  // "画像"タブ
+  JCheckBox jCheckNoIllust;
+
   JTextField jTextDispW;
   JTextField jTextDispH;
   JTextField jTextCoverW;
   JTextField jTextCoverH;
+
   JCheckBox jCheckImageScale;
   JTextField jTextImageScale;
+
+  JCheckBox jCheckGamma;
+  JTextField jTextGammaValue;
+
   JCheckBox jCheckImageFloat;
   JTextField jTextImageFloatW;
   JTextField jTextImageFloatH;
   JComboBox jComboImageFloatType;
+
+  JCheckBox jCheckSvgImage;
+
+  JTextField jTextJpegQuality;
+
   JTextField jTextSinglePageSizeW;
   JTextField jTextSinglePageSizeH;
   JTextField jTextSinglePageWidth;
   JRadioButton jRadioImageSizeType1;
   JRadioButton jRadioImageSizeType3;
   JCheckBox jCheckFitImage;
-  JCheckBox jCheckImageFloatPage;
-  JCheckBox jCheckImageFloatBlock;
-  JCheckBox jCheckSvgImage;
-  JTextField jTextJpegQuality;
-  JCheckBox jCheckGamma;
-  JTextField jTextGammaValue;
-  JCheckBox jCheckResizeH;
-  JTextField jTextResizeNumH;
-  JCheckBox jCheckResizeW;
-  JTextField jTextResizeNumW;
-  JComboBox jComboRotateImage;
+
   JCheckBox jCheckAutoMargin;
   JTextField jTextAutoMarginLimitH;
   JTextField jTextAutoMarginLimitV;
   JTextField jTextAutoMarginWhiteLevel;
   JTextField jTextAutoMarginPadding;
-  JTextField jTextAutoMarginNombreSize;
   JComboBox jComboAutoMarginNombre;
+  JTextField jTextAutoMarginNombreSize;
+
+  JCheckBox jCheckResizeH;
+  JTextField jTextResizeNumH;
+  JCheckBox jCheckResizeW;
+  JTextField jTextResizeNumW;
+  JComboBox jComboRotateImage;
+
+  JCheckBox jCheckImageFloatPage;
+  JCheckBox jCheckImageFloatBlock;
+
+  // "詳細設定"タブ
   JRadioButton jRadioSpaceHyp0;
   JRadioButton jRadioSpaceHyp1;
   JRadioButton jRadioSpaceHyp2;
+
   JRadioButton jRadioChukiRuby0;
   JRadioButton jRadioChukiRuby1;
   JRadioButton jRadioChukiRuby2;
+
   JCheckBox jCheckAutoYoko;
   JCheckBox jCheckAutoYokoNum1;
   JCheckBox jCheckAutoYokoNum3;
   JCheckBox jCheckAutoEQ1;
+
+  JCheckBox jCheckMarkId;
+
   JCheckBox jCheckCommentPrint;
   JCheckBox jCheckCommentConvert;
-  JCheckBox jCheckMarkId;
-  JComboBox jComboxRemoveEmptyLine;
-  JComboBox jComboxMaxEmptyLine;
+
   JCheckBox jCheckForceIndent;
+
   JCheckBox jCheckPageBreak;
   JTextField jTextPageBreakSize;
   JTextField jTextPageBreakEmptySize;
@@ -173,6 +205,8 @@ public class DialogConverterSettings extends JDialog {
   JCheckBox jCheckPageBreakEmpty;
   JComboBox jComboxPageBreakEmptyLine;
   JCheckBox jCheckPageBreakChapter;
+
+  // "目次"タブ
   JTextField jTextMaxChapterNameLength;
   JCheckBox jCheckCoverPageToc;
   JCheckBox jCheckTitleToc;
@@ -180,6 +214,7 @@ public class DialogConverterSettings extends JDialog {
   JCheckBox jCheckChapterExclude;
   JCheckBox jCheckNavNest;
   JCheckBox jCheckNcxNest;
+
   JCheckBox jCheckChapterH;
   JCheckBox jCheckChapterH1;
   JCheckBox jCheckChapterH2;
@@ -193,38 +228,38 @@ public class DialogConverterSettings extends JDialog {
   JCheckBox jCheckChapterNumParenTitle;
   JCheckBox jCheckChapterPattern;
   JComboBox jComboChapterPattern;
+
+  // "スタイル"タブ
   JComboBox jComboLineHeight;
+
   JComboBox jComboFontSize;
+
   JCheckBox jCheckBoldUseGothic;
   JCheckBox jCheckGothicUseBold;
+
   JTextField[] jTextPageMargins;
   JRadioButton jRadioPageMarginUnit0;
   JRadioButton jRadioPageMarginUnit1;
+
   JTextField[] jTextBodyMargins;
   JRadioButton jRadioBodyMarginUnit0;
   JRadioButton jRadioBodyMarginUnit1;
+
   JRadioButton jRadioDakutenType0;
   JRadioButton jRadioDakutenType1;
   JRadioButton jRadioDakutenType2;
+
   JCheckBox jCheckIvsBMP;
   JCheckBox jCheckIvsSSP;
-  JTextField jTextWebInterval;
-  JTextField jTextCachePath;
-  JTextField jTextWebModifiedExpire;
-  JCheckBox jCheckUseCloud;
-  JTextField jTextCloudPath;
-  JCheckBox jCheckUseCloudForListFile;
-  JCheckBox jCheckUseCloudForCache;
-  JCheckBox jCheckUseCloudForViewer;
-  JCheckBox jCheckUseCloudForEPUB3;
 
+  // まだ設置していないもの
   JTextField jTextViewerPath;
   JCheckBox jCheckUseBibi;
   JTextField jTextBibiLocation;
 
   JLabel label;// 使い回し用ラベル
 
-  String title;
+  String title; // 呼び出し元を判別する文字列
 
   // 注意
   // 値を設定/保持するGUIオブジェクトを廃止したが、値自体は固定値でプロパティに保持しておかねばならないものがある
@@ -1852,18 +1887,6 @@ public class DialogConverterSettings extends JDialog {
     jCheckIvsSSP.setBorder(padding2);
     tab7InnerPanel6.add(jCheckIvsSSP);
 
-    // jTextEPUB3DstPathにパスを追加
-    String dstPath = props.getProperty("EPUB3DstPath");
-    if (dstPath != null && !dstPath.equals("")) {
-      jTextEPUB3DstPath.setText(dstPath);
-    }
-
-    // jTextViewerDstPathにパスを追加
-    dstPath = props.getProperty("ViewerDstPath");
-    if (dstPath != null && !dstPath.equals("")) {
-      jTextViewerDstPath.setText(dstPath);
-    }
-
     loadProperties(props);
 
     pack();
@@ -2295,28 +2318,26 @@ public class DialogConverterSettings extends JDialog {
     boolean selected;
     String propValue;
 
-    // 変換前確認
-    setPropsSelected(jCheckConfirm, props, "ChkConfirm");
-
     ////////////////////////////////////////////////////////////////
     // 全般
     if (title.equals("global")) {
+      // 更新チェック
       setPropsFloatText(jTextWebInterval, props, "WebInterval");
       setPropsText(jTextCachePath, props, "CachePath");
       if ("".equals(jTextCachePath.getText()))
         jTextCachePath.setText("cache");
       setPropsNumberText(jTextWebModifiedExpire, props, "WebModifiedExpire"); // "更新判定"
-    }
 
-    ////////////////////////////////////////////////////////////////
-    // "出力"タブ
-    // ファイル出力先指定のチェックボックスとコンボボックス2つづつはコンストラクタの最後で以前の値を設定している--設定にpropsのインスタンスが必要なため、だと思う
-    setPropsSelected(jCheckUseNovelwiseEPUB3Dir, props, "UseNovelwiseDirEPUB3");
-    setPropsSelected(jCheckUseNovelwiseViewerDir, props, "UseNovelwiseDirViewer");
-    setPropsSelected(jCheckSplitByChapter, props, "SplitChapterWise");
-    setPropsIntText(jTextVolumeLength, props, "VolumeLength");
-    setPropsSelected(jCheckAllowSingleEmptyLine, props, "AllowSingleEmptyLines");
-    setPropsIntText(jTextSuccessiveEmptyLinesLimit, props, "SuccessiveEmptyLinesLimit");
+      // クラウド関連
+
+      // 出力先関連
+      setPropsSelected(jCheckConvertToEPUB3, props, "ConvertToEPUB3");
+      setPropsText(jTextEPUB3DstPath, props, "EPUB3DstPath");
+      setPropsSelected(jCheckUseNovelwiseEPUB3Dir, props, "UseNovelwiseDirEPUB3");
+      setPropsSelected(jCheckConvertToViewer, props, "ConvertToViewer");
+      setPropsText(jTextViewerDstPath, props, "ViewerDstPath");
+      setPropsSelected(jCheckUseNovelwiseViewerDir, props, "UseNovelwiseDirViewer");
+    }
 
     ////////////////////////////////////////////////////////////////
     // "変換"タブ
@@ -2371,6 +2392,15 @@ public class DialogConverterSettings extends JDialog {
       jComboEncType.setSelectedIndex(Integer.parseInt(props.getProperty("EncType")));
     } catch (Exception e) {
     }
+
+    // ファイル分割と空行処理
+    setPropsSelected(jCheckSplitByChapter, props, "SplitChapterWise");
+    setPropsIntText(jTextVolumeLength, props, "VolumeLength");
+    setPropsSelected(jCheckAllowSingleEmptyLine, props, "AllowSingleEmptyLines");
+    setPropsIntText(jTextSuccessiveEmptyLinesLimit, props, "SuccessiveEmptyLinesLimit");
+
+    // 変換前確認
+    setPropsSelected(jCheckConfirm, props, "ChkConfirm");
 
     ////////////////////////////////////////////////////////////////
     // 画像設定
@@ -2560,41 +2590,41 @@ public class DialogConverterSettings extends JDialog {
 
     // "全般"タブ
     if (title.equals("global")) {
+      // 更新チェック
       props.setProperty("WebInterval", this.jTextWebInterval.getText());
-      props.setProperty("CachePath", this.jTextCachePath.getText());
       props.setProperty("WebModifiedExpire", this.jTextWebModifiedExpire.getText());
+
+      // クラウド関連
+
+      // 出力先
+      // キャッシュ
+      props.setProperty("CachePath", this.jTextCachePath.getText());
+
+      // EPUB3出力先
+      try {
+        String dstPath = this.jTextEPUB3DstPath.getText().trim();
+        if (dstPath.equals("") && jTextEPUB3DstPath.getText() != null)
+          dstPath = this.jTextEPUB3DstPath.getText().trim();
+        this.props.setProperty("EPUB3DstPath", "" + dstPath);
+      } catch (Exception e) {
+        e.printStackTrace();
+        LogAppender.println("警告: EPUB3ファイル出力先が設定されていません。変換を実行する前に使用可能なディレクトリを指定してください");
+      }
+      this.props.setProperty("UseNovelwiseDirEPUB3", jCheckUseNovelwiseEPUB3Dir.isSelected() ? "1" : "");
+
+      // ビューワ用ファイル出力先
+      try {
+        String dstPath = this.jTextViewerDstPath.getText().trim();
+        if (dstPath.equals("") && jTextViewerDstPath.getText() != null)
+          dstPath = this.jTextViewerDstPath.getText().trim();
+        this.props.setProperty("ViewerDstPath", "" + dstPath);
+      } catch (Exception e) {
+        e.printStackTrace();
+        LogAppender.println("警告: ビューワー閲覧用青空文庫TXTファイル出力先が設定されていません。変換を実行する前に使用可能なディレクトリを指定してください");
+      }
+      this.props.setProperty("UseNovelwiseDirViewer", jCheckUseNovelwiseViewerDir.isSelected() ? "1" : "");
+
     }
-
-    // "出力"タブ
-    // EPUB3出力先と履歴保存
-    try {
-      String dstPath = this.jTextEPUB3DstPath.getText().trim();
-      if (dstPath.equals("") && jTextEPUB3DstPath.getText() != null)
-        dstPath = this.jTextEPUB3DstPath.getText().trim();
-      this.props.setProperty("EPUB3DstPath", "" + dstPath);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-    this.props.setProperty("UseNovelwiseDirEPUB3", jCheckUseNovelwiseEPUB3Dir.isSelected() ? "1" : "");
-
-    // ビューワ用ファイル出力先と履歴保存
-    try {
-      String dstPath = this.jTextViewerDstPath.getText().trim();
-      if (dstPath.equals("") && jTextViewerDstPath.getText() != null)
-        dstPath = this.jTextViewerDstPath.getText().trim();
-      this.props.setProperty("ViewerDstPath", "" + dstPath);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-    this.props.setProperty("UseNovelwiseDirViewer", jCheckUseNovelwiseViewerDir.isSelected() ? "1" : "");
-
-    props.setProperty("SplitChapterWise", this.jCheckSplitByChapter.isSelected() ? "1" : "");
-    props.setProperty("VolumeLength", this.jTextVolumeLength.getText());
-    props.setProperty("AllowSingleEmptyLines", this.jCheckAllowSingleEmptyLine.isSelected() ? "1" : "");
-    props.setProperty("SuccessiveEmptyLinesLimit", jTextSuccessiveEmptyLinesLimit.getText());
-
-    props.setProperty("EncType", "" + this.jComboEncType.getSelectedIndex());
-    props.setProperty("OverWrite", this.jCheckOverWrite.isSelected() ? "1" : "");
 
     // "変換"タブ
     // 表題
@@ -2610,18 +2640,8 @@ public class DialogConverterSettings extends JDialog {
       props.setProperty("Cover", "" + this.jComboCover.getEditor().getItem().toString().trim());
     props.setProperty("CoverHistory", this.jCheckCoverHistory.isSelected() ? "1" : "");
 
-    // TODO 記述の順番整理 ここまで見た
-
-    props.setProperty("AutoFileName", this.jCheckAutoFileName.isSelected() ? "1" : "");
-    // 変換設定
-    props.setProperty("MarkId", this.jCheckMarkId.isSelected() ? "1" : "");
-    props.setProperty("Vertical", this.jRadioVertical.isSelected() ? "1" : "");
-    props.setProperty("Ext", "" + this.jComboExt.getEditor().getItem().toString().trim());
-    props.setProperty("ChkConfirm", this.jCheckConfirm.isSelected() ? "1" : "");
-
     // ページ出力
     props.setProperty("CoverPage", this.jCheckCoverPage.isSelected() ? "1" : "");
-
     props.setProperty("TitlePageWrite", this.jCheckTitlePage.isSelected() ? "1" : "");
     if (this.jRadioTitleNormal.isSelected()) {
       props.setProperty("TitlePage", "" + BookInfo.TITLE_NORMAL);
@@ -2632,6 +2652,20 @@ public class DialogConverterSettings extends JDialog {
     }
     props.setProperty("TocPage", this.jCheckTocPage.isSelected() ? "1" : "");
     props.setProperty("TocVertical", this.jRadioTocV.isSelected() ? "1" : "");
+
+    props.setProperty("Ext", "" + this.jComboExt.getEditor().getItem().toString().trim());
+    props.setProperty("AutoFileName", this.jCheckAutoFileName.isSelected() ? "1" : "");
+    props.setProperty("OverWrite", this.jCheckOverWrite.isSelected() ? "1" : "");
+
+    props.setProperty("EncType", "" + this.jComboEncType.getSelectedIndex());
+    props.setProperty("Vertical", this.jRadioVertical.isSelected() ? "1" : "");
+
+    props.setProperty("SplitChapterWise", this.jCheckSplitByChapter.isSelected() ? "1" : "");
+    props.setProperty("VolumeLength", this.jTextVolumeLength.getText());
+    props.setProperty("AllowSingleEmptyLines", this.jCheckAllowSingleEmptyLine.isSelected() ? "1" : "");
+    props.setProperty("SuccessiveEmptyLinesLimit", jTextSuccessiveEmptyLinesLimit.getText());
+
+    props.setProperty("ChkConfirm", this.jCheckConfirm.isSelected() ? "1" : "");
 
     // "画像"タブ
     // 挿絵非表示
@@ -2681,6 +2715,8 @@ public class DialogConverterSettings extends JDialog {
     props.setProperty("AutoMarginPadding", this.jTextAutoMarginPadding.getText());
     props.setProperty("AutoMarginNombre", "" + this.jComboAutoMarginNombre.getSelectedIndex());
     props.setProperty("AutoMarginNombreSize", this.jTextAutoMarginNombreSize.getText());
+
+    // "詳細設定"タブ
     // 空白の禁則処理
     props.setProperty("SpaceHyphenation",
         this.jRadioSpaceHyp0.isSelected() ? "0" : (this.jRadioSpaceHyp1.isSelected() ? "1" : "2"));
@@ -2692,6 +2728,8 @@ public class DialogConverterSettings extends JDialog {
     props.setProperty("AutoYokoNum1", this.jCheckAutoYokoNum1.isSelected() ? "1" : "");
     props.setProperty("AutoYokoNum3", this.jCheckAutoYokoNum3.isSelected() ? "1" : "");
     props.setProperty("AutoYokoEQ1", this.jCheckAutoEQ1.isSelected() ? "1" : "");
+    // 栞用ID
+    props.setProperty("MarkId", this.jCheckMarkId.isSelected() ? "1" : "");
     // コメント出力
     props.setProperty("CommentPrint", this.jCheckCommentPrint.isSelected() ? "1" : "");
     props.setProperty("CommentConvert", this.jCheckCommentConvert.isSelected() ? "1" : "");
@@ -2705,6 +2743,8 @@ public class DialogConverterSettings extends JDialog {
     props.setProperty("PageBreakEmptySize", "" + this.jTextPageBreakEmptySize.getText().trim());
     props.setProperty("PageBreakChapter", this.jCheckPageBreakChapter.isSelected() ? "1" : "");
     props.setProperty("PageBreakChapterSize", "" + this.jTextPageBreakChapterSize.getText().trim());
+
+    // "目次"タブ
     // 目次出力
     props.setProperty("MaxChapterNameLength", this.jTextMaxChapterNameLength.getText());
     props.setProperty("CoverPageToc", this.jCheckCoverPageToc.isSelected() ? "1" : "");
@@ -2713,6 +2753,8 @@ public class DialogConverterSettings extends JDialog {
     props.setProperty("ChapterExclude", this.jCheckChapterExclude.isSelected() ? "1" : "");
     props.setProperty("NavNest", this.jCheckNavNest.isSelected() ? "1" : "");
     props.setProperty("NcxNest", this.jCheckNcxNest.isSelected() ? "1" : "");
+
+    // 目次抽出
     props.setProperty("ChapterSection", this.jCheckChapterSection.isSelected() ? "1" : "");
     props.setProperty("ChapterH", this.jCheckChapterH.isSelected() ? "1" : "");
     props.setProperty("ChapterH1", this.jCheckChapterH1.isSelected() ? "1" : "");
@@ -2726,7 +2768,13 @@ public class DialogConverterSettings extends JDialog {
     props.setProperty("ChapterNumParenTitle", this.jCheckChapterNumParenTitle.isSelected() ? "1" : "");
     props.setProperty("ChapterPattern", this.jCheckChapterPattern.isSelected() ? "1" : "");
     props.setProperty("ChapterPatternText", this.jComboChapterPattern.getEditor().getItem().toString().trim());
-    // スタイル
+
+    // "スタイル"タブ
+    props.setProperty("LineHeight", this.jComboLineHeight.getEditor().getItem().toString().trim());
+    props.setProperty("FontSize", this.jComboFontSize.getEditor().getItem().toString().trim());
+    props.setProperty("BoldUseGothic", this.jCheckBoldUseGothic.isSelected() ? "1" : "");
+    props.setProperty("GothicUseBold", this.jCheckGothicUseBold.isSelected() ? "1" : "");
+
     props.setProperty("PageMargin", this.jTextPageMargins[0].getText() + "," + this.jTextPageMargins[1].getText() + ","
         + this.jTextPageMargins[2].getText() + "," + this.jTextPageMargins[3].getText());
     props.setProperty("PageMarginUnit",
@@ -2735,10 +2783,7 @@ public class DialogConverterSettings extends JDialog {
         + this.jTextBodyMargins[2].getText() + "," + this.jTextBodyMargins[3].getText());
     props.setProperty("BodyMarginUnit",
         this.jRadioBodyMarginUnit0.isSelected() ? "0" : (this.jRadioBodyMarginUnit1.isSelected() ? "1" : "2"));
-    props.setProperty("LineHeight", this.jComboLineHeight.getEditor().getItem().toString().trim());
-    props.setProperty("FontSize", this.jComboFontSize.getEditor().getItem().toString().trim());
-    props.setProperty("BoldUseGothic", this.jCheckBoldUseGothic.isSelected() ? "1" : "");
-    props.setProperty("GothicUseBold", this.jCheckGothicUseBold.isSelected() ? "1" : "");
+
     // 文字
     props.setProperty("DakutenType",
         this.jRadioDakutenType0.isSelected() ? "0" : (this.jRadioDakutenType1.isSelected() ? "1" : "2"));
