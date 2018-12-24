@@ -11,6 +11,7 @@ import java.awt.Image;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -558,6 +559,7 @@ public class ListWindow {
         return false;
       }
     };
+    // テーブルで使用するフォントを設定
     if (mplus2mMediumFont != null) {
       mplus2mMediumFont = mplus2mMediumFont.deriveFont(0, 13.0f);
       table.setFont(mplus2mMediumFont);
@@ -565,6 +567,20 @@ public class ListWindow {
     table.setSelectionForeground(Color.WHITE);
     table.setSelectionBackground(UIManager.getColor("EditorPane.selectionBackground"));
 
+    // テーブル選択行ダブルクリック時の処理
+    table.addMouseListener(new MouseAdapter() {
+      public void mouseClicked(MouseEvent me) {
+        if (me.getClickCount() == 2 && table.getSelectedRows().length == 1) {
+          int idx = table.getSelectedRow();
+          idx = table.convertRowIndexToModel(idx);
+          String novelID = (String) table.getModel().getValueAt(idx, 0);
+          String urlString = novelList.novelMetaMap.get(novelID).url;
+          String individualCachePath = Utils.getNovelWiseDstPath(urlString, cachePath.getAbsolutePath());
+          // TODO ファイルリスト保存の仕組みができたら続きを書く
+
+        }
+      }
+    });
     // テーブルのコンテキストメニュー
     JPopupMenu tableContextMenu = new JPopupMenu();
 
@@ -933,14 +949,6 @@ public class ListWindow {
       sorter.setSortKeys(sortKeys);
       table.setRowSorter(sorter);
 
-      datePrevChecked = lastChkLbl.getText().substring(14);
-      props.setProperty("DatePrevChecked", datePrevChecked);
-      DateTimeFormatter dateTimeformatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-      LocalDateTime ldtNow = LocalDateTime.now();
-      dateLastChecked = dateTimeformatter.format(ldtNow);
-      lastChkLbl.setText("Last Checked: " + dateLastChecked);
-      props.setProperty("DateLastChecked", dateLastChecked);
-
       // 作品個別の設定をセットした(かもしれない)propsをグローバル値に戻す
       FileInputStream fis;
       try {
@@ -951,6 +959,14 @@ public class ListWindow {
         LogAppender.println("Propertiesへのグローバル値のロードに失敗しました");
         e.printStackTrace();
       }
+
+      datePrevChecked = lastChkLbl.getText().substring(14);
+      props.setProperty("DatePrevChecked", datePrevChecked);
+      DateTimeFormatter dateTimeformatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+      LocalDateTime ldtNow = LocalDateTime.now();
+      dateLastChecked = dateTimeformatter.format(ldtNow);
+      lastChkLbl.setText("Last Checked: " + dateLastChecked);
+      props.setProperty("DateLastChecked", dateLastChecked);
 
       progressBar.setValue(0);
 
@@ -1195,7 +1211,10 @@ public class ListWindow {
   }
 
   /** 青空文庫テキストをEpub3ファイルに変換する */
-  private void convertAozoraToEpub3(File aozoraTxt, String dstPath) {
+  private File convertAozoraToEpub3(File aozoraTxt, String dstPath) {
+
+    // 出力ファイル
+    File outFile = null;
 
     // コンバータとライターの設定
     int resizeW = 0;
@@ -1466,18 +1485,18 @@ public class ListWindow {
           BookInfo.TitleType.indexOf(titleTypeIndex), pubFirst);
     } catch (Exception e) {
       LogAppender.error("ファイルが読み込めませんでした : " + aozoraTxt.getPath());
-      return;
+      return null;
     }
 
     if (this.convertCanceled) {
       LogAppender.println("変換処理を中止しました : " + aozoraTxt.getAbsolutePath());
-      return;
+      return null;
     }
 
     Epub3Writer writer = this.epub3Writer;
     if (bookInfo == null) {
       LogAppender.error("書籍の情報が取得できませんでした");
-      return;
+      return null;
     }
 
     // オリジナルではここにソースがzipだった場合の処理が入っていた
@@ -1560,7 +1579,7 @@ public class ListWindow {
 
     if (this.convertCanceled) {
       LogAppender.println("変換処理を中止しました : " + aozoraTxt.getAbsolutePath());
-      return;
+      return null;
     }
 
     // 前回の変換設定を反映
@@ -1615,7 +1634,7 @@ public class ListWindow {
         JOptionPane.showMessageDialog(frame, "kindlegenがありません\nkindlegen.exeをjarファイルの場所にコピーしてください", "kindlegenエラー",
             JOptionPane.WARNING_MESSAGE);
         LogAppender.println("変換処理をキャンセルしました");
-        return;
+        return null;
       }
       writer.setIsKindle(true);
     }
@@ -1646,12 +1665,12 @@ public class ListWindow {
       if (this.jConfirmDialog.canceled) {
         this.convertCanceled = true;
         LogAppender.println("変換処理を中止しました : " + aozoraTxt.getAbsolutePath());
-        return;
+        return null;
       }
       if (this.jConfirmDialog.skipped) {
         this.setBookInfoHistory(bookInfo);
         LogAppender.println("変換をスキップしました : " + aozoraTxt.getAbsolutePath());
-        return;
+        return null;
       }
 
       // 変換前確認のチェックを反映
@@ -1693,9 +1712,6 @@ public class ListWindow {
     boolean autoFileName = props.getPropertiesAsBoolean("AutoFileName");
     boolean overWrite = props.getPropertiesAsBoolean("OverWrite");
 
-    // 出力ファイル
-    File outFile = null;
-
     // Kindleは一旦tmpファイルに出力
     File outFileOrg = null;
     if (kindlegen != null) {
@@ -1707,7 +1723,7 @@ public class ListWindow {
           LogAppender.println("ファイルが存在します: " + mobiFile.getAbsolutePath());
         else
           LogAppender.println("ファイルが存在します: " + outFile.getAbsolutePath());
-        return;
+        return null;
       }
       outFileOrg = outFile;
       try {
@@ -1725,7 +1741,7 @@ public class ListWindow {
       if (!overWrite && outFile.exists()) {
         LogAppender.println("変換中止: " + aozoraTxt.getAbsolutePath());
         LogAppender.println("ファイルが存在します: " + outFile.getAbsolutePath());
-        return;
+        return null;
       }
     }
     /*
@@ -1755,7 +1771,7 @@ public class ListWindow {
     // 変換中にキャンセルされた場合
     if (this.convertCanceled) {
       LogAppender.println("変換処理を中止しました : " + aozoraTxt.getAbsolutePath());
-      return;
+      return null;
     }
 
     ////////////////////////////////
@@ -1822,6 +1838,7 @@ public class ListWindow {
       this.kindleProcess = null;
     }
 
+    return outFile;
   }
 
   /**
@@ -1942,15 +1959,26 @@ public class ListWindow {
       }
     }
 
+    ArrayList<File> ePUB3FileList = new ArrayList<>();
+
     // 青空文庫テキストからEPUB3ファイルへの変換実行
     for (File splittedSrcFile : srcFiles) {
 
       if (splittedSrcFile != null && splittedSrcFile.isFile()) {
-        convertAozoraToEpub3(splittedSrcFile, dstPath);
+        ePUB3FileList.add(convertAozoraToEpub3(splittedSrcFile, dstPath));
       }
 
       // 再変換のときはnovelList, novelMeta, CSVファイルの更新は必要ないはず(ここに書いてあったのを消した)
 
+    }
+
+    File viewerListFile = new File(novelWiseDstPath + "viewerFiles.txt");
+    FileOutputStream fos = new FileOutputStream(viewerListFile);
+    OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8");
+    BufferedWriter bw = new BufferedWriter(osw);
+    for (File viewerFile : srcFiles) {
+      bw.write(viewerFile.getAbsolutePath());
+      // TODO Dropbox以後のパスをプラットフォームごとに変換する処理ができたら続きを書く
     }
 
     return null;
@@ -2009,26 +2037,16 @@ public class ListWindow {
     props = novelWiseProps;
 
     // EPUB3ファイル出力先の設定
-    String dstPath = null; // = props.getProperty("DstPath");
-    if (props.getPropertiesAsBoolean("EPUB3SamePath")) {
-      try {
-        dstPath = aozoraTxt.getParentFile().getCanonicalPath();
-      } catch (IOException e) {
-        LogAppender.println("EPUB3ファイル出力先ディレクトリが取得できません");
-        LogAppender.println(" -- 変換元ファイルと同じディレクトリに出力するオプションが選択されています");
-        e.printStackTrace();
-      }
-    } else {
-      dstPath = props.getProperty("EPUB3DstPath");
-    }
+    String dstPath = props.getProperty("EPUB3DstPath");
     if (dstPath == null) {
+      LogAppender.println("EPUBファイル出力先が指定されていません。処理を中止します");
       return null;
     }
     if (props.getPropertiesAsBoolean("UseNovelwiseDirEPUB3")) {
       dstPath = dstPath + File.separator + novelMeta.novelID;
       if (new File(dstPath).exists()) {
         if (!new File(dstPath).isDirectory()) {
-          LogAppender.println("指定されたEPUB3ファイル出力先ディレクトリと同名のファイルが既に存在します。処理を終了します");
+          LogAppender.println("指定されたEPUB3ファイル出力先ディレクトリと同名のファイルが既に存在します。処理を中止します");
           return null;
         }
       } else {
