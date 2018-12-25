@@ -1151,7 +1151,7 @@ public class ListWindow {
       File originalFile = new File(dstDirPath + originalName);
       File backupFile = new File(dstDirPath + backupName);
       if (backupFile.exists() && !backupFile.isFile()) {
-        LogAppender.println("「" + novelMeta.title + "」の1次変換済みテキストファイルのバックアップが作成できません。同名のディレクトリが既に存在します");
+        LogAppender.println(urlString + " の1次変換済みテキストファイルのバックアップが作成できません。同名のディレクトリが既に存在します");
         return resultMap;
       }
       backupFile.delete();
@@ -1167,9 +1167,9 @@ public class ListWindow {
           LogAppender.println(" の変換をキャンセルしました");
         } else {
           // 更新がなかった場合、退避させておいたconverted.txtを復帰させる
-          originalFile.delete();
-          backupFile.renameTo(originalFile);
-          aozoraTxt = originalFile;
+          new File(dstDirPath + originalName).delete();
+          new File(dstDirPath + backupName).renameTo(new File(dstDirPath + originalName));
+          aozoraTxt = new File(dstDirPath + originalName);
         }
       } else {
         aozoraTxt = srcFile;
@@ -1885,33 +1885,25 @@ public class ListWindow {
     // 分割関連パラメータの設定
     boolean flagOutputForViewer = true;
     boolean flagOutputForEPUB3 = true;
-    String dstPathForViewer = novelWiseProps.getProperty("ViewerDstPath");
-    if (dstPathForViewer.equals("") || dstPathForViewer == null || !(new File(dstPathForViewer).exists())) {
-      JFileChooser fileChooser = new JFileChooser(currentPath);
-      fileChooser.setDialogTitle("ビューワ用ファイルの出力先を選択");
-      fileChooser.setApproveButtonText("選択");
-      fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-      int state = fileChooser.showOpenDialog(frame);
-      switch (state) {
-      case JFileChooser.APPROVE_OPTION:
-        dstPathForViewer = fileChooser.getSelectedFile().getAbsolutePath();
-        break;
-      case JFileChooser.CANCEL_OPTION:
-        LogAppender.println("ビューワ用ファイルの出力先が得られないため処理を中止します");
-        return null;
-      }
+
+    // ビューワ閲覧用青空文庫テキスト出力先の設定
+    String dstPathForViewer = props.getProperty("ViewerDstPath");
+    if (dstPathForViewer == null) {
+      LogAppender.println("ビューワ閲覧用青空文庫テキスト出力先が指定されていません。処理を中止します");
+      return null;
     }
-    if (novelWiseProps.getPropertiesAsBoolean("UseNovelwiseDirViewer")) {
+    if (props.getPropertiesAsBoolean("UseNovelwiseDirViewer")) {
       dstPathForViewer = dstPathForViewer + File.separator + novelID;
       if (new File(dstPathForViewer).exists()) {
         if (!new File(dstPathForViewer).isDirectory()) {
-          LogAppender.println("指定されたビューワ用ファイル出力先ディレクトリと同名のファイルが既に存在します。処理を終了します");
+          LogAppender.println("指定されたビューワ閲覧用青空文庫テキスト出力先ディレクトリと同名のファイルが既に存在します。処理を中止します");
           return null;
         }
       } else {
         new File(dstPathForViewer).mkdirs();
       }
     }
+
     // 紛らわしいが、これ↓はEPUB3ファイルそのものの出力先ではなく、EPUB3変換の元になる分割された青空文庫テキストの出力先
     String dstPathForEPUB3 = srcFile.getParent();
     Integer volumeLength = Integer.parseInt(novelWiseProps.getProperty("VolumeLength"));
@@ -1920,7 +1912,7 @@ public class ListWindow {
     if (volumeLength == null || volumeLength == 0) {
       // "一巻あたりの文字数上限が設定されていません"
     } else if ((length / volumeLength) > 20) {
-      // "設定されている一巻あたりの文字数に従うと、全#{}巻になります。続行しますか？"
+      // TODO "設定されている一巻あたりの文字数に従うと、全#{}巻になります。続行しますか？"
     }
     boolean forceChapterwise = novelWiseProps.getPropertiesAsBoolean("SplitChapterWise");
     boolean allowSingleEmptyLine = novelWiseProps.getPropertiesAsBoolean("AllowSingleEmptyLines");
@@ -1931,27 +1923,16 @@ public class ListWindow {
         flagOutputForViewer, flagOutputForEPUB3, allowSingleEmptyLine, successiveEmptyLinesLimit);
 
     // EPUB3ファイル出力先の設定
-    String dstPath = null; // = props.getProperty("DstPath");
-    if (novelWiseProps.getPropertiesAsBoolean("EPUB3SamePath")) {
-      try {
-        dstPath = srcFile.getParentFile().getCanonicalPath();
-      } catch (IOException e) {
-        LogAppender.println("EPUB3ファイル出力先ディレクトリが取得できません");
-        LogAppender.println(" -- 変換元ファイルと同じディレクトリに出力するオプションが選択されています");
-        e.printStackTrace();
-      }
-    } else {
-      dstPath = novelWiseProps.getProperty("EPUB3DstPath");
-    }
+    String dstPath = props.getProperty("EPUB3DstPath");
     if (dstPath == null) {
-      LogAppender.println("EPUB3ファイルの出力先が設定できません。変換処理を中止します");
+      LogAppender.println("EPUBファイル出力先が指定されていません。処理を中止します");
       return null;
     }
-    if (novelWiseProps.getPropertiesAsBoolean("UseNovelwiseDirEPUB3")) {
+    if (props.getPropertiesAsBoolean("UseNovelwiseDirEPUB3")) {
       dstPath = dstPath + File.separator + novelID;
       if (new File(dstPath).exists()) {
         if (!new File(dstPath).isDirectory()) {
-          LogAppender.println("指定されたEPUB3ファイル出力先ディレクトリと同名のファイルが既に存在します。処理を終了します");
+          LogAppender.println("指定されたEPUB3ファイル出力先ディレクトリと同名のファイルが既に存在します。処理を中止します");
           return null;
         }
       } else {
@@ -1980,6 +1961,7 @@ public class ListWindow {
       bw.write(viewerFile.getAbsolutePath());
       // TODO Dropbox以後のパスをプラットフォームごとに変換する処理ができたら続きを書く
     }
+    bw.close();
 
     return null;
   }
