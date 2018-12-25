@@ -338,10 +338,10 @@ public class DialogConverterSettings extends JDialog {
 
     // タブパネル内部
 
-    // if (title.equals("global")) {
-    // "全般"タブ(メニューバー "File"メニューの"設定"から呼ばれたときのみ表示する)
+    // "全般"タブ
     JPanel tab0RootPanel = new JPanel();
-    tabbedpane.addTab("全般", new ImageIcon(this.getClass().getResource("/images/web.png")), tab0RootPanel);
+    if (title.equals("global")) // メニューバー "File"メニューの"設定"から呼ばれたときのみ表示する
+      tabbedpane.addTab("全般", new ImageIcon(this.getClass().getResource("/images/web.png")), tab0RootPanel);
     tab0RootPanel.setLayout(new BoxLayout(tab0RootPanel, BoxLayout.Y_AXIS));
 
     // "全般"タブ内 第1段パネル
@@ -2261,7 +2261,7 @@ public class DialogConverterSettings extends JDialog {
     return button.isSelected();
   }
 
-  /** "1"が設定されている場合のみチェックをON nullなら変更しない */
+  /** "1"が設定されている場合はチェックをON nullならnullSelectの値をセット */
   private boolean setPropsSelected(JToggleButton button, Properties props, String name, boolean nullSelect) {
     if (props.containsKey(name)) {
       boolean selected = "1".equals(props.getProperty(name));
@@ -2329,6 +2329,12 @@ public class DialogConverterSettings extends JDialog {
       setPropsNumberText(jTextWebModifiedExpire, props, "WebModifiedExpire"); // "更新判定"
 
       // クラウド関連
+      setPropsSelected(jCheckUseCloud, props, "UseCloud", false);
+      setPropsText(jTextCloudPath, props, "CloudPath");
+      setPropsSelected(jCheckUseCloudForCache, props, "UseCloudForCache", false);
+      setPropsSelected(jCheckUseCloudForListFile, props, "UseCloudForListFile", false);
+      setPropsSelected(jCheckUseCloudForEPUB3, props, "UseCloudForEPUB3", false);
+      setPropsSelected(jCheckUseCloudForViewer, props, "UseCloudForViewer", false);
 
       // 出力先関連
       setPropsSelected(jCheckConvertToEPUB3, props, "ConvertToEPUB3");
@@ -2595,33 +2601,25 @@ public class DialogConverterSettings extends JDialog {
       props.setProperty("WebModifiedExpire", this.jTextWebModifiedExpire.getText());
 
       // クラウド関連
+      props.setProperty("UseCloud", this.jCheckUseCloud.isSelected() ? "1" : "");
+      props.setProperty("CloudPath", jTextCloudPath.getText());
+      props.setProperty("UseCloudForCache", this.jCheckUseCloudForCache.isSelected() ? "1" : "");
+      props.setProperty("UseCloudForListFile", this.jCheckUseCloudForListFile.isSelected() ? "1" : "");
+      props.setProperty("UseCloudForEPUB3", this.jCheckUseCloudForEPUB3.isSelected() ? "1" : "");
+      props.setProperty("UseCloudForViewer", this.jCheckUseCloudForViewer.isSelected() ? "1" : "");
 
       // 出力先
       // キャッシュ
       props.setProperty("CachePath", this.jTextCachePath.getText());
 
       // EPUB3出力先
-      try {
-        String dstPath = this.jTextEPUB3DstPath.getText().trim();
-        if (dstPath.equals("") && jTextEPUB3DstPath.getText() != null)
-          dstPath = this.jTextEPUB3DstPath.getText().trim();
-        this.props.setProperty("EPUB3DstPath", "" + dstPath);
-      } catch (Exception e) {
-        e.printStackTrace();
-        LogAppender.println("警告: EPUB3ファイル出力先が設定されていません。変換を実行する前に使用可能なディレクトリを指定してください");
-      }
+      props.setProperty("ConvertToEPUB3", this.jCheckConvertToEPUB3.isSelected() ? "1" : "");
+      props.setProperty("EPUB3DstPath", this.jTextEPUB3DstPath.getText().trim());
       this.props.setProperty("UseNovelwiseDirEPUB3", jCheckUseNovelwiseEPUB3Dir.isSelected() ? "1" : "");
 
       // ビューワ用ファイル出力先
-      try {
-        String dstPath = this.jTextViewerDstPath.getText().trim();
-        if (dstPath.equals("") && jTextViewerDstPath.getText() != null)
-          dstPath = this.jTextViewerDstPath.getText().trim();
-        this.props.setProperty("ViewerDstPath", "" + dstPath);
-      } catch (Exception e) {
-        e.printStackTrace();
-        LogAppender.println("警告: ビューワー閲覧用青空文庫TXTファイル出力先が設定されていません。変換を実行する前に使用可能なディレクトリを指定してください");
-      }
+      props.setProperty("ConvertToViewer", this.jCheckConvertToViewer.isSelected() ? "1" : "");
+      props.setProperty("ViewerDstPath", this.jTextViewerDstPath.getText().trim());
       this.props.setProperty("UseNovelwiseDirViewer", jCheckUseNovelwiseViewerDir.isSelected() ? "1" : "");
 
     }
