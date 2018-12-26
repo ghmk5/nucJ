@@ -7,6 +7,8 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Frame;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -37,7 +39,6 @@ import javax.swing.JToggleButton;
 import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -87,14 +88,31 @@ public class DialogConverterSettings extends JDialog {
   JTextField jTextWebInterval;
   JTextField jTextWebModifiedExpire;
 
-  JCheckBox jCheckUseCloud;
-  JTextField jTextCloudPath;
-  JCheckBox jCheckUseCloudForListFile;
-  JCheckBox jCheckUseCloudForCache;
-  JCheckBox jCheckUseCloudForViewer;
-  JCheckBox jCheckUseCloudForEPUB3;
+  // TODO 小説リストダブルクリック時の動作関連 変数宣言部
+  // 一次グループ
+  JRadioButton jRadioOnDcOpenViewer;
+  JRadioButton jRadioOnDcOpenHostedBibi;
+  JRadioButton jRadioOnDcOpenLocalBibi;
+  JRadioButton jRadioOnDcOpenFilerEPUB3;
+  JRadioButton jRadioOnDcOpenFilerAozora;
 
+  // jRadioOnDcOpenViewer選択時に有効化される二次グループのラジオボタンとテキストフィールド
+  JTextField jTextViewerExePath;
+  JRadioButton jRadioOpenEpubWViewer;
+  JRadioButton jRadioOpenAozoraWViewer;
+
+  // jRadioOnDcOpenHostedBibi選択時に有効化されるテキストフィールドとチェックボックス
+  JTextField jTextUrlHostedBibi;
+  JCheckBox jCheckOpenFilerHostedBibi;
+
+  // jRadioOnDcOpenLocalBibi選択時に有効化されるチェックボックスとラジオボタン
+  JTextField jTextUrlLocalBibi;
+  JCheckBox jCheckOpenFilerLocalBibi;
+
+  // 各種保存パス指定部
+  JCheckBox jCheckUseRelativePath;
   JTextField jTextCachePath;
+  JTextField jTextCSVPath;
   JCheckBox jCheckConvertToEPUB3;
   JTextField jTextEPUB3DstPath;
   JCheckBox jCheckUseNovelwiseEPUB3Dir;
@@ -252,11 +270,6 @@ public class DialogConverterSettings extends JDialog {
   JCheckBox jCheckIvsBMP;
   JCheckBox jCheckIvsSSP;
 
-  // まだ設置していないもの
-  JTextField jTextViewerPath;
-  JCheckBox jCheckUseBibi;
-  JTextField jTextBibiLocation;
-
   JLabel label;// 使い回し用ラベル
 
   String title; // 呼び出し元を判別する文字列
@@ -345,15 +358,15 @@ public class DialogConverterSettings extends JDialog {
     tab0RootPanel.setLayout(new BoxLayout(tab0RootPanel, BoxLayout.Y_AXIS));
 
     // "全般"タブ内 第1段パネル
-    JPanel tab0LinePanel1 = new JPanel();
-    tab0LinePanel1.setLayout(new FlowLayout(FlowLayout.LEFT));
-    tab0RootPanel.add(tab0LinePanel1);
+    JPanel panelT0L1 = new JPanel();
+    panelT0L1.setLayout(new FlowLayout(FlowLayout.LEFT));
+    tab0RootPanel.add(panelT0L1);
 
     // "全般"タブ内 "webアクセス設定"グループ
     JPanel tab0Line1InnerPanel1 = new JPanel();
     tab0Line1InnerPanel1.setLayout(new BoxLayout(tab0Line1InnerPanel1, BoxLayout.Y_AXIS));
     tab0Line1InnerPanel1.setBorder(new NarrowTitledBorder("Webアクセス設定"));
-    tab0LinePanel1.add(tab0Line1InnerPanel1);
+    panelT0L1.add(tab0Line1InnerPanel1);
 
     // "全般"タブ内 "取得間隔"グループ
     JPanel tab0InnerPanel1 = new JPanel();
@@ -386,143 +399,301 @@ public class DialogConverterSettings extends JDialog {
     jTextWebModifiedExpire.setPreferredSize(text4);
     jTextWebModifiedExpire.addFocusListener(new TextSelectFocusListener(jTextWebModifiedExpire));
     tab0InnerPanel3.add(jTextWebModifiedExpire);
-    label = new JLabel("時間以内を更新とみなす");
+    label = new JLabel("<html>時間以内を<br>更新とみなす</html>");
     label.setToolTipText(jTextWebModifiedExpire.getToolTipText());
     tab0InnerPanel3.add(label);
 
-    // "全般"タブ内 第1段パネル内 "クラウドサービス"グループ
-    JPanel tab0Line1InnerPanel2 = new JPanel();
-    tab0Line1InnerPanel2.setLayout(new BoxLayout(tab0Line1InnerPanel2, BoxLayout.Y_AXIS));
-    tab0Line1InnerPanel2.setBorder(new NarrowTitledBorder("クラウドサービス設定"));
-    tab0LinePanel1.add(tab0Line1InnerPanel2);
+    // "全般"タブ内 "ファイル出力/保存先設定"パネル
+    JPanel panelDirConfig = new JPanel();
+    panelDirConfig.setBorder(new NarrowTitledBorder("ファイル出力/保存先設定"));
+    // tab0RootPanel.add(tab0LinePanel2);
+    panelT0L1.add(panelDirConfig);
 
-    // "全般"タブ内 第2段パネル内 "クラウドサービス"グループ 上段パネル
-    JPanel tab0Line1UpperPanel = new JPanel();
-    FlowLayout fl_tab0Line1UpperPanel = new FlowLayout();
-    fl_tab0Line1UpperPanel.setAlignment(FlowLayout.LEFT);
-    tab0Line1UpperPanel.setLayout(fl_tab0Line1UpperPanel);
-    tab0Line1InnerPanel2.add(tab0Line1UpperPanel);
-    jCheckUseCloud = new JCheckBox("クラウド使用");
-    jCheckUseCloud.setToolTipText("クラウドサービスを利用して複数環境でキャッシュや出力ファイルを共有する場合にチェックします");
-    tab0Line1UpperPanel.add(jCheckUseCloud);
-    jTextCloudPath = new JTextField("~/Dropbox/");
-    jTextCloudPath.setToolTipText("クラウドにより共有されるディレクトリルートのパス");
-    jTextCloudPath.setMaximumSize(text300);
-    jTextCloudPath.setPreferredSize(text300);
-    tab0Line1UpperPanel.add(jTextCloudPath);
-    JButton jButtonCloudPath = new JButton("選択");
-    jButtonCloudPath.setBorder(padding2);
-    jButtonCloudPath.setIcon(new ImageIcon(this.getClass().getResource("/images/dst_path.png")));
-    jButtonCloudPath.setFocusPainted(false);
-    jButtonCloudPath.addActionListener(new CloudPathChooserListener(jButtonCloudPath));
-    tab0Line1UpperPanel.add(jButtonCloudPath);
+    GridBagLayout layoutDirConfig = new GridBagLayout();
+    panelDirConfig.setLayout(layoutDirConfig);
+    GridBagConstraints constraintsDirConfig = new GridBagConstraints();
+    constraintsDirConfig.anchor = GridBagConstraints.WEST;
+    constraintsDirConfig.fill = GridBagConstraints.BOTH;
 
-    // "全般"タブ内 第2段パネル内 "クラウドサービス"グループ 下段パネル
-    JPanel tab0Line1LowerPanel = new JPanel();
-    tab0Line1LowerPanel
-        .setBorder(new TitledBorder(null, "クラウドに置くファイル", TitledBorder.LEADING, TitledBorder.TOP, null, null));
-    FlowLayout fl_tab0Line2LowerPanel = new FlowLayout();
-    fl_tab0Line2LowerPanel.setAlignment(FlowLayout.LEFT);
-    tab0Line1LowerPanel.setLayout(fl_tab0Line2LowerPanel);
-    tab0Line1InnerPanel2.add(tab0Line1LowerPanel);
-    jCheckUseCloudForCache = new JCheckBox("キャッシュ");
-    jCheckUseCloudForCache.setToolTipText("キャッシュをクラウド上に置く場合にチェックします");
-    tab0Line1LowerPanel.add(jCheckUseCloudForCache);
-    jCheckUseCloudForListFile = new JCheckBox("小説リスト");
-    jCheckUseCloudForListFile.setToolTipText("小説リストCSVファイルをクラウド上に置く場合にチェックします");
-    tab0Line1LowerPanel.add(jCheckUseCloudForListFile);
-    jCheckUseCloudForEPUB3 = new JCheckBox("epub");
-    jCheckUseCloudForEPUB3.setToolTipText("epubファイルをクラウド上に置く場合にチェックします");
-    tab0Line1LowerPanel.add(jCheckUseCloudForEPUB3);
-    jCheckUseCloudForViewer = new JCheckBox("青空文庫テキスト");
-    jCheckUseCloudForViewer.setToolTipText("ビューワ閲覧用青空文庫テキストファイルをクラウド上に置く場合にチェックします");
-    tab0Line1LowerPanel.add(jCheckUseCloudForViewer);
+    // "全般"タブ "ファイル出力/保存先設定"パネル内 1行目 "相対パス使用"
+    jCheckUseRelativePath = new JCheckBox("相対パス使用");
+    jCheckUseRelativePath.setToolTipText(
+        "Webキャッシュ, EPUBファイル, 青空文庫テキストファイルの保存先指定に相対パスを使用します\nこれらの保存にクラウドサービスを使用し、かつnucJフォルダ自体もクラウドに置いて複数環境で共有する場合に有用です");
+    // TODO "相対パス使用"にリスナを設定し、パス相対化の処理を挟む
+    constraintsDirConfig.gridx = 0;
+    constraintsDirConfig.gridy = 0;
+    constraintsDirConfig.gridwidth = 2;
+    layoutDirConfig.setConstraints(panelDirConfig, constraintsDirConfig);
+    panelDirConfig.add(jCheckUseRelativePath, constraintsDirConfig);
 
-    // "全般"タブ内 第2段パネル
-    JPanel tab0LinePanel2 = new JPanel();
-    tab0LinePanel2.setLayout(new BoxLayout(tab0LinePanel2, BoxLayout.Y_AXIS));
-    tab0LinePanel2.setBorder(new NarrowTitledBorder("ファイル出力/保存先設定"));
-    tab0RootPanel.add(tab0LinePanel2);
+    // "全般"タブ "ファイル出力/保存先設定"パネル内 2行目 "キャッシュ保存先"グループ
+    label = new JLabel("キャッシュ: ");
+    constraintsDirConfig.gridx = 0;
+    constraintsDirConfig.gridy = 1;
+    constraintsDirConfig.gridwidth = 2;
+    layoutDirConfig.setConstraints(panelDirConfig, constraintsDirConfig);
+    panelDirConfig.add(label, constraintsDirConfig);
 
-    // "全般"タブ 第2段パネル内 第1段パネル "キャッシュ保存先"グループ
-    JPanel tab0Line2InnerPanel1 = new JPanel();
-    FlowLayout fl_tab0Line2InnerPanel1 = new FlowLayout();
-    fl_tab0Line2InnerPanel1.setAlignment(FlowLayout.LEFT);
-    tab0Line2InnerPanel1.setLayout(fl_tab0Line2InnerPanel1);
-    tab0LinePanel2.add(tab0Line2InnerPanel1);
-    label = new JLabel("キャッシュ保存先: ");
-    label.setPreferredSize(new Dimension(146, 13));
-    tab0Line2InnerPanel1.add(label);
+    // "キャッシュ保存先"グループ内テキストフィールドのサイズ
+    Dimension textFieldDimension = new Dimension(240, 24);
+
     jTextCachePath = new JTextField("cache");
-    jTextCachePath
-        .setToolTipText("キャッシュファイルを保存するパスです。\"クラウド使用\"にチェックされていればクラウド共有ディレクトリルートからの、チェックされていなければjar起動パスからの相対パスを指定します");
-    jTextCachePath.setPreferredSize(new Dimension(280, 24));
     jTextCachePath.addFocusListener(new TextSelectFocusListener(jTextCachePath));
-    tab0Line2InnerPanel1.add(jTextCachePath);
+    jTextCachePath.setPreferredSize(textFieldDimension);
+    constraintsDirConfig.gridx = 2;
+    constraintsDirConfig.gridy = 1;
+    constraintsDirConfig.gridwidth = 1;
+    layoutDirConfig.setConstraints(panelDirConfig, constraintsDirConfig);
+    panelDirConfig.add(jTextCachePath, constraintsDirConfig);
+
     JButton jButtonCachePath = new JButton("選択");
     jButtonCachePath.setBorder(padding2);
     jButtonCachePath.setIcon(new ImageIcon(this.getClass().getResource("/images/dst_path.png")));
     jButtonCachePath.setFocusPainted(false);
     jButtonCachePath.addActionListener(new CachePathChooserListener(jButtonCachePath));
-    tab0Line2InnerPanel1.add(jButtonCachePath);
+    constraintsDirConfig.gridx = 3;
+    constraintsDirConfig.gridy = 1;
+    layoutDirConfig.setConstraints(panelDirConfig, constraintsDirConfig);
+    panelDirConfig.add(jButtonCachePath, constraintsDirConfig);
 
-    // "全般"タブ 第2段パネル内 第2段パネル "epub出力先"グループ
-    JPanel tab0Line2InnerPanel2 = new JPanel();
-    FlowLayout fl_tab0Line2InnerPanel2 = new FlowLayout();
-    fl_tab0Line2InnerPanel2.setAlignment(FlowLayout.LEFT);
-    tab0Line2InnerPanel2.setLayout(fl_tab0Line2InnerPanel2);
-    tab0LinePanel2.add(tab0Line2InnerPanel2);
+    // "全般"タブ "ファイル出力/保存先設定"パネル内 3行目 "小説リストCSVファイル保存先"グループ
+    label = new JLabel("小説リストCSV保存先: ");
+    constraintsDirConfig.gridx = 0;
+    constraintsDirConfig.gridy = 2;
+    constraintsDirConfig.gridwidth = 2;
+    layoutDirConfig.setConstraints(panelDirConfig, constraintsDirConfig);
+    panelDirConfig.add(label, constraintsDirConfig);
+
+    jTextCSVPath = new JTextField("csv");
+    jTextCSVPath.addFocusListener(new TextSelectFocusListener(jTextCSVPath));
+    jTextCSVPath.setPreferredSize(textFieldDimension);
+    constraintsDirConfig.gridx = 2;
+    constraintsDirConfig.gridy = 2;
+    constraintsDirConfig.gridwidth = 1;
+    layoutDirConfig.setConstraints(panelDirConfig, constraintsDirConfig);
+    panelDirConfig.add(jTextCSVPath, constraintsDirConfig);
+
+    JButton jButtonCSVPath = new JButton("選択");
+    jButtonCSVPath.setBorder(padding2);
+    jButtonCSVPath.setIcon(new ImageIcon(this.getClass().getResource("/images/dst_path.png")));
+    jButtonCSVPath.setFocusPainted(false);
+    jButtonCSVPath.addActionListener(new CSVPathChooserListener(jButtonCSVPath));
+    constraintsDirConfig.gridx = 3;
+    constraintsDirConfig.gridy = 2;
+    layoutDirConfig.setConstraints(panelDirConfig, constraintsDirConfig);
+    panelDirConfig.add(jButtonCSVPath, constraintsDirConfig);
+
+    // "全般"タブ "ファイル出力/保存先設定"パネル内 3行目 "epub出力先"グループ
     label = new JLabel("EPUB3: ");
-    label.setPreferredSize(new Dimension(64, 13));
-    tab0Line2InnerPanel2.add(label);
+    constraintsDirConfig.gridx = 0;
+    constraintsDirConfig.gridy = 3;
+    layoutDirConfig.setConstraints(panelDirConfig, constraintsDirConfig);
+    panelDirConfig.add(label, constraintsDirConfig);
+
     jCheckConvertToEPUB3 = new JCheckBox("出力する");
+    // TODO EPUB"出力する"チェックボックスの値を読んで出力可否を変更する処理
     jCheckConvertToEPUB3.setToolTipText("EPUB3ファイルを出力する場合にチェックします");
     jCheckConvertToEPUB3.setSelected(true);
-    tab0Line2InnerPanel2.add(jCheckConvertToEPUB3);
+    constraintsDirConfig.gridx = 1;
+    constraintsDirConfig.gridy = 3;
+    layoutDirConfig.setConstraints(panelDirConfig, constraintsDirConfig);
+    panelDirConfig.add(jCheckConvertToEPUB3, constraintsDirConfig);
+
     jTextEPUB3DstPath = new JTextField();
     jTextEPUB3DstPath.setToolTipText("EPUB3ファイルの出力先を指定します");
-    jTextEPUB3DstPath.setPreferredSize(new Dimension(280, 24));
-    tab0Line2InnerPanel2.add(jTextEPUB3DstPath);
+    constraintsDirConfig.gridx = 2;
+    constraintsDirConfig.gridy = 3;
+    layoutDirConfig.setConstraints(panelDirConfig, constraintsDirConfig);
+    panelDirConfig.add(jTextEPUB3DstPath, constraintsDirConfig);
 
     JButton jButtonEPUB3DstPath = new JButton("選択");
     jButtonEPUB3DstPath.setBorder(padding3);
     jButtonEPUB3DstPath.setIcon(new ImageIcon(this.getClass().getResource("/images/dst_path.png")));
     jButtonEPUB3DstPath.setFocusPainted(false);
     jButtonEPUB3DstPath.addActionListener(new EPUB3DstPathChooserListener(jButtonEPUB3DstPath));
-    tab0Line2InnerPanel2.add(jButtonEPUB3DstPath);
+    constraintsDirConfig.gridx = 3;
+    constraintsDirConfig.gridy = 3;
+    layoutDirConfig.setConstraints(panelDirConfig, constraintsDirConfig);
+    panelDirConfig.add(jButtonEPUB3DstPath, constraintsDirConfig);
 
-    jCheckUseNovelwiseEPUB3Dir = new JCheckBox("作品別ディレクトリ使用");
-    jCheckUseNovelwiseEPUB3Dir.setToolTipText("選択したディレクトリの中に作品別ディレクトリを作成します");
-    tab0Line2InnerPanel2.add(jCheckUseNovelwiseEPUB3Dir);
+    jCheckUseNovelwiseEPUB3Dir = new JCheckBox("作品別フォルダ使用");
+    jCheckUseNovelwiseEPUB3Dir.setToolTipText("選択したフォルダの中に作品別ディレクトリを作成します");
+    constraintsDirConfig.gridx = 4;
+    constraintsDirConfig.gridy = 3;
+    layoutDirConfig.setConstraints(panelDirConfig, constraintsDirConfig);
+    panelDirConfig.add(jCheckUseNovelwiseEPUB3Dir, constraintsDirConfig);
 
-    // "全般"タブ 第2段パネル内 第3段パネル "青空文庫テキスト出力先"グループ
-    JPanel tab0Line2InnerPanel3 = new JPanel();
-    FlowLayout fl_tab0Line2InnerPanel3 = new FlowLayout();
-    fl_tab0Line2InnerPanel3.setAlignment(FlowLayout.LEFT);
-    tab0Line2InnerPanel3.setLayout(fl_tab0Line2InnerPanel3);
-    tab0LinePanel2.add(tab0Line2InnerPanel3);
+    // "全般"タブ "ファイル出力/保存先設定"パネル内 4行目 "青空文庫テキスト出力先"グループ
     label = new JLabel("青空TXT: ");
-    label.setPreferredSize(new Dimension(64, 13));
-    tab0Line2InnerPanel3.add(label);
+    constraintsDirConfig.gridx = 0;
+    constraintsDirConfig.gridy = 4;
+    layoutDirConfig.setConstraints(panelDirConfig, constraintsDirConfig);
+    panelDirConfig.add(label, constraintsDirConfig);
+
     jCheckConvertToViewer = new JCheckBox("出力する");
+    // TODO 青空文庫TXT"出力する"チェックボックスの値を読んで出力可否を変更する処理
     jCheckConvertToViewer.setToolTipText("ビューワー閲覧用の青空文庫テキストファイルを出力する場合にチェックします");
     jCheckConvertToViewer.setSelected(true);
-    tab0Line2InnerPanel3.add(jCheckConvertToViewer);
+    constraintsDirConfig.gridx = 1;
+    constraintsDirConfig.gridy = 4;
+    layoutDirConfig.setConstraints(panelDirConfig, constraintsDirConfig);
+    panelDirConfig.add(jCheckConvertToViewer, constraintsDirConfig);
+
     jTextViewerDstPath = new JTextField();
     jTextViewerDstPath.setToolTipText("ビューワー閲覧用青空文庫テキストファイルの出力先を指定します");
-    jTextViewerDstPath.setPreferredSize(new Dimension(280, 24));
-    tab0Line2InnerPanel3.add(jTextViewerDstPath);
+    constraintsDirConfig.gridx = 2;
+    constraintsDirConfig.gridy = 4;
+    layoutDirConfig.setConstraints(panelDirConfig, constraintsDirConfig);
+    panelDirConfig.add(jTextViewerDstPath, constraintsDirConfig);
 
     JButton jButtonViewerDstPath = new JButton("選択");
     jButtonViewerDstPath.setBorder(padding3);
     jButtonViewerDstPath.setIcon(new ImageIcon(this.getClass().getResource("/images/dst_path.png")));
     jButtonViewerDstPath.setFocusPainted(false);
     jButtonViewerDstPath.addActionListener(new ViewerDstPathChooserListener(jButtonViewerDstPath));
-    tab0Line2InnerPanel3.add(jButtonViewerDstPath);
+    constraintsDirConfig.gridx = 3;
+    constraintsDirConfig.gridy = 4;
+    layoutDirConfig.setConstraints(panelDirConfig, constraintsDirConfig);
+    panelDirConfig.add(jButtonViewerDstPath, constraintsDirConfig);
 
-    jCheckUseNovelwiseViewerDir = new JCheckBox("作品別ディレクトリ使用");
-    jCheckUseNovelwiseViewerDir.setToolTipText("選択したディレクトリの中に作品別ディレクトリを作成します");
-    tab0Line2InnerPanel3.add(jCheckUseNovelwiseViewerDir);
+    jCheckUseNovelwiseViewerDir = new JCheckBox("作品別フォルダ使用");
+    jCheckUseNovelwiseViewerDir.setToolTipText("選択したフォルダの中に作品別ディレクトリを作成します");
+    constraintsDirConfig.gridx = 4;
+    constraintsDirConfig.gridy = 4;
+    layoutDirConfig.setConstraints(panelDirConfig, constraintsDirConfig);
+    panelDirConfig.add(jCheckUseNovelwiseViewerDir, constraintsDirConfig);
+
+    // "全般"タブ内 "小説リストダブルクリック時の動作"グループ
+    JPanel panelDcConfig = new JPanel();
+    panelDcConfig.setLayout(new BoxLayout(panelDcConfig, BoxLayout.Y_AXIS));
+    panelDcConfig.setBorder(new NarrowTitledBorder("小説リストダブルクリック時の動作"));
+    tab0RootPanel.add(panelDcConfig);
+
+    // "小説リストダブルクリック時の動作"グループ内に配置する行パネル用のレイアウトマネージャ
+    FlowLayout flowLayoutLinePanel = new FlowLayout(FlowLayout.LEFT);
+    flowLayoutLinePanel.setVgap(0);
+
+    JPanel panelDcConfigL1 = new JPanel();
+    panelDcConfigL1.setLayout(flowLayoutLinePanel);
+    panelDcConfig.add(panelDcConfigL1);
+
+    jRadioOnDcOpenViewer = new JRadioButton("ビューワで");
+    panelDcConfigL1.add(jRadioOnDcOpenViewer);
+    label = new JLabel("(");
+    panelDcConfigL1.add(label);
+    jRadioOpenEpubWViewer = new JRadioButton("EPUB");
+    panelDcConfigL1.add(jRadioOpenEpubWViewer);
+    jRadioOpenAozoraWViewer = new JRadioButton("青空文庫TXT");
+    panelDcConfigL1.add(jRadioOpenAozoraWViewer);
+    label = new JLabel(") を開く");
+    panelDcConfigL1.add(label);
+
+    JPanel panelDcConfigL2 = new JPanel();
+    panelDcConfigL2.setLayout(flowLayoutLinePanel);
+    panelDcConfig.add(panelDcConfigL2);
+
+    label = new JLabel("    実行ファイルのパス:");
+    label.setPreferredSize(new Dimension(144, 12));
+    label.setHorizontalAlignment(JLabel.RIGHT);
+    panelDcConfigL2.add(label);
+    jTextViewerExePath = new JTextField();
+    jTextViewerExePath.setPreferredSize(new Dimension(280, 24));
+    panelDcConfigL2.add(jTextViewerExePath);
+
+    JButton jButtonViewerExe = new JButton("選択");
+    jButtonViewerExe.setBorder(padding2);
+    jButtonViewerExe.setIcon(new ImageIcon(this.getClass().getResource("/images/dst_path.png")));
+    jButtonViewerExe.setFocusPainted(false);
+    // TODO ViewerExeChooserListenerを書いたら復帰させる
+    // jButtonViewerExe.addActionListener(new
+    // ViewerExeChooserListener(jButtonViewerExe));
+    jButtonViewerExe.setPreferredSize(new Dimension(52, 14));
+    panelDcConfigL2.add(jButtonViewerExe);
+
+    JPanel panelDcConfigL3 = new JPanel();
+    panelDcConfigL3.setLayout(flowLayoutLinePanel);
+    panelDcConfig.add(panelDcConfigL3);
+
+    jRadioOnDcOpenHostedBibi = new JRadioButton("localhostのBib/iでEPUBを開く");
+    jRadioOnDcOpenHostedBibi.setToolTipText("localhostでホストされたBib/iを使用します EPUB保存フォルダにBib/bookshelfが指定されている必要があります");
+    panelDcConfigL3.add(jRadioOnDcOpenHostedBibi);
+
+    JPanel panelDcConfigL4 = new JPanel();
+    panelDcConfigL4.setLayout(flowLayoutLinePanel);
+    panelDcConfig.add(panelDcConfigL4);
+
+    label = new JLabel("    Bib/iのURL:");
+    label.setPreferredSize(new Dimension(144, 12));
+    label.setHorizontalAlignment(JLabel.RIGHT);
+    panelDcConfigL4.add(label);
+    jTextUrlHostedBibi = new JTextField();
+    jTextUrlHostedBibi.setPreferredSize(new Dimension(280, 24));
+    panelDcConfigL4.add(jTextUrlHostedBibi);
+    label = new JLabel("    ");
+    label.setPreferredSize(new Dimension(52, 14));
+    panelDcConfigL4.add(label);
+    jCheckOpenFilerHostedBibi = new JCheckBox("同時にEPUB保存フォルダも開く");
+    panelDcConfigL4.add(jCheckOpenFilerHostedBibi);
+
+    JPanel panelDcConfigL5 = new JPanel();
+    panelDcConfigL5.setLayout(flowLayoutLinePanel);
+    panelDcConfig.add(panelDcConfigL5);
+
+    jRadioOnDcOpenLocalBibi = new JRadioButton("ローカルファイルのBib/iを開く");
+    jRadioOnDcOpenLocalBibi
+        .setToolTipText("ローカルのBib/iを使用します Bib/iのウィンドウクリックでEPUBを読み込むには、EPUB保存フォルダにBib/bookshelfが指定されている必要があります");
+    panelDcConfigL5.add(jRadioOnDcOpenLocalBibi);
+
+    JPanel panelDcConfigL6 = new JPanel();
+    panelDcConfigL6.setLayout(flowLayoutLinePanel);
+    panelDcConfig.add(panelDcConfigL6);
+
+    label = new JLabel("    Bib/iのパス:");
+    label.setPreferredSize(new Dimension(144, 12));
+    label.setHorizontalAlignment(JLabel.RIGHT);
+    panelDcConfigL6.add(label);
+    jTextUrlLocalBibi = new JTextField();
+    jTextUrlLocalBibi.setPreferredSize(new Dimension(280, 24));
+    panelDcConfigL6.add(jTextUrlLocalBibi);
+    JButton jButtonLocalBibiPath = new JButton("選択");
+    jButtonLocalBibiPath.setBorder(padding2);
+    jButtonLocalBibiPath.setIcon(new ImageIcon(this.getClass().getResource("/images/dst_path.png")));
+    jButtonLocalBibiPath.setFocusPainted(false);
+    // TODO LocalBibiChooserListenerを書いたら復帰させる
+    // jButtonViewerExe.addActionListener(new
+    // LocalBibiChooserListener(jButtonLocalBibiPath));
+    jButtonLocalBibiPath.setPreferredSize(new Dimension(52, 14));
+    panelDcConfigL6.add(jButtonLocalBibiPath);
+
+    jCheckOpenFilerLocalBibi = new JCheckBox("同時にEPUB保存フォルダも開く");
+    panelDcConfigL6.add(jCheckOpenFilerLocalBibi);
+
+    JPanel panelDcConfigL7 = new JPanel();
+    panelDcConfigL7.setLayout(flowLayoutLinePanel);
+    panelDcConfig.add(panelDcConfigL7);
+
+    label = new JLabel("(");
+    panelDcConfigL7.add(label);
+    jRadioOnDcOpenFilerEPUB3 = new JRadioButton("EPUB");
+    panelDcConfigL7.add(jRadioOnDcOpenFilerEPUB3);
+    jRadioOnDcOpenFilerAozora = new JRadioButton("青空文庫TXT");
+    panelDcConfigL7.add(jRadioOnDcOpenFilerAozora);
+    label = new JLabel(") の保存フォルダを開く");
+    panelDcConfigL7.add(label);
+
+    // ボタングループ定義
+    ButtonGroup groupPrimaryDoOnDc = new ButtonGroup();
+    groupPrimaryDoOnDc.add(jRadioOnDcOpenViewer);
+    groupPrimaryDoOnDc.add(jRadioOnDcOpenHostedBibi);
+    groupPrimaryDoOnDc.add(jRadioOnDcOpenLocalBibi);
+    groupPrimaryDoOnDc.add(jRadioOnDcOpenFilerEPUB3);
+    groupPrimaryDoOnDc.add(jRadioOnDcOpenFilerAozora);
+
+    ButtonGroup groupOpenByViewer = new ButtonGroup();
+    groupOpenByViewer.add(jRadioOpenEpubWViewer);
+    groupOpenByViewer.add(jRadioOpenAozoraWViewer);
+
+    // TODO GUIオブジェクト配置部
 
     // "変換"タブ
     JPanel tab2RootPanel = new JPanel();
@@ -2075,42 +2246,6 @@ public class DialogConverterSettings extends JDialog {
     }
   }
 
-  /** クラウド共有ディレクトリパス選択ボタンイベント */
-  class CloudPathChooserListener implements ActionListener {
-    Component parent;
-
-    private CloudPathChooserListener(Component parent) {
-      this.parent = parent;
-    }
-
-    @Override
-    public void actionPerformed(ActionEvent e) {
-      File path = new File(jTextCloudPath.getText());
-      if (!path.isDirectory())
-        path = path.getParentFile();
-      if (path != null && !path.isDirectory())
-        path = path.getParentFile();
-      JFileChooser fileChooser = new JFileChooser(path);
-      fileChooser.setDialogTitle("キャッシュ出力先を選択");
-      fileChooser.setApproveButtonText("選択");
-      fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-      int state = fileChooser.showOpenDialog(parent);
-      switch (state) {
-      case JFileChooser.APPROVE_OPTION:
-        String pathString = fileChooser.getSelectedFile().getAbsolutePath();
-        try {
-          // パス調整
-          String rootPath = new File("").getCanonicalPath();
-          if (pathString.startsWith(rootPath)) {
-            pathString = pathString.substring(rootPath.length() + 1);
-          }
-        } catch (IOException e1) {
-        }
-        jTextCloudPath.setText(pathString);
-      }
-    }
-  }
-
   /** キャッシュパス選択ボタンイベント */
   class CachePathChooserListener implements ActionListener {
     Component parent;
@@ -2143,6 +2278,42 @@ public class DialogConverterSettings extends JDialog {
         } catch (IOException e1) {
         }
         jTextCachePath.setText(pathString);
+      }
+    }
+  }
+
+  /** CSVパス選択ボタンイベント */
+  class CSVPathChooserListener implements ActionListener {
+    Component parent;
+
+    private CSVPathChooserListener(Component parent) {
+      this.parent = parent;
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      File path = new File(jTextCSVPath.getText());
+      if (!path.isDirectory())
+        path = path.getParentFile();
+      if (path != null && !path.isDirectory())
+        path = path.getParentFile();
+      JFileChooser fileChooser = new JFileChooser(path);
+      fileChooser.setDialogTitle("小説リストCSV保存先を選択");
+      fileChooser.setApproveButtonText("選択");
+      fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+      int state = fileChooser.showOpenDialog(parent);
+      switch (state) {
+      case JFileChooser.APPROVE_OPTION:
+        String pathString = fileChooser.getSelectedFile().getAbsolutePath();
+        try {
+          // パス調整
+          String rootPath = new File("").getCanonicalPath();
+          if (pathString.startsWith(rootPath)) {
+            pathString = pathString.substring(rootPath.length() + 1);
+          }
+        } catch (IOException e1) {
+        }
+        jTextCSVPath.setText(pathString);
       }
     }
   }
@@ -2318,28 +2489,47 @@ public class DialogConverterSettings extends JDialog {
     boolean selected;
     String propValue;
 
-    ////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////
     // 全般
     if (title.equals("global")) {
       // 更新チェック
       setPropsFloatText(jTextWebInterval, props, "WebInterval");
+      // "更新判定"
+      setPropsNumberText(jTextWebModifiedExpire, props, "WebModifiedExpire");
+
+      // TODO 以下5つは排他なので、propsに複数がtrueと記録されていると、読み出し順で最後にtrueだったものが有効になる
+      // 検査を入れるべきか？
+      setPropsSelected(jRadioOnDcOpenViewer, props, "OnDcOpenViewer", false);
+      setPropsSelected(jRadioOnDcOpenHostedBibi, props, "OnDcOpenHostedBibi", false);
+      setPropsSelected(jRadioOnDcOpenLocalBibi, props, "OnDcOpenLocalBibi", false);
+      setPropsSelected(jRadioOnDcOpenFilerEPUB3, props, "OnDcOpenFilerEPUB3", false);
+      setPropsSelected(jRadioOnDcOpenFilerAozora, props, "OnDcOpenFilerAozora", false);
+
+      setPropsText(jTextViewerExePath, props, "ViewerExePath");
+      // TODO 以下2つは排他なので、propsに複数がtrueと記録されていると、読み出し順で最後にtrueだったものが有効になる
+      // 検査を入れるべきか？
+      setPropsSelected(jRadioOpenEpubWViewer, props, "OpenEpubWViewer", false);
+      setPropsSelected(jRadioOpenAozoraWViewer, props, "OpenAozoraWViewer", false);
+
+      setPropsText(jTextUrlHostedBibi, props, "UrlHostedBibi");
+      setPropsSelected(jCheckOpenFilerHostedBibi, props, "OpenFilerHostedBibi", false);
+
+      setPropsText(jTextUrlLocalBibi, props, "UrlLocalBibi");
+      setPropsSelected(jCheckOpenFilerLocalBibi, props, "OpenFilerLocalBibi", false);
+
+      // 出力先関連
+      // 相対パス使用
+      setPropsSelected(jCheckUseRelativePath, props, "UseRelativePath", false);
+
+      // キャッシュ
       setPropsText(jTextCachePath, props, "CachePath");
       if ("".equals(jTextCachePath.getText()))
         jTextCachePath.setText("cache");
-      setPropsNumberText(jTextWebModifiedExpire, props, "WebModifiedExpire"); // "更新判定"
-
-      // クラウド関連
-      setPropsSelected(jCheckUseCloud, props, "UseCloud", false);
-      setPropsText(jTextCloudPath, props, "CloudPath");
-      setPropsSelected(jCheckUseCloudForCache, props, "UseCloudForCache", false);
-      setPropsSelected(jCheckUseCloudForListFile, props, "UseCloudForListFile", false);
-      setPropsSelected(jCheckUseCloudForEPUB3, props, "UseCloudForEPUB3", false);
-      setPropsSelected(jCheckUseCloudForViewer, props, "UseCloudForViewer", false);
-
-      // 出力先関連
+      // EPUB出力
       setPropsSelected(jCheckConvertToEPUB3, props, "ConvertToEPUB3");
       setPropsText(jTextEPUB3DstPath, props, "EPUB3DstPath");
       setPropsSelected(jCheckUseNovelwiseEPUB3Dir, props, "UseNovelwiseDirEPUB3");
+      // 青空文庫TXT出力
       setPropsSelected(jCheckConvertToViewer, props, "ConvertToViewer");
       setPropsText(jTextViewerDstPath, props, "ViewerDstPath");
       setPropsSelected(jCheckUseNovelwiseViewerDir, props, "UseNovelwiseDirViewer");
@@ -2600,15 +2790,27 @@ public class DialogConverterSettings extends JDialog {
       props.setProperty("WebInterval", this.jTextWebInterval.getText());
       props.setProperty("WebModifiedExpire", this.jTextWebModifiedExpire.getText());
 
-      // クラウド関連
-      props.setProperty("UseCloud", this.jCheckUseCloud.isSelected() ? "1" : "");
-      props.setProperty("CloudPath", jTextCloudPath.getText());
-      props.setProperty("UseCloudForCache", this.jCheckUseCloudForCache.isSelected() ? "1" : "");
-      props.setProperty("UseCloudForListFile", this.jCheckUseCloudForListFile.isSelected() ? "1" : "");
-      props.setProperty("UseCloudForEPUB3", this.jCheckUseCloudForEPUB3.isSelected() ? "1" : "");
-      props.setProperty("UseCloudForViewer", this.jCheckUseCloudForViewer.isSelected() ? "1" : "");
+      // 小説リストダブルクリック時の動作
+      props.setProperty("OnDcOpenViewer", this.jRadioOnDcOpenViewer.isSelected() ? "1" : "");
+      props.setProperty("OnDcOpenHostedBibi", this.jRadioOnDcOpenHostedBibi.isSelected() ? "1" : "");
+      props.setProperty("OnDcOpenLocalBibi", this.jRadioOnDcOpenLocalBibi.isSelected() ? "1" : "");
+      props.setProperty("OnDcOpenFilerEPUB3", this.jRadioOnDcOpenFilerEPUB3.isSelected() ? "1" : "");
+      props.setProperty("OnDcOpenFilerAozora", this.jRadioOnDcOpenFilerAozora.isSelected() ? "1" : "");
+
+      props.setProperty("ViewerExePath", this.jTextViewerExePath.getText());
+      props.setProperty("OpenEpubWViewer", this.jRadioOpenEpubWViewer.isSelected() ? "1" : "");
+      props.setProperty("OpenAozoraWViewer", this.jRadioOpenAozoraWViewer.isSelected() ? "1" : "");
+
+      props.setProperty("UrlHostedBibi", this.jTextUrlHostedBibi.getText());
+      props.setProperty("OpenFilerHostedBibi", this.jCheckOpenFilerHostedBibi.isSelected() ? "1" : "");
+
+      props.setProperty("UrlLocalBibi", this.jTextUrlLocalBibi.getText());
+      props.setProperty("OpenFilerLocalBibi", this.jCheckOpenFilerLocalBibi.isSelected() ? "1" : "");
 
       // 出力先
+      // 相対パス使用
+      props.setProperty("UseRelativePath", this.jCheckUseRelativePath.isSelected() ? "1" : "");
+
       // キャッシュ
       props.setProperty("CachePath", this.jTextCachePath.getText());
 
