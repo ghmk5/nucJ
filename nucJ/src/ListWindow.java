@@ -2,6 +2,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
+import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.FlowLayout;
@@ -28,6 +29,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -576,7 +578,50 @@ public class ListWindow {
           String novelID = (String) table.getModel().getValueAt(idx, 0);
           String urlString = novelList.novelMetaMap.get(novelID).url;
           String individualCachePath = Utils.getNovelWiseDstPath(urlString, cachePath.getAbsolutePath());
-          // TODO ファイルリスト保存の仕組みができたら続きを書く
+          String doOnDc = props.getProperty("DoOnDc");
+          if (doOnDc != null) {
+            switch (doOnDc) {
+            case "OpenViewer":
+              // TODO ビューワで開く
+              break;
+            case "OpenHostedBibi":
+              // TODO localhostのBib/iで開く
+              break;
+            case "OpenLocalBibi":
+              // TODO localfileのBib/iで開く
+              break;
+            case "OpenFilerEPUB3": // OS標準のファイラーでEPUB保存ディレクトリを開く
+              String epubSavePath = props.getProperty("EPUB3DstPath");
+              if (epubSavePath != null) {
+                if (props.getPropertiesAsBoolean("UseNovelwiseDirEPUB3"))
+                  epubSavePath = Paths.get(epubSavePath, novelID).toString();
+                try {
+                  Desktop.getDesktop().open(new File(epubSavePath));
+                } catch (IOException e) {
+                  // TODO 自動生成された catch ブロック
+                  e.printStackTrace();
+                }
+              } else {
+                LogAppender.println("EPUBファイルの保存先が記録されていません");
+              }
+              break;
+            case "OpenFilerAozora":
+              String viewerSavePath = props.getProperty("ViewerDstPath");
+              if (viewerSavePath != null) {
+                if (props.getPropertiesAsBoolean("UseNovelwiseDirViewer"))
+                  viewerSavePath = Paths.get(viewerSavePath, novelID).toString();
+                try {
+                  Desktop.getDesktop().open(new File(viewerSavePath));
+                } catch (IOException e) {
+                  // TODO 自動生成された catch ブロック
+                  e.printStackTrace();
+                }
+              } else {
+                LogAppender.println("青空文庫テキストの保存先が記録されていません");
+              }
+              break;
+            }
+          }
 
         }
       }
@@ -950,6 +995,7 @@ public class ListWindow {
       table.setRowSorter(sorter);
 
       // 作品個別の設定をセットした(かもしれない)propsをグローバル値に戻す
+      // execWebConvertの最後でも実行しているので必要ないはずだが、念のために残しておく
       FileInputStream fis;
       try {
         fis = new FileInputStream(jarPath + propFileName);
@@ -1010,6 +1056,7 @@ public class ListWindow {
     @Override
     protected void done() {
       // 作品個別の設定をセットした(かもしれない)propsをグローバル値に戻す
+      // execReConvertの最後でも実行しているので必要ないはずだが、念のために残しておく
       FileInputStream fis;
       try {
         fis = new FileInputStream(jarPath + propFileName);
@@ -1165,12 +1212,11 @@ public class ListWindow {
         if (webConverter.isCanceled()) {
           LogAppender.append(urlString);
           LogAppender.println(" の変換をキャンセルしました");
-        } else {
-          // 更新がなかった場合、退避させておいたconverted.txtを復帰させる
-          new File(dstDirPath + originalName).delete();
-          new File(dstDirPath + backupName).renameTo(new File(dstDirPath + originalName));
-          aozoraTxt = new File(dstDirPath + originalName);
         }
+        // 更新がなかった場合、退避させておいたconverted.txtを復帰させる
+        new File(dstDirPath + originalName).delete();
+        new File(dstDirPath + backupName).renameTo(new File(dstDirPath + originalName));
+        aozoraTxt = new File(dstDirPath + originalName);
       } else {
         aozoraTxt = srcFile;
         if (webConverter.isUpdated()) {
@@ -1196,6 +1242,11 @@ public class ListWindow {
           LogAppender.append(dstPath);
           LogAppender.println(" に キャッシュしました");
 
+        } else {
+          // 更新がなかった場合、退避させておいたconverted.txtを復帰させる
+          new File(dstDirPath + originalName).delete();
+          new File(dstDirPath + backupName).renameTo(new File(dstDirPath + originalName));
+          aozoraTxt = new File(dstDirPath + originalName);
         }
       }
     } catch (IOException e1) {
@@ -1919,8 +1970,8 @@ public class ListWindow {
     int successiveEmptyLinesLimit = Integer.parseInt(novelWiseProps.getProperty("SuccessiveEmptyLinesLimit"));
 
     // 分割実行
-    ArrayList<File> srcFiles = aozoraBook.split(dstPathForViewer, dstPathForEPUB3, volumeLength, forceChapterwise,
-        flagOutputForViewer, flagOutputForEPUB3, allowSingleEmptyLine, successiveEmptyLinesLimit);
+    ArrayList<ArrayList<File>> listOfLists = aozoraBook.split(dstPathForViewer, dstPathForEPUB3, volumeLength,
+        forceChapterwise, flagOutputForViewer, flagOutputForEPUB3, allowSingleEmptyLine, successiveEmptyLinesLimit);
 
     // EPUB3ファイル出力先の設定
     String dstPath = props.getProperty("EPUB3DstPath");
@@ -1940,28 +1991,53 @@ public class ListWindow {
       }
     }
 
-    ArrayList<File> ePUB3FileList = new ArrayList<>();
+    ArrayList<File> listSrcs = listOfLists.get(0);
+    ArrayList<File> listAozora = listOfLists.get(1);
+    ArrayList<File> listEpub3 = new ArrayList<>();
 
     // 青空文庫テキストからEPUB3ファイルへの変換実行
-    for (File splittedSrcFile : srcFiles) {
+    for (File splittedSrcFile : listSrcs) {
 
       if (splittedSrcFile != null && splittedSrcFile.isFile()) {
-        ePUB3FileList.add(convertAozoraToEpub3(splittedSrcFile, dstPath));
+        listEpub3.add(convertAozoraToEpub3(splittedSrcFile, dstPath));
       }
 
       // 再変換のときはnovelList, novelMeta, CSVファイルの更新は必要ないはず(ここに書いてあったのを消した)
 
     }
 
+    // ビューワ閲覧用青空文庫TXTファイルリストの書き出し
     File viewerListFile = new File(novelWiseDstPath + "viewerFiles.txt");
     FileOutputStream fos = new FileOutputStream(viewerListFile);
     OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8");
     BufferedWriter bw = new BufferedWriter(osw);
-    for (File viewerFile : srcFiles) {
+    for (File viewerFile : listAozora) {
       bw.write(viewerFile.getAbsolutePath());
-      // TODO Dropbox以後のパスをプラットフォームごとに変換する処理ができたら続きを書く
+      bw.newLine();
     }
     bw.close();
+
+    // ビューワ閲覧用青空文庫TXTファイルリストの書き出し
+    File ePUB3ListFile = new File(novelWiseDstPath + "EpubFiles.txt");
+    fos = new FileOutputStream(ePUB3ListFile);
+    osw = new OutputStreamWriter(fos, "UTF-8");
+    bw = new BufferedWriter(osw);
+    for (File ePUB3File : listEpub3) {
+      bw.write(ePUB3File.getAbsolutePath());
+      bw.newLine();
+    }
+    bw.close();
+
+    // 作品個別の設定をセットした(かもしれない)propsをグローバル値に戻す
+    FileInputStream fis;
+    try {
+      fis = new FileInputStream(jarPath + propFileName);
+      props.load(fis);
+      fis.close();
+    } catch (IOException e) {
+      LogAppender.println("Propertiesへのグローバル値のロードに失敗しました");
+      e.printStackTrace();
+    }
 
     return null;
   }
@@ -2086,11 +2162,16 @@ public class ListWindow {
     boolean allowSingleEmptyLine = props.getPropertiesAsBoolean("AllowSingleEmptyLines");
     int successiveEmptyLinesLimit = Integer.parseInt(props.getProperty("SuccessiveEmptyLinesLimit"));
 
-    ArrayList<File> srcFiles = aozoraBook.split(dstPathForViewer, dstPathForEPUB3, volumeLength, forceChapterwise,
-        flagOutputForViewer, flagOutputForEPUB3, allowSingleEmptyLine, successiveEmptyLinesLimit);
+    // 分割実行
+    ArrayList<ArrayList<File>> listOfLists = aozoraBook.split(dstPathForViewer, dstPathForEPUB3, volumeLength,
+        forceChapterwise, flagOutputForViewer, flagOutputForEPUB3, allowSingleEmptyLine, successiveEmptyLinesLimit);
+
+    ArrayList<File> listSrcs = listOfLists.get(0);
+    ArrayList<File> listAozora = listOfLists.get(1);
+    ArrayList<File> listEpub3 = new ArrayList<>();
 
     // 青空文庫テキストからEPUB3ファイルへの変換実行
-    for (File srcFile : srcFiles) {
+    for (File srcFile : listSrcs) {
 
       if (updated || newlyAdded) {
         if (srcFile != null && srcFile.isFile()) {
@@ -2111,6 +2192,28 @@ public class ListWindow {
         LogAppender.println(novelMeta.novelID + ": EPUB3への変換は実行されません");
       }
     }
+
+    // ビューワ閲覧用青空文庫TXTファイルリストの書き出し
+    File viewerListFile = new File(novelWiseDstPath + "viewerFiles.txt");
+    FileOutputStream fos = new FileOutputStream(viewerListFile);
+    OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8");
+    BufferedWriter bw = new BufferedWriter(osw);
+    for (File viewerFile : listAozora) {
+      bw.write(viewerFile.getAbsolutePath());
+      bw.newLine();
+    }
+    bw.close();
+
+    // ビューワ閲覧用青空文庫TXTファイルリストの書き出し
+    File ePUB3ListFile = new File(novelWiseDstPath + "EpubFiles.txt");
+    fos = new FileOutputStream(ePUB3ListFile);
+    osw = new OutputStreamWriter(fos, "UTF-8");
+    bw = new BufferedWriter(osw);
+    for (File ePUB3File : listEpub3) {
+      bw.write(ePUB3File.getAbsolutePath());
+      bw.newLine();
+    }
+    bw.close();
 
     // 作品個別の設定をセットした(かもしれない)propsをグローバル値に戻す
     FileInputStream fis;

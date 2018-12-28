@@ -88,18 +88,20 @@ public class DialogConverterSettings extends JDialog {
   JTextField jTextWebInterval;
   JTextField jTextWebModifiedExpire;
 
-  // TODO 小説リストダブルクリック時の動作関連 変数宣言部
+  // 小説リストダブルクリック時の動作関連 変数宣言部
   // 一次グループ
   JRadioButton jRadioOnDcOpenViewer;
   JRadioButton jRadioOnDcOpenHostedBibi;
   JRadioButton jRadioOnDcOpenLocalBibi;
   JRadioButton jRadioOnDcOpenFilerEPUB3;
   JRadioButton jRadioOnDcOpenFilerAozora;
+  String doOnDC; // 上記5つのラジオボタンのどれが選択されているかを記録する変数
 
   // jRadioOnDcOpenViewer選択時に有効化される二次グループのラジオボタンとテキストフィールド
   JTextField jTextViewerExePath;
   JRadioButton jRadioOpenEpubWViewer;
   JRadioButton jRadioOpenAozoraWViewer;
+  String fileOpenWViewer; // 上記2つのラジオボタンのどれが選択されているかを記録する変数
 
   // jRadioOnDcOpenHostedBibi選択時に有効化されるテキストフィールドとチェックボックス
   JTextField jTextUrlHostedBibi;
@@ -578,12 +580,30 @@ public class DialogConverterSettings extends JDialog {
     panelDcConfig.add(panelDcConfigL1);
 
     jRadioOnDcOpenViewer = new JRadioButton("ビューワで");
+    jRadioOnDcOpenViewer.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        doOnDC = "OpenViewer";
+      }
+    });
     panelDcConfigL1.add(jRadioOnDcOpenViewer);
     label = new JLabel("(");
     panelDcConfigL1.add(label);
     jRadioOpenEpubWViewer = new JRadioButton("EPUB");
+    jRadioOpenEpubWViewer.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        fileOpenWViewer = "EPUB";
+      }
+    });
     panelDcConfigL1.add(jRadioOpenEpubWViewer);
     jRadioOpenAozoraWViewer = new JRadioButton("青空文庫TXT");
+    jRadioOpenAozoraWViewer.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        fileOpenWViewer = "Aozora";
+      }
+    });
     panelDcConfigL1.add(jRadioOpenAozoraWViewer);
     label = new JLabel(") を開く");
     panelDcConfigL1.add(label);
@@ -616,6 +636,12 @@ public class DialogConverterSettings extends JDialog {
 
     jRadioOnDcOpenHostedBibi = new JRadioButton("localhostのBib/iでEPUBを開く");
     jRadioOnDcOpenHostedBibi.setToolTipText("localhostでホストされたBib/iを使用します EPUB保存フォルダにBib/bookshelfが指定されている必要があります");
+    jRadioOnDcOpenHostedBibi.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        doOnDC = "OpenHostedBibi";
+      }
+    });
     panelDcConfigL3.add(jRadioOnDcOpenHostedBibi);
 
     JPanel panelDcConfigL4 = new JPanel();
@@ -642,6 +668,12 @@ public class DialogConverterSettings extends JDialog {
     jRadioOnDcOpenLocalBibi = new JRadioButton("ローカルファイルのBib/iを開く");
     jRadioOnDcOpenLocalBibi
         .setToolTipText("ローカルのBib/iを使用します Bib/iのウィンドウクリックでEPUBを読み込むには、EPUB保存フォルダにBib/bookshelfが指定されている必要があります");
+    jRadioOnDcOpenLocalBibi.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        doOnDC = "OpenLocalBibi";
+      }
+    });
     panelDcConfigL5.add(jRadioOnDcOpenLocalBibi);
 
     JPanel panelDcConfigL6 = new JPanel();
@@ -675,10 +707,23 @@ public class DialogConverterSettings extends JDialog {
     label = new JLabel("(");
     panelDcConfigL7.add(label);
     jRadioOnDcOpenFilerEPUB3 = new JRadioButton("EPUB");
+    label = new JLabel(") の保存フォルダを開く");
+    jRadioOnDcOpenFilerEPUB3.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        doOnDC = "OpenFilerEPUB3";
+      }
+    });
     panelDcConfigL7.add(jRadioOnDcOpenFilerEPUB3);
     jRadioOnDcOpenFilerAozora = new JRadioButton("青空文庫TXT");
-    panelDcConfigL7.add(jRadioOnDcOpenFilerAozora);
     label = new JLabel(") の保存フォルダを開く");
+    jRadioOnDcOpenFilerAozora.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        doOnDC = "OpenFilerAozora";
+      }
+    });
+    panelDcConfigL7.add(jRadioOnDcOpenFilerAozora);
     panelDcConfigL7.add(label);
 
     // ボタングループ定義
@@ -2497,19 +2542,42 @@ public class DialogConverterSettings extends JDialog {
       // "更新判定"
       setPropsNumberText(jTextWebModifiedExpire, props, "WebModifiedExpire");
 
-      // TODO 以下5つは排他なので、propsに複数がtrueと記録されていると、読み出し順で最後にtrueだったものが有効になる
-      // 検査を入れるべきか？
-      setPropsSelected(jRadioOnDcOpenViewer, props, "OnDcOpenViewer", false);
-      setPropsSelected(jRadioOnDcOpenHostedBibi, props, "OnDcOpenHostedBibi", false);
-      setPropsSelected(jRadioOnDcOpenLocalBibi, props, "OnDcOpenLocalBibi", false);
-      setPropsSelected(jRadioOnDcOpenFilerEPUB3, props, "OnDcOpenFilerEPUB3", false);
-      setPropsSelected(jRadioOnDcOpenFilerAozora, props, "OnDcOpenFilerAozora", false);
+      // テーブル行ダブルクリック時に実行する処理の選択
+      doOnDC = props.getProperty("DoOnDc");
+      if (doOnDC != null) {
+        switch (doOnDC) {
+        case "OpenViewer":
+          jRadioOnDcOpenViewer.setSelected(true);
+          break;
+        case "OpenHostedBibi":
+          jRadioOnDcOpenHostedBibi.setSelected(true);
+          break;
+        case "OpenLocalBibi":
+          jRadioOnDcOpenLocalBibi.setSelected(true);
+          break;
+        case "OpenFilerEPUB3":
+          jRadioOnDcOpenFilerEPUB3.setSelected(true);
+          break;
+        case "OpenFilerAozora":
+          jRadioOnDcOpenFilerAozora.setSelected(true);
+          break;
+        }
+      }
 
       setPropsText(jTextViewerExePath, props, "ViewerExePath");
-      // TODO 以下2つは排他なので、propsに複数がtrueと記録されていると、読み出し順で最後にtrueだったものが有効になる
-      // 検査を入れるべきか？
-      setPropsSelected(jRadioOpenEpubWViewer, props, "OpenEpubWViewer", false);
-      setPropsSelected(jRadioOpenAozoraWViewer, props, "OpenAozoraWViewer", false);
+
+      // "ビューワで開く"を選択している場合にEPUBと青空文庫TXTのどちらを開くかを選択
+      fileOpenWViewer = props.getProperty("FileOpenWViewer");
+      if (fileOpenWViewer != null) {
+        switch (fileOpenWViewer) {
+        case "EPUB":
+          jRadioOpenEpubWViewer.setSelected(true);
+          break;
+        case "Aozora":
+          jRadioOpenAozoraWViewer.setSelected(true);
+          break;
+        }
+      }
 
       setPropsText(jTextUrlHostedBibi, props, "UrlHostedBibi");
       setPropsSelected(jCheckOpenFilerHostedBibi, props, "OpenFilerHostedBibi", false);
@@ -2791,15 +2859,20 @@ public class DialogConverterSettings extends JDialog {
       props.setProperty("WebModifiedExpire", this.jTextWebModifiedExpire.getText());
 
       // 小説リストダブルクリック時の動作
-      props.setProperty("OnDcOpenViewer", this.jRadioOnDcOpenViewer.isSelected() ? "1" : "");
-      props.setProperty("OnDcOpenHostedBibi", this.jRadioOnDcOpenHostedBibi.isSelected() ? "1" : "");
-      props.setProperty("OnDcOpenLocalBibi", this.jRadioOnDcOpenLocalBibi.isSelected() ? "1" : "");
-      props.setProperty("OnDcOpenFilerEPUB3", this.jRadioOnDcOpenFilerEPUB3.isSelected() ? "1" : "");
-      props.setProperty("OnDcOpenFilerAozora", this.jRadioOnDcOpenFilerAozora.isSelected() ? "1" : "");
+      if (doOnDC != null) {
+        props.setProperty("DoOnDc", doOnDC);
+      } else {
+        props.setProperty("DoOnDc", "");
+      }
 
       props.setProperty("ViewerExePath", this.jTextViewerExePath.getText());
-      props.setProperty("OpenEpubWViewer", this.jRadioOpenEpubWViewer.isSelected() ? "1" : "");
-      props.setProperty("OpenAozoraWViewer", this.jRadioOpenAozoraWViewer.isSelected() ? "1" : "");
+
+      // 小説リストダブルクリック時に"ビューワで開く"が選択されているときに開くファイルの種類
+      if (fileOpenWViewer != null) {
+        props.setProperty("FileOpenWViewer", fileOpenWViewer);
+      } else {
+        props.setProperty("FileOpenWViewer", "");
+      }
 
       props.setProperty("UrlHostedBibi", this.jTextUrlHostedBibi.getText());
       props.setProperty("OpenFilerHostedBibi", this.jCheckOpenFilerHostedBibi.isSelected() ? "1" : "");

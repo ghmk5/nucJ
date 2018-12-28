@@ -286,7 +286,7 @@ public class AozoraTxt {
   }
 
   /**
-   * 分割した青空文庫テキストファイルを保存し、EPUB3変換用ファイルのリストを返す
+   * 分割した青空文庫テキストファイルを保存し、分割済みEPUB3変換用ファイル、Epub3ファイル、ビューワ閲覧用青空文庫TXTのリストを返す
    *
    * @param dstPathForViewer
    *          ビューワー閲覧用ファイルの保存パス
@@ -308,10 +308,12 @@ public class AozoraTxt {
    * @return EPUB3変換用ファイルのリスト
    * @throws IOException
    */
-  public ArrayList<File> split(String dstPathForViewer, String dstPathForEPUB3, int volumeLength,
+  public ArrayList<ArrayList<File>> split(String dstPathForViewer, String dstPathForEPUB3, int volumeLength,
       boolean forceChapterwise, boolean flagOutputForViewer, boolean flagOutputForEPUB3, boolean allowSingleEmptyLine,
       int successiveEmptyLinesLimit) throws IOException {
-    ArrayList<File> outFiles = new ArrayList<>();
+    ArrayList<ArrayList<File>> listOfLists = new ArrayList<>();
+    ArrayList<File> listRawSplit = new ArrayList<>();
+    ArrayList<File> listAozora = new ArrayList<>();
 
     String fileNameForViewer;
     File dstFileForViewer;
@@ -472,7 +474,7 @@ public class AozoraTxt {
           bwForEPUB3.write(line);
         }
         volumeNumber++;
-        outFiles.add(dstFileForEPUB3);
+        listRawSplit.add(dstFileForEPUB3);
         bwForEPUB3.close();
       }
     }
@@ -485,6 +487,7 @@ public class AozoraTxt {
         if (!dstPathForViewer.endsWith("/"))
           dstPathForViewer += "/";
         dstFileForViewer = new File(dstPathForViewer + fileNameForViewer);
+        listAozora.add(dstFileForViewer);
         fosForViewer = new FileOutputStream(dstFileForViewer);
         writerForViewer = new OutputStreamWriter(fosForViewer, "UTF-8");
         bwForViewer = new BufferedWriter(writerForViewer);
@@ -494,9 +497,13 @@ public class AozoraTxt {
         volumeNumber++;
         bwForViewer.close();
       }
+    } else {
+      listAozora = null;
     }
 
-    return outFiles;
+    listOfLists.add(listRawSplit);
+    listOfLists.add(listAozora);
+    return listOfLists;
   }
 
   public String titlePageForEPUB3(int volumeNumber) {
