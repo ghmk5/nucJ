@@ -29,6 +29,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.net.URI;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -77,10 +79,14 @@ import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
+import org.apache.commons.codec.EncoderException;
+import org.apache.commons.codec.net.URLCodec;
+
 import com.github.ghmk5.info.NovelList;
 import com.github.ghmk5.info.NovelMeta;
 import com.github.ghmk5.info.Properties;
 import com.github.ghmk5.swing.DialogConverterSettings;
+import com.github.ghmk5.swing.DialogListFilesToOpen;
 import com.github.ghmk5.txt.AozoraTxt;
 import com.github.ghmk5.util.Utils;
 import com.github.hmdev.converter.AozoraEpub3Converter;
@@ -586,6 +592,59 @@ public class ListWindow {
               break;
             case "OpenHostedBibi":
               // TODO localhostのBib/iで開く
+              Path pathToEpubFileList = Paths.get(individualCachePath, "EpubFiles.txt");
+              ArrayList<File> listFilesToOpen = new ArrayList<>();
+              try {
+                FileInputStream fis = new FileInputStream(pathToEpubFileList.toFile());
+                InputStreamReader iReader = new InputStreamReader(fis, "UTF-8");
+                BufferedReader br = new BufferedReader(iReader);
+                String line = "";
+                while (line != null) {
+                  line = br.readLine();
+                  try {
+                    if (line != null && !line.equals("")) {
+                      File fileToOpen = new File(line);
+                      listFilesToOpen.add(fileToOpen);
+                    }
+                  } catch (Exception e) {
+                  }
+                }
+              } catch (Exception e1) {
+                // TODO 自動生成された catch ブロック
+                e1.printStackTrace();
+              }
+              DialogListFilesToOpen dialogListFilesToOpen = new DialogListFilesToOpen(frame, listFilesToOpen);
+              dialogListFilesToOpen.addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosed(WindowEvent e) {
+                  File fileToOpen = dialogListFilesToOpen.fileToOpen;
+                  Path path = fileToOpen.toPath();
+                  String urlString = props.getProperty("UrlHostedBibi");
+                  String fileName = path.getFileName().toString();
+                  if (props.getPropertiesAsBoolean("UseNovelwiseDirEPUB3")) {
+                    String dirName = path.getParent().getFileName().toString();
+                    urlString = urlString + "?book=" + dirName + "/";
+                  }
+                  URLCodec codec = new URLCodec("UTF-8");
+                  try {
+                    fileName = codec.encode(fileName);
+                    fileName = fileName.replaceAll("\\+", "%20");
+                    urlString += fileName;
+                  } catch (EncoderException e1) {
+                    // TODO 自動生成された catch ブロック
+                    e1.printStackTrace();
+                  }
+                  URI uri;
+                  try {
+                    uri = new URI(urlString);
+                    Desktop.getDesktop().browse(uri);
+                  } catch (Exception e1) {
+                    // TODO 自動生成された catch ブロック
+                    e1.printStackTrace();
+                  }
+                }
+              });
+              dialogListFilesToOpen.setVisible(true);
               break;
             case "OpenLocalBibi":
               // TODO localfileのBib/iで開く
