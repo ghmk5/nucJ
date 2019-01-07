@@ -4,9 +4,11 @@ import java.awt.BorderLayout;
 import java.awt.Frame;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.BufferedReader;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JDialog;
@@ -15,11 +17,17 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
 
+/**
+ * 与えられたファイルの各行をリストとして表示し、ダブルクリックされた行の内容をpublicな変数に入れて外からアクセス可能にするだけのダイアログ
+ * 
+ * @author mk5
+ *
+ */
 public class DialogListFilesToOpen extends JDialog {
 
-  public File fileToOpen;
+  public String selectedLine;
 
-  public DialogListFilesToOpen(Frame owner, ArrayList<File> listFilesToOpen) {
+  public DialogListFilesToOpen(Frame owner, File listFile) throws IOException {
     super(owner);
 
     getContentPane().setLayout(new BorderLayout());
@@ -28,13 +36,15 @@ public class DialogListFilesToOpen extends JDialog {
 
     DefaultListModel<String> listModel = new DefaultListModel<>();
 
-    HashMap<String, File> mapNameToFile = new HashMap<>();
-    for (int i = 0; i < listFilesToOpen.size(); i++) {
-      File file = listFilesToOpen.get(i);
-      String fileName = file.toPath().getFileName().toString();
-      mapNameToFile.put(fileName, file);
-      listModel.addElement(fileName);
+    FileInputStream fis = new FileInputStream(listFile);
+    InputStreamReader iReader = new InputStreamReader(fis, "UTF-8");
+    BufferedReader br = new BufferedReader(iReader);
+    String line = "";
+    while (line != null) {
+      line = br.readLine();
+      listModel.addElement(line);
     }
+    br.close();
 
     JList list = new JList(listModel);
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -42,8 +52,7 @@ public class DialogListFilesToOpen extends JDialog {
     list.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent me) {
         if (me.getClickCount() == 2) {
-          String fileName = (String) list.getSelectedValue();
-          fileToOpen = mapNameToFile.get(fileName);
+          selectedLine = (String) list.getSelectedValue();
           dispose();
         }
       }

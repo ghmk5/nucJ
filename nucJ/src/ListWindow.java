@@ -30,7 +30,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.URI;
-import java.nio.file.Path;
+import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -592,60 +592,53 @@ public class ListWindow {
               break;
             case "OpenHostedBibi":
               // TODO localhostのBib/iで開く
-              Path pathToEpubFileList = Paths.get(individualCachePath, "EpubFiles.txt");
-              ArrayList<File> listFilesToOpen = new ArrayList<>();
-              try {
-                FileInputStream fis = new FileInputStream(pathToEpubFileList.toFile());
-                InputStreamReader iReader = new InputStreamReader(fis, "UTF-8");
-                BufferedReader br = new BufferedReader(iReader);
-                String line = "";
-                while (line != null) {
-                  line = br.readLine();
-                  try {
-                    if (line != null && !line.equals("")) {
-                      File fileToOpen = new File(line);
-                      listFilesToOpen.add(fileToOpen);
-                    }
-                  } catch (Exception e) {
-                  }
-                }
-              } catch (Exception e1) {
-                // TODO 自動生成された catch ブロック
-                e1.printStackTrace();
+              File listFile = Paths.get(individualCachePath, "EpubFiles.txt").toFile();
+              if (!listFile.exists()) {
+                LogAppender.println("この作品のEPUBリストが見つかりません(変換されたことがない？)");
+                break;
               }
-              DialogListFilesToOpen dialogListFilesToOpen = new DialogListFilesToOpen(frame, listFilesToOpen);
-              dialogListFilesToOpen.setModal(true);
-              dialogListFilesToOpen.setLocationRelativeTo(frame);
-              dialogListFilesToOpen.addWindowListener(new WindowAdapter() {
-                @Override
-                public void windowClosed(WindowEvent e) {
-                  File fileToOpen = dialogListFilesToOpen.fileToOpen;
-                  Path path = fileToOpen.toPath();
-                  try {
+              DialogListFilesToOpen dialogListFilesToOpen;
+              try {
+                dialogListFilesToOpen = new DialogListFilesToOpen(frame, listFile);
+                dialogListFilesToOpen.setModal(true);
+                dialogListFilesToOpen.setLocationRelativeTo(frame);
+                dialogListFilesToOpen.addWindowListener(new WindowAdapter() {
+                  @Override
+                  public void windowClosed(WindowEvent e) {
+                    String fileName = dialogListFilesToOpen.selectedLine;
                     String urlString = props.getProperty("UrlHostedBibi");
-                    String fileName = path.getFileName().toString();
-                    if (props.getPropertiesAsBoolean("UseNovelwiseDirEPUB3")) {
-                      String dirName = path.getParent().getFileName().toString();
-                      urlString = urlString + "?book=" + dirName + "/";
-                    }
+                    urlString += "?book=";
+                    if (props.getPropertiesAsBoolean("UseNovelwiseDirEPUB3"))
+                      urlString = urlString + novelID + "/";
                     URLCodec codec = new URLCodec("UTF-8");
-                    fileName = codec.encode(fileName);
-                    fileName = fileName.replaceAll("\\+", "%20");
-                    urlString += fileName;
-                    URI uri;
-                    uri = new URI(urlString);
-                    Desktop.getDesktop().browse(uri);
-                  } catch (EncoderException e1) {
-                    LogAppender.println("Bib/iに与えるURLがエンコードできません");
-                    e1.printStackTrace();
-                  } catch (Exception e1) {
-                    LogAppender.println("ファイルリストに記録されているEPUBファイルにアクセスできません");
-                    e1.printStackTrace();
+                    try {
+                      fileName = codec.encode(fileName);
+                      fileName = fileName.replaceAll("\\+", "%20");
+                      urlString += fileName;
+                      URI uri;
+                      uri = new URI(urlString);
+                      Desktop.getDesktop().browse(uri);
+                    } catch (EncoderException e1) {
+                      LogAppender.append(fileName);
+                      LogAppender.append(" のURLエンコードでエラーが発生しました\n");
+                      e1.printStackTrace();
+                    } catch (URISyntaxException e2) {
+                      LogAppender.append(urlString);
+                      LogAppender.append(" はURIとして解釈できません\n");
+                      e2.printStackTrace();
+                    } catch (IOException e3) {
+                      LogAppender.append(urlString);
+                      LogAppender.append(" はURIとして開けません\n");
+                      e3.printStackTrace();
+                    }
                   }
-
-                }
-              });
-              dialogListFilesToOpen.setVisible(true);
+                });
+                dialogListFilesToOpen.setVisible(true);
+              } catch (IOException e) {
+                LogAppender.append(listFile.toString());
+                LogAppender.append(" を開くことができません/n");
+                e.printStackTrace();
+              }
               break;
             case "OpenLocalBibi":
               // TODO localfileのBib/iで開く
@@ -2140,30 +2133,10 @@ public class ListWindow {
     }
 
     // ビューワ閲覧用青空文庫TXTファイルリストの書き出し
-    File viewerListFile = new File(novelWiseDstPath + "viewerFiles.txt");
-    FileOutputStream fos = new FileOutputStream(viewerListFile);
-    OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8");
-    BufferedWriter bw = new BufferedWriter(osw);
-    if (listAozora.size() > 0) {
-      for (File viewerFile : listAozora) {
-        bw.write(viewerFile.getAbsolutePath());
-        bw.newLine();
-      }
-    }
-    bw.close();
+    writeFileList(listAozora, "Viewer", novelMeta, novelWiseProps);
 
     // EPUBファイルリストの書き出し
-    File ePUB3ListFile = new File(novelWiseDstPath + "EpubFiles.txt");
-    fos = new FileOutputStream(ePUB3ListFile);
-    osw = new OutputStreamWriter(fos, "UTF-8");
-    bw = new BufferedWriter(osw);
-    if (listEpub3.size() > 0) {
-      for (File ePUB3File : listEpub3) {
-        bw.write(ePUB3File.getAbsolutePath());
-        bw.newLine();
-      }
-      bw.close();
-    }
+    writeFileList(listEpub3, "EPUB3", novelMeta, novelWiseProps);
 
     // 作品個別の設定をセットした(かもしれない)propsをグローバル値に戻す
     FileInputStream fis;
@@ -2194,7 +2167,8 @@ public class ListWindow {
     }
 
     // 作品個別のpropertyをロード
-    String urlString = this.novelList.novelMetaMap.get(novelID).url;
+    NovelMeta novelMeta = this.novelList.novelMetaMap.get(novelID);
+    String urlString = novelMeta.url;
     String novelWiseDstPath = Utils.getNovelWiseDstPath(urlString, props.getProperty("CachePath"));
     Properties novelWiseProps = new Properties();
     try {
@@ -2294,30 +2268,10 @@ public class ListWindow {
     }
 
     // ビューワ閲覧用青空文庫TXTファイルリストの書き出し
-    File viewerListFile = new File(novelWiseDstPath + "viewerFiles.txt");
-    FileOutputStream fos = new FileOutputStream(viewerListFile);
-    OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8");
-    BufferedWriter bw = new BufferedWriter(osw);
-    if (listAozora.size() > 0) {
-      for (File viewerFile : listAozora) {
-        bw.write(viewerFile.getAbsolutePath());
-        bw.newLine();
-      }
-    }
-    bw.close();
+    writeFileList(listAozora, "Viewer", novelMeta, novelWiseProps);
 
     // EPUBファイルリストの書き出し
-    File ePUB3ListFile = new File(novelWiseDstPath + "EpubFiles.txt");
-    fos = new FileOutputStream(ePUB3ListFile);
-    osw = new OutputStreamWriter(fos, "UTF-8");
-    bw = new BufferedWriter(osw);
-    if (listEpub3.size() > 0) {
-      for (File ePUB3File : listEpub3) {
-        bw.write(ePUB3File.getAbsolutePath());
-        bw.newLine();
-      }
-      bw.close();
-    }
+    writeFileList(listEpub3, "EPUB3", novelMeta, novelWiseProps);
 
     // 作品個別の設定をセットした(かもしれない)propsをグローバル値に戻す
     FileInputStream fis;
@@ -2331,6 +2285,45 @@ public class ListWindow {
     }
 
     return null;
+  }
+
+  /**
+   * EPUBファイルまたはビューワ閲覧用青空文庫TXTのリストを書き出す
+   * 
+   * @param listFiles
+   * @param type
+   *          "EPUB3" または "Viewer" でなければならない
+   * @param novelID
+   * @param props
+   * @throws IllegalArgumentException
+   * @throws IOException
+   */
+  private void writeFileList(ArrayList<File> listFiles, String type, NovelMeta novelMeta, Properties props)
+      throws IllegalArgumentException, IOException {
+    String fileName = "";
+    if (type.equals("EPUB3")) {
+      fileName = "EpubFiles.txt";
+    } else if (type.equals("Viewer")) {
+      fileName = "viewerFiles.txt";
+    } else {
+      throw new IllegalArgumentException("引数 String \"type\" は \"EPUB3\" または \"Viewer\" でなければならない");
+    }
+    String novelWiseDstPath = Utils.getNovelWiseDstPath(novelMeta.url, props.getProperty("CachePath"));
+    File listFile = new File(novelWiseDstPath + fileName);
+    FileOutputStream fos = new FileOutputStream(listFile);
+    OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8");
+    BufferedWriter bw = new BufferedWriter(osw);
+    if (listFiles.size() > 0) {
+      for (File outputFile : listFiles) {
+        String line = outputFile.getName();
+        bw.write(line);
+        bw.newLine();
+      }
+    }
+    bw.close();
+    // TODO ダブルクリック時にdstDirをpropsから拾い出す処理
+    // TODO DialogListFilesToOpenでリスト化するときも
+
   }
 
   /**
