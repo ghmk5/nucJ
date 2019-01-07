@@ -896,6 +896,12 @@ public class ListWindow {
       logTextArea.append(e.getMessage());
     }
 
+    // プロパティからのCSVパスの取り出しを試みる
+    String csvPathString = props.getProperty("CSVPath");
+    if (csvPathString != null && !csvPathString.equals("")) {
+      csvPath = new File(csvPathString);
+    } // propsから取り出せなければデフォルト値が使用される
+
     // csvをロード
     if (!csvPath.isDirectory()) {
       csvPath.mkdirs();
@@ -933,7 +939,7 @@ public class ListWindow {
 
     }
 
-    // キャッシュパスのプロパティからの取り出しを試みる
+    // プロパティからのキャッシュパスの取り出しを試みる
     String cachePathString = props.getProperty("CachePath");
     if (new File(cachePathString).exists()) {
       if (new File(cachePathString).isDirectory()) {

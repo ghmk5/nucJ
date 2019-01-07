@@ -738,8 +738,6 @@ public class DialogConverterSettings extends JDialog {
     groupOpenByViewer.add(jRadioOpenEpubWViewer);
     groupOpenByViewer.add(jRadioOpenAozoraWViewer);
 
-    // TODO GUIオブジェクト配置部
-
     // "変換"タブ
     JPanel tab2RootPanel = new JPanel();
     tab2RootPanel.setLayout(new BoxLayout(tab2RootPanel, BoxLayout.Y_AXIS));
@@ -2593,6 +2591,10 @@ public class DialogConverterSettings extends JDialog {
       setPropsText(jTextCachePath, props, "CachePath");
       if ("".equals(jTextCachePath.getText()))
         jTextCachePath.setText("cache");
+      // CSV出力/読み込み先
+      setPropsText(jTextCSVPath, props, "CSVPath");
+      if ("".equals(jTextCSVPath.getText()))
+        jTextCSVPath.setText("csv");
       // EPUB出力
       setPropsSelected(jCheckConvertToEPUB3, props, "ConvertToEPUB3");
       setPropsText(jTextEPUB3DstPath, props, "EPUB3DstPath");
@@ -2887,6 +2889,9 @@ public class DialogConverterSettings extends JDialog {
       // キャッシュ
       props.setProperty("CachePath", this.jTextCachePath.getText());
 
+      // CSVパス
+      props.setProperty("CSVPath", this.jTextCSVPath.getText());
+
       // EPUB3出力先
       props.setProperty("ConvertToEPUB3", this.jCheckConvertToEPUB3.isSelected() ? "1" : "");
       props.setProperty("EPUB3DstPath", this.jTextEPUB3DstPath.getText().trim());
@@ -3062,11 +3067,6 @@ public class DialogConverterSettings extends JDialog {
         this.jRadioDakutenType0.isSelected() ? "0" : (this.jRadioDakutenType1.isSelected() ? "1" : "2"));
     props.setProperty("IvsBMP", this.jCheckIvsBMP.isSelected() ? "1" : "");
     props.setProperty("IvsSSP", this.jCheckIvsSSP.isSelected() ? "1" : "");
-
-    // 確認ダイアログの元画像を残す
-    // props.setProperty("ReplaceCover",
-    // this.jConfirmDialog.jCheckReplaceCover.isSelected() ? "1" : "");
-    // TODO 変換実行部分ができたらここを復帰させる
 
   }
 
