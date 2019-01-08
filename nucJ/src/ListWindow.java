@@ -609,7 +609,8 @@ public class ListWindow {
                 try {
                   Desktop.getDesktop().open(new File(epubSavePath));
                 } catch (IOException e) {
-                  // TODO 自動生成された catch ブロック
+                  LogAppender.append(epubSavePath);
+                  LogAppender.append(" は開けません\n");
                   e.printStackTrace();
                 }
               } else {
@@ -624,7 +625,7 @@ public class ListWindow {
                 try {
                   Desktop.getDesktop().open(new File(viewerSavePath));
                 } catch (IOException e) {
-                  // TODO 自動生成された catch ブロック
+                  LogAppender.println(viewerSavePath + " は開けません");
                   e.printStackTrace();
                 }
               } else {
@@ -998,7 +999,9 @@ public class ListWindow {
 
     public void actionPerformed(ActionEvent e) {
       urlString = urlTextField.getText();
-      // TODO 新規エントリ追加処理
+      WebConvertWorker webConvertWorker = new WebConvertWorker(novelList, csvFile, urlString);
+      webConvertWorker.execute();
+      // CSVには未登録だがキャッシュは既に存在する状態で新規登録しようとすると、novelListとCSVファイルを更新する前に処理が止まるので追加されないが、対処すべきか迷う
     }
   }
 
