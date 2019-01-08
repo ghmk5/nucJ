@@ -427,49 +427,7 @@ public class ListWindow {
 
     // 設定ダイアログを開くメニューアイテム
     JMenuItem menuOpenPrefDialog = new JMenuItem("設定...");
-    menuOpenPrefDialog.addActionListener(new ActionListener() {
-      // JFrame owner;
-
-      public void actionPerformed(ActionEvent e) {
-        try {
-          FileInputStream fis = new FileInputStream(jarPath + propFileName);
-          props.load(fis);
-          fis.close();
-        } catch (Exception e1) {
-          InputStream iStream = this.getClass().getResourceAsStream("defaults/nucJ_default.ini");
-          System.out.println("初期設定ファイル ./nucJ_default.ini がロードできません。デフォルト値のロードを試みます");
-          try {
-            props.load(iStream);
-            iStream.close();
-            System.out.println("デフォルト設定 ./src/defaults/nucJ_default.ini をロードしました");
-          } catch (IOException e11) {
-            System.out.println("デフォルト設定ファイル defaults/nucJ_default.ini のロードに失敗した");
-            e11.printStackTrace();
-          }
-        }
-        dialogConverterSettings = new DialogConverterSettings(frame, props, "global");
-        dialogConverterSettings.addWindowListener(new WindowAdapter() {
-          @Override
-          public void windowClosed(WindowEvent e) {
-            LogAppender.println(dialogConverterSettings.testString);
-            if (dialogConverterSettings.approved)
-              props = dialogConverterSettings.props;
-          }
-        });
-        dialogConverterSettings.setLocationRelativeTo(frame);
-        dialogConverterSettings.setModal(true);
-        dialogConverterSettings.setVisible(true);
-        try {
-          // 設定ファイル更新
-          fos = new FileOutputStream(jarPath + propFileName);
-          props.store(fos, "nucJ Parameters");
-          fos.close();
-        } catch (Exception e1) {
-          LogAppender.println("設定ファイル " + jarPath + propFileName + " の更新に失敗しました");
-          e1.printStackTrace();
-        }
-      }
-    });
+    menuOpenPrefDialog.addActionListener(new ActionOpenDialogSettingsGlobal());
     mnNewMenu.add(menuOpenPrefDialog);
 
     // Look & Feel切り替えメニューアイテム
@@ -682,155 +640,25 @@ public class ListWindow {
     // テーブルのコンテキストメニュー
     JPopupMenu tableContextMenu = new JPopupMenu();
 
-    JMenuItem openDialogConverterSettings = new JMenuItem("作品別変換設定");
-    openDialogConverterSettings.addActionListener(new ActionListener() {
-
-      @Override
-      public void actionPerformed(ActionEvent e) {
-
-        String title;
-        int numEntriesSelected = table.getSelectedRowCount();
-        String individualPropsFilePath;
-
-        // 選択された作品のIDを取得
-        ArrayList<String> listNovelIDsToBePropped = new ArrayList<>();
-        if (numEntriesSelected > 1) {
-          title = "multiple";
-          int[] selection = table.getSelectedRows();
-          for (int idx : selection) {
-            idx = table.convertRowIndexToModel(idx);
-            listNovelIDsToBePropped.add((String) table.getModel().getValueAt(idx, 0));
-          }
-        } else if (numEntriesSelected == 1) {
-          int idx = table.getSelectedRow();
-          idx = table.convertRowIndexToModel(idx);
-          title = (String) table.getModel().getValueAt(idx, 2);
-          listNovelIDsToBePropped.add((String) table.getModel().getValueAt(idx, 0));
-        } else {
-          return;
-        }
-
-        // 既存設定の読み込み
-        individualProps = new Properties();
-        for (String novelID : listNovelIDsToBePropped) {
-          String urlString = novelList.novelMetaMap.get(novelID).url;
-          String cachePathString = props.getProperty("CachePath");
-          individualPropsFilePath = Utils.getNovelWiseDstPath(urlString, cachePathString);
-          try {
-            FileInputStream fis = new FileInputStream(individualPropsFilePath + "convert.ini");
-            individualProps.load(fis);
-            fis.close();
-            if (listNovelIDsToBePropped.size() > 1) {
-              LogAppender.println("複数作品に対する変換設定のテンプレートとして、「" + novelList.novelMetaMap.get(novelID).title + "」の値を表示します");
-            } else {
-              LogAppender.println("選択された作品の保存済み個別設定を表示します");
-            }
-            break;
-          } catch (Exception e1) {
-            LogAppender.println("選択された作品の保存済み個別設定が見つかりません。グローバル値を表示します");
-            individualProps = props;
-          }
-        }
-
-        dialogConverterSettings = new DialogConverterSettings(frame, individualProps, title);
-        dialogConverterSettings.addWindowListener(new WindowAdapter() {
-          @Override
-          public void windowClosed(WindowEvent e) {
-            LogAppender.println(dialogConverterSettings.testString);
-            if (dialogConverterSettings.approved) {
-              individualProps = dialogConverterSettings.props;
-              for (String novelID : listNovelIDsToBePropped) {
-                String urlString = novelList.novelMetaMap.get(novelID).url;
-                urlString = novelList.novelMetaMap.get(novelID).url;
-                String individualPropsFilePath = Utils.getNovelWiseDstPath(urlString, props.getProperty("CachePath"));
-                try {
-                  // 設定ファイル更新
-                  File propFile = new File(individualPropsFilePath + "convert.ini");
-                  LogAppender.println(propFile.getAbsolutePath());
-                  fos = new FileOutputStream(propFile);
-                  individualProps.store(fos, "converter Parameters");
-                  fos.close();
-                } catch (Exception e1) {
-                  LogAppender.println(novelID + " の個別設定値の保存でエラーが発生しました。設定の変更は保存されていません");
-                  e1.printStackTrace();
-                }
-              }
-            }
-          }
-        });
-        dialogConverterSettings.setLocationRelativeTo(frame);
-        dialogConverterSettings.setModal(true);
-        dialogConverterSettings.setVisible(true);
-      }
-    });
-    tableContextMenu.add(openDialogConverterSettings);
-
-    JMenuItem tglChkFlg = new JMenuItem("更新チェック可否の切り替え(トグル動作)");
-    tglChkFlg.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        int[] selection = table.getSelectedRows();
-        for (int i = 0; i < selection.length; i++) {
-          String novelID = (String) table.getValueAt(selection[i], 0);
-          NovelMeta novelMeta = novelList.novelMetaMap.get(novelID);
-          if (novelMeta.checkFlag) {
-            novelMeta.checkFlag = false;
-          } else {
-            novelMeta.checkFlag = true;
-          }
-          novelList.novelMetaMap.put(novelID, novelMeta);
-        }
-      }
-    });
-    tableContextMenu.add(tglChkFlg);
-
-    JMenuItem mntmReConvert = new JMenuItem("EPUB3/ビューワ閲覧用ファイルの再生成");
-    mntmReConvert.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        // 選択された作品のIDを取得
-        ArrayList<String> listNovelIDsToBeTreated = new ArrayList<>();
-        for (int idx : table.getSelectedRows()) {
-          idx = table.convertRowIndexToModel(idx);
-          listNovelIDsToBeTreated.add((String) table.getModel().getValueAt(idx, 0));
-        }
-        ReConvertWorker reConvertWorker = new ReConvertWorker(listNovelIDsToBeTreated);
-        // プログレスバーの処理
-        reConvertWorker.addPropertyChangeListener(new PropertyChangeListener() {
-          @Override
-          public void propertyChange(PropertyChangeEvent evt) {
-            if ("progress".equals(evt.getPropertyName())) {
-              progressBar.setValue((Integer) evt.getNewValue());
-            }
-          }
-        });
-        reConvertWorker.execute();
-      }
-    });
-    tableContextMenu.add(mntmReConvert);
+    JMenuItem mntmOpenWeb = new JMenuItem("作品Webページを開く");
+    mntmOpenWeb.addActionListener(new ActionOpenWeb());
+    tableContextMenu.add(mntmOpenWeb);
 
     JMenuItem mntmOpenCache = new JMenuItem("キャッシュディレクトリを開く");
-    mntmOpenCache.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        // 選択された作品のIDを取得
-        ArrayList<String> listNovelIDsToBeTreated = new ArrayList<>();
-        for (int idx : table.getSelectedRows()) {
-          idx = table.convertRowIndexToModel(idx);
-          listNovelIDsToBeTreated.add((String) table.getModel().getValueAt(idx, 0));
-        }
-        for (String novelID : listNovelIDsToBeTreated) {
-          String urlString = novelList.novelMetaMap.get(novelID).url;
-          String cachePathString = Utils.getNovelWiseDstPath(urlString, cachePath.getAbsolutePath());
-          try {
-            Desktop.getDesktop().open(new File(cachePathString));
-          } catch (IOException e1) {
-            LogAppender.println("キャッシュディレクトリのパス " + cachePathString + " は開けません");
-            e1.printStackTrace();
-          }
-        }
-      }
-    });
+    mntmOpenCache.addActionListener(new ActionOpenIndividualCache());
     tableContextMenu.add(mntmOpenCache);
+
+    JMenuItem tglChkFlg = new JMenuItem("更新チェック可否の切り替え(トグル動作)");
+    tglChkFlg.addActionListener(new ActionToggleChkUpdt());
+    tableContextMenu.add(tglChkFlg);
+
+    JMenuItem openDialogConverterSettings = new JMenuItem("作品別変換設定");
+    openDialogConverterSettings.addActionListener(new ActionSetIndividualProps());
+    tableContextMenu.add(openDialogConverterSettings);
+
+    JMenuItem mntmReConvert = new JMenuItem("EPUB3/ビューワ閲覧用ファイルの再生成");
+    mntmReConvert.addActionListener(new ActionReConvert());
+    tableContextMenu.add(mntmReConvert);
 
     table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
     table.setComponentPopupMenu(tableContextMenu);
@@ -1165,24 +993,12 @@ public class ListWindow {
   private class ActionAddEntry extends AbstractAction {
     public ActionAddEntry() {
       putValue(NAME, "Add Entry");
-      // putValue(SHORT_DESCRIPTION, "check update for URL in textField");
+      putValue(SHORT_DESCRIPTION, "テキストフィールドのURLに目次ページを持つ作品をリストに加えます");
     }
 
     public void actionPerformed(ActionEvent e) {
       urlString = urlTextField.getText();
-      WebConvertWorker webConvertWorker = new WebConvertWorker(novelList, csvFile, urlString);
-
-      // プログレスバーの処理
-      webConvertWorker.addPropertyChangeListener(new PropertyChangeListener() {
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-          if ("progress".equals(evt.getPropertyName())) {
-            progressBar.setValue((Integer) evt.getNewValue());
-          }
-        }
-      });
-
-      webConvertWorker.execute();
+      // TODO 新規エントリ追加処理
     }
   }
 
@@ -1209,6 +1025,212 @@ public class ListWindow {
 
       webConvertWorker.execute();
 
+    }
+  }
+
+  // メニュー "File" のメニューアイテム "設定..." のアクション 設定ダイアログを開く
+  private class ActionOpenDialogSettingsGlobal extends AbstractAction {
+    public void actionPerformed(ActionEvent e) {
+      try {
+        FileInputStream fis = new FileInputStream(jarPath + propFileName);
+        props.load(fis);
+        fis.close();
+      } catch (Exception e1) {
+        InputStream iStream = this.getClass().getResourceAsStream("defaults/nucJ_default.ini");
+        System.out.println("初期設定ファイル ./nucJ_default.ini がロードできません。デフォルト値のロードを試みます");
+        try {
+          props.load(iStream);
+          iStream.close();
+          System.out.println("デフォルト設定 ./src/defaults/nucJ_default.ini をロードしました");
+        } catch (IOException e11) {
+          System.out.println("デフォルト設定ファイル defaults/nucJ_default.ini のロードに失敗した");
+          e11.printStackTrace();
+        }
+      }
+      dialogConverterSettings = new DialogConverterSettings(frame, props, "global");
+      dialogConverterSettings.addWindowListener(new WindowAdapter() {
+        @Override
+        public void windowClosed(WindowEvent e) {
+          LogAppender.println(dialogConverterSettings.testString);
+          if (dialogConverterSettings.approved)
+            props = dialogConverterSettings.props;
+        }
+      });
+      dialogConverterSettings.setLocationRelativeTo(frame);
+      dialogConverterSettings.setModal(true);
+      dialogConverterSettings.setVisible(true);
+      try {
+        // 設定ファイル更新
+        fos = new FileOutputStream(jarPath + propFileName);
+        props.store(fos, "nucJ Parameters");
+        fos.close();
+      } catch (Exception e1) {
+        LogAppender.println("設定ファイル " + jarPath + propFileName + " の更新に失敗しました");
+        e1.printStackTrace();
+      }
+    }
+  }
+
+  // テーブルコンテキストメニューのメニューアイテム用アクション 作品Webページを開く
+  private class ActionOpenWeb extends AbstractAction {
+    public void actionPerformed(ActionEvent e) {
+      int[] selection = table.getSelectedRows();
+      for (int i = 0; i < selection.length; i++) {
+        String novelID = (String) table.getValueAt(selection[i], 0);
+        NovelMeta novelMeta = novelList.novelMetaMap.get(novelID);
+        String urlString = novelMeta.url;
+        try {
+          URI uri = new URI(urlString);
+          Desktop.getDesktop().browse(uri);
+        } catch (URISyntaxException | IOException e1) {
+          LogAppender.append(urlString);
+          LogAppender.append(" は URLとして開けません\n");
+          e1.printStackTrace();
+        }
+      }
+    }
+  }
+
+  // テーブルコンテキストメニューのメニューアイテム用アクション リストアイテムの更新チェック可否切り替え
+  private class ActionToggleChkUpdt extends AbstractAction {
+
+    public void actionPerformed(ActionEvent e) {
+      int[] selection = table.getSelectedRows();
+      for (int i = 0; i < selection.length; i++) {
+        String novelID = (String) table.getValueAt(selection[i], 0);
+        NovelMeta novelMeta = novelList.novelMetaMap.get(novelID);
+        if (novelMeta.checkFlag) {
+          novelMeta.checkFlag = false;
+        } else {
+          novelMeta.checkFlag = true;
+        }
+        novelList.novelMetaMap.put(novelID, novelMeta);
+      }
+    }
+  }
+
+  // テーブルコンテキストメニューのメニューアイテム用アクション 作品個別変換設定
+  private class ActionSetIndividualProps extends AbstractAction {
+    public void actionPerformed(ActionEvent e) {
+
+      String title;
+      int numEntriesSelected = table.getSelectedRowCount();
+      String individualPropsFilePath;
+
+      // 選択された作品のIDを取得
+      ArrayList<String> listNovelIDsToBePropped = new ArrayList<>();
+      if (numEntriesSelected > 1) {
+        title = "multiple";
+        int[] selection = table.getSelectedRows();
+        for (int idx : selection) {
+          idx = table.convertRowIndexToModel(idx);
+          listNovelIDsToBePropped.add((String) table.getModel().getValueAt(idx, 0));
+        }
+      } else if (numEntriesSelected == 1) {
+        int idx = table.getSelectedRow();
+        idx = table.convertRowIndexToModel(idx);
+        title = (String) table.getModel().getValueAt(idx, 2);
+        listNovelIDsToBePropped.add((String) table.getModel().getValueAt(idx, 0));
+      } else {
+        return;
+      }
+
+      // 既存設定の読み込み
+      individualProps = new Properties();
+      for (String novelID : listNovelIDsToBePropped) {
+        String urlString = novelList.novelMetaMap.get(novelID).url;
+        String cachePathString = props.getProperty("CachePath");
+        individualPropsFilePath = Utils.getNovelWiseDstPath(urlString, cachePathString);
+        try {
+          FileInputStream fis = new FileInputStream(individualPropsFilePath + "convert.ini");
+          individualProps.load(fis);
+          fis.close();
+          if (listNovelIDsToBePropped.size() > 1) {
+            LogAppender.println("複数作品に対する変換設定のテンプレートとして、「" + novelList.novelMetaMap.get(novelID).title + "」の値を表示します");
+          } else {
+            LogAppender.println("選択された作品の保存済み個別設定を表示します");
+          }
+          break;
+        } catch (Exception e1) {
+          LogAppender.println("選択された作品の保存済み個別設定が見つかりません。グローバル値を表示します");
+          individualProps = props;
+        }
+      }
+
+      dialogConverterSettings = new DialogConverterSettings(frame, individualProps, title);
+      dialogConverterSettings.addWindowListener(new WindowAdapter() {
+        @Override
+        public void windowClosed(WindowEvent e) {
+          LogAppender.println(dialogConverterSettings.testString);
+          if (dialogConverterSettings.approved) {
+            individualProps = dialogConverterSettings.props;
+            for (String novelID : listNovelIDsToBePropped) {
+              String urlString = novelList.novelMetaMap.get(novelID).url;
+              urlString = novelList.novelMetaMap.get(novelID).url;
+              String individualPropsFilePath = Utils.getNovelWiseDstPath(urlString, props.getProperty("CachePath"));
+              try {
+                // 設定ファイル更新
+                File propFile = new File(individualPropsFilePath + "convert.ini");
+                LogAppender.println(propFile.getAbsolutePath());
+                fos = new FileOutputStream(propFile);
+                individualProps.store(fos, "converter Parameters");
+                fos.close();
+              } catch (Exception e1) {
+                LogAppender.println(novelID + " の個別設定値の保存でエラーが発生しました。設定の変更は保存されていません");
+                e1.printStackTrace();
+              }
+            }
+          }
+        }
+      });
+      dialogConverterSettings.setLocationRelativeTo(frame);
+      dialogConverterSettings.setModal(true);
+      dialogConverterSettings.setVisible(true);
+    }
+  }
+
+  // テーブルコンテキストメニューのメニューアイテム用アクション EPUB3/ビューワ閲覧用ファイルの再生成
+  private class ActionReConvert extends AbstractAction {
+    public void actionPerformed(ActionEvent e) {
+      // 選択された作品のIDを取得
+      ArrayList<String> listNovelIDsToBeTreated = new ArrayList<>();
+      for (int idx : table.getSelectedRows()) {
+        idx = table.convertRowIndexToModel(idx);
+        listNovelIDsToBeTreated.add((String) table.getModel().getValueAt(idx, 0));
+      }
+      ReConvertWorker reConvertWorker = new ReConvertWorker(listNovelIDsToBeTreated);
+      // プログレスバーの処理
+      reConvertWorker.addPropertyChangeListener(new PropertyChangeListener() {
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+          if ("progress".equals(evt.getPropertyName())) {
+            progressBar.setValue((Integer) evt.getNewValue());
+          }
+        }
+      });
+      reConvertWorker.execute();
+    }
+  }
+
+  // テーブルコンテキストメニューのメニューアイテム用アクション キャッシュディレクトリを開く
+  private class ActionOpenIndividualCache extends AbstractAction {
+    public void actionPerformed(ActionEvent e) {
+      // 選択された作品のIDを取得
+      ArrayList<String> listNovelIDsToBeTreated = new ArrayList<>();
+      for (int idx : table.getSelectedRows()) {
+        idx = table.convertRowIndexToModel(idx);
+        listNovelIDsToBeTreated.add((String) table.getModel().getValueAt(idx, 0));
+      }
+      for (String novelID : listNovelIDsToBeTreated) {
+        String urlString = novelList.novelMetaMap.get(novelID).url;
+        String cachePathString = Utils.getNovelWiseDstPath(urlString, cachePath.getAbsolutePath());
+        try {
+          Desktop.getDesktop().open(new File(cachePathString));
+        } catch (IOException e1) {
+          LogAppender.println("キャッシュディレクトリのパス " + cachePathString + " は開けません");
+          e1.printStackTrace();
+        }
+      }
     }
   }
 
@@ -2321,8 +2343,6 @@ public class ListWindow {
       }
     }
     bw.close();
-    // TODO ダブルクリック時にdstDirをpropsから拾い出す処理
-    // TODO DialogListFilesToOpenでリスト化するときも
 
   }
 
