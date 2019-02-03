@@ -998,10 +998,13 @@ public class ListWindow {
     }
 
     public void actionPerformed(ActionEvent e) {
+      // TODO 既にリストにあるURLを入れた場合への対応
+      // TODO URLじゃない文字列を入れたときの対応
       urlString = urlTextField.getText();
       WebConvertWorker webConvertWorker = new WebConvertWorker(novelList, csvFile, urlString);
       webConvertWorker.execute();
-      // CSVには未登録だがキャッシュは既に存在する状態で新規登録しようとすると、novelListとCSVファイルを更新する前に処理が止まるので追加されないが、対処すべきか迷う
+      // CSVには未登録だがキャッシュは既に存在する&&更新なしと判断される状態で新規登録しようとすると、
+      // novelListとCSVファイルを更新する前に処理が止まるので追加されないが、対処すべきか迷う
     }
   }
 
@@ -1009,7 +1012,7 @@ public class ListWindow {
   private class ActionChkUpdt extends AbstractAction {
     public ActionChkUpdt() {
       putValue(NAME, "Check Update");
-      putValue(SHORT_DESCRIPTION, "check update for enabled URLs in List");
+      putValue(SHORT_DESCRIPTION, "小説の更新をチェックします");
     }
 
     public void actionPerformed(ActionEvent e) {
@@ -1246,7 +1249,7 @@ public class ListWindow {
    * @param props
    * @param webConfigPath
    */
-  private HashMap<String, Object> cacheURL(String urlString, Properties props, File webConfigPath) {
+  private HashMap<String, Object> cacheAndAozorize(String urlString, Properties props, File webConfigPath) {
 
     NovelMeta novelMeta = null;
     Boolean updated = false;
@@ -2021,27 +2024,23 @@ public class ListWindow {
 
     // 作品個別のpropertyをロード
     String novelWiseDstPath = Utils.getNovelWiseDstPath(urlString, props.getProperty("CachePath"));
-    Properties novelWiseProps = new Properties();
     try {
       FileInputStream fos = new FileInputStream(novelWiseDstPath + "convert.ini");
-      novelWiseProps.load(fos);
+      individualProps.load(fos);
       fos.close();
-    } catch (Exception e1) {
-      novelWiseProps = props;
+    } catch (Exception e1) { // 作品個別のpropertyファイルが存在しない場合はグローバル値を使用
+      individualProps = props;
       LogAppender.append("作品ID ");
       LogAppender.append(new File(novelWiseDstPath).getName().toString());
       LogAppender.append(" の作品別変換設定ファイルが見つかりません。デフォルト値を使用します\n");
     }
 
-    // propsの記録内容と保存先を、個別の変換設定に必要な部分とそれ以外とに分ける
-    // 変換設定以外の値は現行のnucJ.iniをそのまま使う
-    // 変換設定関連はグローバル値と作品個別の値とに分け、グローバル値はnucJ.iniと同じ場所のconvert.iniに保存し、
-    // 作品別の変換設定値は作品別キャッシュディレクトリのconvert.iniに保存する
-    // グローバル値はメニューバーから呼び出す設定パネルで設定し、個別値はテーブルコンテキストメニューから呼び出すパネルで設定する
-    // メニューバーから呼び出す設定パネルは、個別値が存在する(優先される)部分とそうでない部分(作品個別値が存在しない設定値)を分けて表示する
+    // 変換設定以外の値は現行のnucJ.iniをそのまま使う(propsの方から読み出す)
+    // 変換設定関連は(あれば)作品個別の値を使う(individualPropsの方から読み出す)
+    // グローバル値は変更されないのでiniファイルへの書き戻しはしない
 
     // URLをキャッシュ
-    HashMap<String, Object> resultMap = this.cacheURL(urlString, props, webConfigPath);
+    HashMap<String, Object> resultMap = this.cacheAndAozorize(urlString, props, webConfigPath);
 
     NovelMeta novelMeta = (NovelMeta) resultMap.get("novelMeta");
     // Boolean cached = (Boolean) resultMap.get("cached");
@@ -2054,9 +2053,6 @@ public class ListWindow {
       newlyAdded = true;
     }
     File aozoraTxt = (File) resultMap.get("aozoraTxt");
-
-    // 以下使用されるpropsは個別値
-    props = novelWiseProps;
 
     // EPUB3ファイル出力先の設定
     String dstPath = props.getProperty("EPUB3DstPath");
@@ -2086,7 +2082,7 @@ public class ListWindow {
     // 分割関連パラメータの設定
     boolean flagOutputForViewer = true;
     boolean flagOutputForEPUB3 = true;
-    String dstPathForViewer = props.getProperty("ViewerDstPath");
+    String dstPathForViewer = individualProps.getProperty("ViewerDstPath");
     if (dstPathForViewer.equals("") || dstPathForViewer == null || !(new File(dstPathForViewer).exists())) {
       JFileChooser fileChooser = new JFileChooser(currentPath);
       fileChooser.setDialogTitle("ビューワ用ファイルの出力先を選択");
@@ -2101,7 +2097,7 @@ public class ListWindow {
         return null;
       }
     }
-    if (props.getPropertiesAsBoolean("UseNovelwiseDirViewer")) {
+    if (individualProps.getPropertiesAsBoolean("UseNovelwiseDirViewer")) {
       dstPathForViewer = dstPathForViewer + File.separator + novelMeta.novelID;
       if (new File(dstPathForViewer).exists()) {
         if (!new File(dstPathForViewer).isDirectory()) {
@@ -2114,7 +2110,7 @@ public class ListWindow {
     }
     // 紛らわしいが、これ↓はEPUB3ファイルそのものの出力先ではなく、EPUB3変換の元になる分割された青空文庫テキストの出力先
     String dstPathForEPUB3 = aozoraTxt.getParent();
-    Integer volumeLength = Integer.parseInt(props.getProperty("VolumeLength"));
+    Integer volumeLength = Integer.parseInt(individualProps.getProperty("VolumeLength"));
     // TODO volumeLength値の正当性検査
     int length = aozoraBook.getLength();
     if (volumeLength == null || volumeLength == 0) {
@@ -2122,9 +2118,9 @@ public class ListWindow {
     } else if ((length / volumeLength) > 20) {
       // "設定されている一巻あたりの文字数に従うと、全#{}巻になります。続行しますか？"
     }
-    boolean forceChapterwise = props.getPropertiesAsBoolean("SplitChapterWise");
-    boolean allowSingleEmptyLine = props.getPropertiesAsBoolean("AllowSingleEmptyLines");
-    int successiveEmptyLinesLimit = Integer.parseInt(props.getProperty("SuccessiveEmptyLinesLimit"));
+    boolean forceChapterwise = individualProps.getPropertiesAsBoolean("SplitChapterWise");
+    boolean allowSingleEmptyLine = individualProps.getPropertiesAsBoolean("AllowSingleEmptyLines");
+    int successiveEmptyLinesLimit = Integer.parseInt(individualProps.getProperty("SuccessiveEmptyLinesLimit"));
 
     // 分割実行
     ArrayList<ArrayList<File>> listOfLists = aozoraBook.split(dstPathForViewer, dstPathForEPUB3, volumeLength,
@@ -2158,21 +2154,10 @@ public class ListWindow {
     }
 
     // ビューワ閲覧用青空文庫TXTファイルリストの書き出し
-    writeFileList(listAozora, "Viewer", novelMeta, novelWiseProps);
+    writeFileList(listAozora, "Viewer", novelMeta, props);
 
     // EPUBファイルリストの書き出し
-    writeFileList(listEpub3, "EPUB3", novelMeta, novelWiseProps);
-
-    // 作品個別の設定をセットした(かもしれない)propsをグローバル値に戻す
-    FileInputStream fis;
-    try {
-      fis = new FileInputStream(jarPath + propFileName);
-      props.load(fis);
-      fis.close();
-    } catch (IOException e) {
-      LogAppender.println("Propertiesへのグローバル値のロードに失敗しました");
-      e.printStackTrace();
-    }
+    writeFileList(listEpub3, "EPUB3", novelMeta, props);
 
     return null;
   }
@@ -2195,13 +2180,12 @@ public class ListWindow {
     NovelMeta novelMeta = this.novelList.novelMetaMap.get(novelID);
     String urlString = novelMeta.url;
     String novelWiseDstPath = Utils.getNovelWiseDstPath(urlString, props.getProperty("CachePath"));
-    Properties novelWiseProps = new Properties();
     try {
       FileInputStream fos = new FileInputStream(novelWiseDstPath + "convert.ini");
-      novelWiseProps.load(fos);
+      individualProps.load(fos);
       fos.close();
     } catch (Exception e1) {
-      novelWiseProps = props;
+      individualProps = props; // 作品個別のpropertyファイルが存在しない場合はグローバル値を使用
       LogAppender.append("作品ID ");
       LogAppender.append(novelID);
       LogAppender.append(" の作品別変換設定ファイルが見つかりません。デフォルト値を使用します\n");
@@ -2243,7 +2227,7 @@ public class ListWindow {
 
     // 紛らわしいが、これ↓はEPUB3ファイルそのものの出力先ではなく、EPUB3変換の元になる分割された青空文庫テキストの出力先
     String dstPathForEPUB3 = srcFile.getParent();
-    Integer volumeLength = Integer.parseInt(novelWiseProps.getProperty("VolumeLength"));
+    Integer volumeLength = Integer.parseInt(individualProps.getProperty("VolumeLength"));
     // TODO volumeLength値の正当性検査
     int length = aozoraBook.getLength();
     if (volumeLength == null || volumeLength == 0) {
@@ -2251,9 +2235,9 @@ public class ListWindow {
     } else if ((length / volumeLength) > 20) {
       // TODO "設定されている一巻あたりの文字数に従うと、全#{}巻になります。続行しますか？"
     }
-    boolean forceChapterwise = novelWiseProps.getPropertiesAsBoolean("SplitChapterWise");
-    boolean allowSingleEmptyLine = novelWiseProps.getPropertiesAsBoolean("AllowSingleEmptyLines");
-    int successiveEmptyLinesLimit = Integer.parseInt(novelWiseProps.getProperty("SuccessiveEmptyLinesLimit"));
+    boolean forceChapterwise = individualProps.getPropertiesAsBoolean("SplitChapterWise");
+    boolean allowSingleEmptyLine = individualProps.getPropertiesAsBoolean("AllowSingleEmptyLines");
+    int successiveEmptyLinesLimit = Integer.parseInt(individualProps.getProperty("SuccessiveEmptyLinesLimit"));
 
     // 分割実行
     ArrayList<ArrayList<File>> listOfLists = aozoraBook.split(dstPathForViewer, dstPathForEPUB3, volumeLength,
@@ -2293,21 +2277,10 @@ public class ListWindow {
     }
 
     // ビューワ閲覧用青空文庫TXTファイルリストの書き出し
-    writeFileList(listAozora, "Viewer", novelMeta, novelWiseProps);
+    writeFileList(listAozora, "Viewer", novelMeta, props);
 
     // EPUBファイルリストの書き出し
-    writeFileList(listEpub3, "EPUB3", novelMeta, novelWiseProps);
-
-    // 作品個別の設定をセットした(かもしれない)propsをグローバル値に戻す
-    FileInputStream fis;
-    try {
-      fis = new FileInputStream(jarPath + propFileName);
-      props.load(fis);
-      fis.close();
-    } catch (IOException e) {
-      LogAppender.println("Propertiesへのグローバル値のロードに失敗しました");
-      e.printStackTrace();
-    }
+    writeFileList(listEpub3, "EPUB3", novelMeta, props);
 
     return null;
   }
