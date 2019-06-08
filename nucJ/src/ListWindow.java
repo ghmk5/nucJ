@@ -48,7 +48,6 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
-import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
@@ -524,7 +523,42 @@ public class ListWindow {
       public boolean isCellEditable(int row, int column) {
         return false;
       }
+
+      // getToolTipText()をオーバーライド
+      // マウスポインタが上にあるセルのtooltipにそのセルの内容を設定する
+      // TODO 内容がカラム幅を超えるときのみtooltip化するのは可能か？
+
+      // ↓(http://java409.web.fc2.com/jtable_tool_tip.htm)だとソートするとダメになる
+      // @Override
+      // public String getToolTipText(MouseEvent e) {
+      // // イベントからマウス位置を取得し、テーブル内のセルを割り出す
+      // return (String) getModel().getValueAt(rowAtPoint(e.getPoint()),
+      // columnAtPoint(e.getPoint()));
+      // }
+
+      // ↓https://stackoverflow.com/questions/9467093/how-to-add-a-tooltip-to-a-cell-in-a-jtable
+      // 上と同じことをやってるはずだが、こちらだとうまくいってるように見える
+      // 何が違うのかわからない
+      @Override
+      public String getToolTipText(MouseEvent e) {
+        String tip = null;
+        java.awt.Point p = e.getPoint();
+        // int rowIndex = getRowSorter().convertRowIndexToModel(rowAtPoint(p));
+        int rowIndex = rowAtPoint(p);
+        int colIndex = columnAtPoint(p);
+        // LogAppender.append("(" + rowIndex + ", " + colIndex + ")\n");
+
+        try {
+          tip = getValueAt(rowIndex, colIndex).toString();
+        } catch (RuntimeException e1) {
+          // catch null pointer exception if mouse is over an empty line
+        }
+
+        return tip;
+      }
+
     };
+
     // テーブルで使用するフォントを設定
     if (mplus2mMediumFont != null) {
       mplus2mMediumFont = mplus2mMediumFont.deriveFont(0, 13.0f);
@@ -820,7 +854,8 @@ public class ListWindow {
     fos.close();
 
     csvFile = new File(csvPath.getCanonicalPath(), csvFileName);
-    writeCSV(csvFile, novelList);
+    if (novelList != null)
+      writeCSV(csvFile, novelList);
 
     super.finalize();
   }
@@ -883,7 +918,7 @@ public class ListWindow {
     // doInBackgroundで記述したスレッドが終了したら実行する処理
     @Override
     protected void done() {
-      // 更新後の状態をCSVファイルに書き込む
+      // 更新後の状態をCSVファイルから読み込んでnovelListとテーブルを更新
       try {
         novelList = new NovelList(csvFile);
         defaultTableModel = novelList.getTableModel();
@@ -930,6 +965,17 @@ public class ListWindow {
       dateLastChecked = dateTimeformatter.format(ldtNow);
       lastChkLbl.setText("Last Checked: " + dateLastChecked);
       props.setProperty("DateLastChecked", dateLastChecked);
+
+      // 設定ファイル更新
+      try {
+        fos = new FileOutputStream(jarPath + propFileName);
+        props.store(fos, "nucJ Parameters");
+        fos.close();
+      } catch (IOException e) {
+        LogAppender.println("Propertiesの" + jarPath + propFileName + "への保存に失敗しました");
+        e.printStackTrace();
+      }
+
       LogAppender.println("処理が終了しました: " + dateLastChecked);
 
       progressBar.setValue(0);
@@ -2072,6 +2118,24 @@ public class ListWindow {
       }
     }
 
+    // ビューワ用ファイル出力先の設定
+    String dstPathForViewer = props.getProperty("ViewerDstPath");
+    if (dstPathForViewer == null) {
+      LogAppender.println("ビューワ用ファイル出力先が指定されていません。処理を中止します");
+      return null;
+    }
+    if (props.getPropertiesAsBoolean("UseNovelwiseDirViewer")) {
+      dstPathForViewer = dstPathForViewer + File.separator + novelMeta.novelID;
+      if (new File(dstPathForViewer).exists()) {
+        if (!new File(dstPathForViewer).isDirectory()) {
+          LogAppender.println("指定されたビューワ用ファイル出力先ディレクトリと同名のファイルが既に存在します。処理を中止します");
+          return null;
+        }
+      } else {
+        new File(dstPathForViewer).mkdirs();
+      }
+    }
+
     // 紛らわしいが、ここまでで使われてるaozoraTxtはクラスAozoraTxtのインスタンスではなく、File("converted.txt")である
     // (クラスAozoraTxtを書く前に作ったの部分なので) クラスAozoraTxtはこの直後に初めて出てくる
 
@@ -2082,32 +2146,6 @@ public class ListWindow {
     // 分割関連パラメータの設定
     boolean flagOutputForViewer = true;
     boolean flagOutputForEPUB3 = true;
-    String dstPathForViewer = individualProps.getProperty("ViewerDstPath");
-    if (dstPathForViewer.equals("") || dstPathForViewer == null || !(new File(dstPathForViewer).exists())) {
-      JFileChooser fileChooser = new JFileChooser(currentPath);
-      fileChooser.setDialogTitle("ビューワ用ファイルの出力先を選択");
-      fileChooser.setApproveButtonText("選択");
-      fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-      int state = fileChooser.showOpenDialog(frame);
-      switch (state) {
-      case JFileChooser.APPROVE_OPTION:
-        dstPathForViewer = fileChooser.getSelectedFile().getAbsolutePath();
-      case JFileChooser.CANCEL_OPTION:
-        LogAppender.println("ビューワ用ファイルの出力先が得られないため処理を中止します");
-        return null;
-      }
-    }
-    if (individualProps.getPropertiesAsBoolean("UseNovelwiseDirViewer")) {
-      dstPathForViewer = dstPathForViewer + File.separator + novelMeta.novelID;
-      if (new File(dstPathForViewer).exists()) {
-        if (!new File(dstPathForViewer).isDirectory()) {
-          LogAppender.println("指定されたビューワ用ファイル出力先ディレクトリと同名のファイルが既に存在します。処理を終了します");
-          return null;
-        }
-      } else {
-        new File(dstPathForViewer).mkdirs();
-      }
-    }
     // 紛らわしいが、これ↓はEPUB3ファイルそのものの出力先ではなく、EPUB3変換の元になる分割された青空文庫テキストの出力先
     String dstPathForEPUB3 = aozoraTxt.getParent();
     Integer volumeLength = Integer.parseInt(individualProps.getProperty("VolumeLength"));
