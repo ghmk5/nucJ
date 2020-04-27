@@ -2,7 +2,11 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="test"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER">
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="lib" path="lib/commons-cli-1.2.jar"/>
 	<classpathentry kind="lib" path="lib/commons-collections-3.2.1.jar"/>
@@ -13,13 +17,13 @@
 	<classpathentry kind="lib" path="lib/jai_core.jar"/>
 	<classpathentry kind="lib" path="lib/jsoup-1.10.2.jar">
 		<attributes>
-			<attribute name="javadoc_location" value="jar:file:/Users/mk5/git/nucJ.git/nucJ/javadoc/jsoup-1.10.2-javadoc.jar!/"/>
+			<attribute name="javadoc_location" value="jar:platform:/resource/nucJ/lib/jsoup-1.10.2-javadoc.jar!/"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="lib/junrar-0.7.jar"/>
 	<classpathentry kind="lib" path="lib/opencsv-3.8.jar">
 		<attributes>
-			<attribute name="javadoc_location" value="jar:file:/Users/mk5/git/nucJ.git/nucJ/javadoc/opencsv-3.8-javadoc.jar!/"/>
+			<attribute name="javadoc_location" value="jar:platform:/resource/nucJ/lib/opencsv-3.8-javadoc.jar!/"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="lib/velocity-1.7.jar"/>
