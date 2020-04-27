@@ -40,7 +40,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
 import javax.swing.AbstractAction;
 import javax.swing.AbstractButton;
 import javax.swing.Action;
@@ -77,10 +76,8 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
-
 import org.apache.commons.codec.EncoderException;
 import org.apache.commons.codec.net.URLCodec;
-
 import com.github.ghmk5.info.NovelList;
 import com.github.ghmk5.info.NovelMeta;
 import com.github.ghmk5.info.Properties;
@@ -164,6 +161,7 @@ public class ListWindow {
   // 以下ListWindow関連の変数
   JFrame frame;
   JLabel lastChkLbl;
+  JButton btnChkUpdt;
   JTable table;
   JProgressBar progressBar;
 
@@ -222,7 +220,8 @@ public class ListWindow {
 
           // テーブルカラム幅の復元
           try {
-            DefaultTableColumnModel defaultTableColumnModel = (DefaultTableColumnModel) window.table.getColumnModel();
+            DefaultTableColumnModel defaultTableColumnModel =
+                (DefaultTableColumnModel) window.table.getColumnModel();
             int numCulmns = defaultTableColumnModel.getColumnCount();
             TableColumn column = null;
             int savedwidth;
@@ -243,7 +242,8 @@ public class ListWindow {
             UIManager.setLookAndFeel(lafName);
             // ここを通るとテーブル選択強調色がデフォルトに戻るので以下一行を挟んである。L&Fの選択によっては余分かもしれない
             // なお、なぜかNumbusでは効かないのみならず、一度Numbusを選ぶと他のL&Fでも効かなくなる模様
-            UIManager.put("Table.selectionBackground", UIManager.getColor("EditorPane.selectionBackground"));
+            UIManager.put("Table.selectionBackground",
+                UIManager.getColor("EditorPane.selectionBackground"));
             SwingUtilities.updateComponentTreeUI(window.frame);
           } catch (Exception e) {
             // LogAppender.println("Look & Feelを " + lafName + " に設定できなかった");
@@ -251,7 +251,8 @@ public class ListWindow {
 
           // 現在選択されているLook & Feelに対応するメニュー内ボタンモデルを選択する処理
           String className = UIManager.getLookAndFeel().getName();
-          for (Enumeration<AbstractButton> e = window.mntmLafSubGroup.getElements(); e.hasMoreElements();) {
+          for (Enumeration<AbstractButton> e = window.mntmLafSubGroup.getElements(); e
+              .hasMoreElements();) {
             AbstractButton button = e.nextElement();
             if (button.getText().equals(className)) {
               button.setSelected(true);
@@ -297,7 +298,7 @@ public class ListWindow {
     // DefaultTableModelを定義
     // このまま使用されるのはiniファイルから読み込めず、かつデフォルトiniからも読み込めなかった場合のみ
     DefaultTableModel defaultTableModel;
-    String[] columnNames = { "novel ID", "author", "title", "chapters", "last updated" };
+    String[] columnNames = {"novel ID", "author", "title", "chapters", "last updated"};
     defaultTableModel = new DefaultTableModel(columnNames, 0);
 
     // 使用可能なLook & Feelを取得
@@ -358,8 +359,8 @@ public class ListWindow {
     }
 
     // 確認ダイアログ
-    jConfirmDialog = new JConfirmDialog(iconImage,
-        this.getClass().getResource("/images/icon.png").toString().replaceFirst("/icon\\.png", "/"));
+    jConfirmDialog = new JConfirmDialog(iconImage, this.getClass().getResource("/images/icon.png")
+        .toString().replaceFirst("/icon\\.png", "/"));
     if ("1".equals(props.getProperty("ReplaceCover")))
       jConfirmDialog.jCheckReplaceCover.setSelected(true);
 
@@ -447,7 +448,8 @@ public class ListWindow {
           try {
             UIManager.setLookAndFeel(className);
             // どうやら一度Numbusを選ぶと以下二行が効かなくなるらしい。なにが起きているのか不明
-            UIManager.put("Table.selectionBackground", UIManager.getColor("EditorPane.selectionBackground"));
+            UIManager.put("Table.selectionBackground",
+                UIManager.getColor("EditorPane.selectionBackground"));
             SwingUtilities.updateComponentTreeUI(frame);
             // LogAppender.println("Look & Feelを " + className + " に設定した");
             props.setProperty("LastLook&Feel", className);
@@ -477,7 +479,7 @@ public class ListWindow {
     if (dateLastChecked != "" && dateLastChecked != null)
       lastChkLbl.setText("Last Checked: " + dateLastChecked);
     panel1.add(lastChkLbl);
-    JButton btnChkUpdt = new JButton("Check Update");
+    btnChkUpdt = new JButton("Check Update");
     btnChkUpdt.setActionCommand("check");
     panel1.add(btnChkUpdt);
     btnChkUpdt.setAction(actionChkUpdt);
@@ -575,97 +577,98 @@ public class ListWindow {
           idx = table.convertRowIndexToModel(idx);
           String novelID = (String) table.getModel().getValueAt(idx, 0);
           String urlString = novelList.novelMetaMap.get(novelID).url;
-          String individualCachePath = Utils.getNovelWiseDstPath(urlString, cachePath.getAbsolutePath());
+          String individualCachePath =
+              Utils.getNovelWiseDstPath(urlString, cachePath.getAbsolutePath());
           String doOnDc = props.getProperty("DoOnDc");
           if (doOnDc != null) {
             switch (doOnDc) {
-            case "OpenViewer":
-              // TODO ビューワで開く
-              break;
-            case "OpenHostedBibi":
-              // TODO localhostのBib/iで開く
-              File listFile = Paths.get(individualCachePath, "EpubFiles.txt").toFile();
-              if (!listFile.exists()) {
-                LogAppender.println("この作品のEPUBリストが見つかりません(変換されたことがない？)");
+              case "OpenViewer":
+                // TODO ビューワで開く
                 break;
-              }
-              DialogListFilesToOpen dialogListFilesToOpen;
-              try {
-                dialogListFilesToOpen = new DialogListFilesToOpen(frame, listFile);
-                dialogListFilesToOpen.setModal(true);
-                dialogListFilesToOpen.setLocationRelativeTo(frame);
-                dialogListFilesToOpen.addWindowListener(new WindowAdapter() {
-                  @Override
-                  public void windowClosed(WindowEvent e) {
-                    String fileName = dialogListFilesToOpen.selectedLine;
-                    String urlString = props.getProperty("UrlHostedBibi");
-                    urlString += "?book=";
-                    if (props.getPropertiesAsBoolean("UseNovelwiseDirEPUB3"))
-                      urlString = urlString + novelID + "/";
-                    URLCodec codec = new URLCodec("UTF-8");
-                    try {
-                      fileName = codec.encode(fileName);
-                      fileName = fileName.replaceAll("\\+", "%20");
-                      urlString += fileName;
-                      URI uri;
-                      uri = new URI(urlString);
-                      Desktop.getDesktop().browse(uri);
-                    } catch (EncoderException e1) {
-                      LogAppender.append(fileName);
-                      LogAppender.append(" のURLエンコードでエラーが発生しました\n");
-                      e1.printStackTrace();
-                    } catch (URISyntaxException e2) {
-                      LogAppender.append(urlString);
-                      LogAppender.append(" はURIとして解釈できません\n");
-                      e2.printStackTrace();
-                    } catch (IOException e3) {
-                      LogAppender.append(urlString);
-                      LogAppender.append(" はURIとして開けません\n");
-                      e3.printStackTrace();
+              case "OpenHostedBibi":
+                // TODO localhostのBib/iで開く
+                File listFile = Paths.get(individualCachePath, "EpubFiles.txt").toFile();
+                if (!listFile.exists()) {
+                  LogAppender.println("この作品のEPUBリストが見つかりません(変換されたことがない？)");
+                  break;
+                }
+                DialogListFilesToOpen dialogListFilesToOpen;
+                try {
+                  dialogListFilesToOpen = new DialogListFilesToOpen(frame, listFile);
+                  dialogListFilesToOpen.setModal(true);
+                  dialogListFilesToOpen.setLocationRelativeTo(frame);
+                  dialogListFilesToOpen.addWindowListener(new WindowAdapter() {
+                    @Override
+                    public void windowClosed(WindowEvent e) {
+                      String fileName = dialogListFilesToOpen.selectedLine;
+                      String urlString = props.getProperty("UrlHostedBibi");
+                      urlString += "?book=";
+                      if (props.getPropertiesAsBoolean("UseNovelwiseDirEPUB3"))
+                        urlString = urlString + novelID + "/";
+                      URLCodec codec = new URLCodec("UTF-8");
+                      try {
+                        fileName = codec.encode(fileName);
+                        fileName = fileName.replaceAll("\\+", "%20");
+                        urlString += fileName;
+                        URI uri;
+                        uri = new URI(urlString);
+                        Desktop.getDesktop().browse(uri);
+                      } catch (EncoderException e1) {
+                        LogAppender.append(fileName);
+                        LogAppender.append(" のURLエンコードでエラーが発生しました\n");
+                        e1.printStackTrace();
+                      } catch (URISyntaxException e2) {
+                        LogAppender.append(urlString);
+                        LogAppender.append(" はURIとして解釈できません\n");
+                        e2.printStackTrace();
+                      } catch (IOException e3) {
+                        LogAppender.append(urlString);
+                        LogAppender.append(" はURIとして開けません\n");
+                        e3.printStackTrace();
+                      }
                     }
+                  });
+                  dialogListFilesToOpen.setVisible(true);
+                } catch (IOException e) {
+                  LogAppender.append(listFile.toString());
+                  LogAppender.append(" を開くことができません/n");
+                  e.printStackTrace();
+                }
+                break;
+              case "OpenLocalBibi":
+                // TODO localfileのBib/iで開く
+                break;
+              case "OpenFilerEPUB3": // OS標準のファイラーでEPUB保存ディレクトリを開く
+                String epubSavePath = props.getProperty("EPUB3DstPath");
+                if (epubSavePath != null) {
+                  if (props.getPropertiesAsBoolean("UseNovelwiseDirEPUB3"))
+                    epubSavePath = Paths.get(epubSavePath, novelID).toString();
+                  try {
+                    Desktop.getDesktop().open(new File(epubSavePath));
+                  } catch (IOException e) {
+                    LogAppender.append(epubSavePath);
+                    LogAppender.append(" は開けません\n");
+                    e.printStackTrace();
                   }
-                });
-                dialogListFilesToOpen.setVisible(true);
-              } catch (IOException e) {
-                LogAppender.append(listFile.toString());
-                LogAppender.append(" を開くことができません/n");
-                e.printStackTrace();
-              }
-              break;
-            case "OpenLocalBibi":
-              // TODO localfileのBib/iで開く
-              break;
-            case "OpenFilerEPUB3": // OS標準のファイラーでEPUB保存ディレクトリを開く
-              String epubSavePath = props.getProperty("EPUB3DstPath");
-              if (epubSavePath != null) {
-                if (props.getPropertiesAsBoolean("UseNovelwiseDirEPUB3"))
-                  epubSavePath = Paths.get(epubSavePath, novelID).toString();
-                try {
-                  Desktop.getDesktop().open(new File(epubSavePath));
-                } catch (IOException e) {
-                  LogAppender.append(epubSavePath);
-                  LogAppender.append(" は開けません\n");
-                  e.printStackTrace();
+                } else {
+                  LogAppender.println("EPUBファイルの保存先が記録されていません");
                 }
-              } else {
-                LogAppender.println("EPUBファイルの保存先が記録されていません");
-              }
-              break;
-            case "OpenFilerAozora":
-              String viewerSavePath = props.getProperty("ViewerDstPath");
-              if (viewerSavePath != null) {
-                if (props.getPropertiesAsBoolean("UseNovelwiseDirViewer"))
-                  viewerSavePath = Paths.get(viewerSavePath, novelID).toString();
-                try {
-                  Desktop.getDesktop().open(new File(viewerSavePath));
-                } catch (IOException e) {
-                  LogAppender.println(viewerSavePath + " は開けません");
-                  e.printStackTrace();
+                break;
+              case "OpenFilerAozora":
+                String viewerSavePath = props.getProperty("ViewerDstPath");
+                if (viewerSavePath != null) {
+                  if (props.getPropertiesAsBoolean("UseNovelwiseDirViewer"))
+                    viewerSavePath = Paths.get(viewerSavePath, novelID).toString();
+                  try {
+                    Desktop.getDesktop().open(new File(viewerSavePath));
+                  } catch (IOException e) {
+                    LogAppender.println(viewerSavePath + " は開けません");
+                    e.printStackTrace();
+                  }
+                } else {
+                  LogAppender.println("青空文庫テキストの保存先が記録されていません");
                 }
-              } else {
-                LogAppender.println("青空文庫テキストの保存先が記録されていません");
-              }
-              break;
+                break;
             }
           }
 
@@ -801,7 +804,8 @@ public class ListWindow {
       if (new File(cachePathString).isDirectory()) {
         this.cachePath = new File(cachePathString);
       } else {
-        LogAppender.println("設定ファイルに記録されたキャッシュパスの名前 " + cachePathString + " は既に他のファイルに使われています。デフォルト値をセットします");
+        LogAppender.println(
+            "設定ファイルに記録されたキャッシュパスの名前 " + cachePathString + " は既に他のファイルに使われています。デフォルト値をセットします");
         this.cachePath = new File(this.jarPath + "cache");
       }
     } else {
@@ -818,8 +822,8 @@ public class ListWindow {
   }
 
   /**
-   * 終了時の処理 設定ファイルを保存 Macではアプリケーションウィンドウのクローズボックスのクリックではなく、cmd-QでJavaVMを終了させると
-   * 実行されないので注意 - 重要な情報の保存など、確実に実行させたい処理はここに書くべきではない
+   * 終了時の処理 設定ファイルを保存 Macではアプリケーションウィンドウのクローズボックスのクリックではなく、cmd-QでJavaVMを終了させると 実行されないので注意 -
+   * 重要な情報の保存など、確実に実行させたい処理はここに書くべきではない
    */
   @Override
   protected void finalize() throws Throwable {
@@ -834,7 +838,8 @@ public class ListWindow {
     this.props.setProperty("SizeH", "" + size.getHeight());
 
     // テーブルの列幅を取得してpropsに設定
-    DefaultTableColumnModel defaultTableColumnModel = (DefaultTableColumnModel) this.table.getColumnModel();
+    DefaultTableColumnModel defaultTableColumnModel =
+        (DefaultTableColumnModel) this.table.getColumnModel();
     int numColumns = defaultTableColumnModel.getColumnCount();
     String propName;
     for (int idx = 0; idx < numColumns; idx++) {
@@ -880,6 +885,7 @@ public class ListWindow {
     // スレッドで実行する処理
     @Override
     protected Object doInBackground() throws Exception {
+      btnChkUpdt.setEnabled(false);
       NovelMeta novelMeta;
       if (flgCheckMultiple) {
         String urlString;
@@ -912,13 +918,13 @@ public class ListWindow {
 
     // 途中経過
     @Override
-    protected void process(List<Object> chunks) {
-    }
+    protected void process(List<Object> chunks) {}
 
     // doInBackgroundで記述したスレッドが終了したら実行する処理
     @Override
     protected void done() {
       // 更新後の状態をCSVファイルから読み込んでnovelListとテーブルを更新
+      btnChkUpdt.setEnabled(true);
       try {
         novelList = new NovelList(csvFile);
         defaultTableModel = novelList.getTableModel();
@@ -928,7 +934,8 @@ public class ListWindow {
       }
 
       // テーブルカラム幅の復元
-      DefaultTableColumnModel defaultTableColumnModel = (DefaultTableColumnModel) table.getColumnModel();
+      DefaultTableColumnModel defaultTableColumnModel =
+          (DefaultTableColumnModel) table.getColumnModel();
       int numCulmns = defaultTableColumnModel.getColumnCount();
       TableColumn column = null;
       int savedwidth;
@@ -1013,8 +1020,7 @@ public class ListWindow {
 
     // 途中経過
     @Override
-    protected void process(List<Object> chunks) {
-    }
+    protected void process(List<Object> chunks) {}
 
     // doInBackgroundで記述したスレッドが終了したら実行する処理
     @Override
@@ -1198,7 +1204,8 @@ public class ListWindow {
           individualProps.load(fis);
           fis.close();
           if (listNovelIDsToBePropped.size() > 1) {
-            LogAppender.println("複数作品に対する変換設定のテンプレートとして、「" + novelList.novelMetaMap.get(novelID).title + "」の値を表示します");
+            LogAppender.println("複数作品に対する変換設定のテンプレートとして、「"
+                + novelList.novelMetaMap.get(novelID).title + "」の値を表示します");
           } else {
             LogAppender.println("選択された作品の保存済み個別設定を表示します");
           }
@@ -1219,7 +1226,8 @@ public class ListWindow {
             for (String novelID : listNovelIDsToBePropped) {
               String urlString = novelList.novelMetaMap.get(novelID).url;
               urlString = novelList.novelMetaMap.get(novelID).url;
-              String individualPropsFilePath = Utils.getNovelWiseDstPath(urlString, props.getProperty("CachePath"));
+              String individualPropsFilePath =
+                  Utils.getNovelWiseDstPath(urlString, props.getProperty("CachePath"));
               try {
                 // 設定ファイル更新
                 File propFile = new File(individualPropsFilePath + "convert.ini");
@@ -1288,14 +1296,14 @@ public class ListWindow {
 
   /**
    * 指定されたURLに目次ページがある小説を指定されたディレクトリにキャッシュし、青空文庫形式テキストに変換する
-   * 呼び出しているWebAozoraConverterは青空文庫やアルカディアなどのサイトにも対応しているが、
-   * 追加したメタデータを抽出する部分がなろう系にしか対応していないので注意
+   * 呼び出しているWebAozoraConverterは青空文庫やアルカディアなどのサイトにも対応しているが、 追加したメタデータを抽出する部分がなろう系にしか対応していないので注意
    *
    * @param urlString
    * @param props
    * @param webConfigPath
    */
-  private HashMap<String, Object> cacheAndAozorize(String urlString, Properties props, File webConfigPath) {
+  private HashMap<String, Object> cacheAndAozorize(String urlString, Properties props,
+      File webConfigPath) {
 
     NovelMeta novelMeta = null;
     Boolean updated = false;
@@ -1348,7 +1356,8 @@ public class ListWindow {
         webModifiedTail = true;
       }
       int webBeforeChapter;
-      if (props.getProperty("WebBeforeChapter") == null || props.getProperty("WebBeforeChapter").equals("")) {
+      if (props.getProperty("WebBeforeChapter") == null
+          || props.getProperty("WebBeforeChapter").equals("")) {
         webBeforeChapter = 0;
       } else {
         webBeforeChapter = Integer.parseInt(props.getProperty("WebBeforeChapter"));
@@ -1368,8 +1377,8 @@ public class ListWindow {
       originalFile.renameTo(backupFile);
 
       // キャッシュされたhtmlファイルを青空文庫形式テキストに変換する
-      File srcFile = webConverter.convertToAozoraText(urlString, cachePath, webInterval, webModifiedExpire,
-          webConvertUpdated, webModifiedOnly, webModifiedTail, webBeforeChapter);
+      File srcFile = webConverter.convertToAozoraText(urlString, cachePath, webInterval,
+          webModifiedExpire, webConvertUpdated, webModifiedOnly, webModifiedTail, webBeforeChapter);
 
       if (srcFile == null) {
         if (webConverter.isCanceled()) {
@@ -1385,7 +1394,8 @@ public class ListWindow {
         if (webConverter.isUpdated()) {
 
           updated = true;
-          String urlFilePath = CharUtils.escapeUrlToFile(urlString.substring(urlString.indexOf("//") + 2));
+          String urlFilePath =
+              CharUtils.escapeUrlToFile(urlString.substring(urlString.indexOf("//") + 2));
           String urlParentPath = urlFilePath;
           boolean isPath = false;
           if (urlFilePath.endsWith("/")) {
@@ -1526,18 +1536,20 @@ public class ListWindow {
 
     int imageSizeType = Integer.parseInt(props.getProperty("ImageSizeType"));
 
-    this.epub3Writer.setImageParam(dispW, dispH, coverW, coverH, resizeW, resizeH, singlePageSizeW, singlePageSizeH,
-        singlePageWidth, imageSizeType, props.getPropertiesAsBoolean("FitImage"),
-        props.getPropertiesAsBoolean("SvgImage"), rorateAngle, imageScale, imageFloatType, imageFloatW, imageFloatH,
-        jpegQualty, gamma, autoMarginLimitH, autoMarginLimitV, autoMarginWhiteLevel, autoMarginPadding,
-        autoMarginNombre, autoMarginNombreSize);
-    this.epub3ImageWriter.setImageParam(dispW, dispH, coverW, coverH, resizeW, resizeH, singlePageSizeW,
+    this.epub3Writer.setImageParam(dispW, dispH, coverW, coverH, resizeW, resizeH, singlePageSizeW,
         singlePageSizeH, singlePageWidth, imageSizeType, props.getPropertiesAsBoolean("FitImage"),
-        props.getPropertiesAsBoolean("SvgImage"), rorateAngle, imageScale, imageFloatType, imageFloatW, imageFloatH,
-        jpegQualty, gamma, autoMarginLimitH, autoMarginLimitV, autoMarginWhiteLevel, autoMarginPadding,
+        props.getPropertiesAsBoolean("SvgImage"), rorateAngle, imageScale, imageFloatType,
+        imageFloatW, imageFloatH, jpegQualty, gamma, autoMarginLimitH, autoMarginLimitV,
+        autoMarginWhiteLevel, autoMarginPadding, autoMarginNombre, autoMarginNombreSize);
+    this.epub3ImageWriter.setImageParam(dispW, dispH, coverW, coverH, resizeW, resizeH,
+        singlePageSizeW, singlePageSizeH, singlePageWidth, imageSizeType,
+        props.getPropertiesAsBoolean("FitImage"), props.getPropertiesAsBoolean("SvgImage"),
+        rorateAngle, imageScale, imageFloatType, imageFloatW, imageFloatH, jpegQualty, gamma,
+        autoMarginLimitH, autoMarginLimitV, autoMarginWhiteLevel, autoMarginPadding,
         autoMarginNombre, autoMarginNombreSize);
     // 目次階層化設定
-    this.epub3Writer.setTocParam(props.getPropertiesAsBoolean("NavNest"), props.getPropertiesAsBoolean("NcxNest"));
+    this.epub3Writer.setTocParam(props.getPropertiesAsBoolean("NavNest"),
+        props.getPropertiesAsBoolean("NcxNest"));
 
     // スタイル設定
     // int marginUnitIdx =
@@ -1564,7 +1576,8 @@ public class ListWindow {
     int dakutenType = Integer.parseInt(props.getProperty("DakutenType"));
 
     this.epub3Writer.setStyles(pageMargin, bodyMargin, lineHeight, fontSize,
-        props.getPropertiesAsBoolean("BoldUseGothic"), props.getPropertiesAsBoolean("GothicUseBold"));
+        props.getPropertiesAsBoolean("BoldUseGothic"),
+        props.getPropertiesAsBoolean("GothicUseBold"));
 
     try {
       // 挿絵なし
@@ -1573,13 +1586,15 @@ public class ListWindow {
       this.aozoraConverter.setWithMarkId(props.getPropertiesAsBoolean("MarkId"));
       // 変換オプション設定
       this.aozoraConverter.setAutoYoko(props.getPropertiesAsBoolean("AutoYoko"),
-          props.getPropertiesAsBoolean("AutoYokoNum1"), props.getPropertiesAsBoolean("AutoYokoNum3"),
+          props.getPropertiesAsBoolean("AutoYokoNum1"),
+          props.getPropertiesAsBoolean("AutoYokoNum3"),
           props.getPropertiesAsBoolean("AutoYokoEQ1"));
       // 文字出力設定
       this.aozoraConverter.setCharOutput(dakutenType, props.getPropertiesAsBoolean("IvsBMP"),
           props.getPropertiesAsBoolean("IvsSSP"));
       // 全角スペースの禁則
-      this.aozoraConverter.setSpaceHyphenation(Integer.parseInt(props.getProperty("SpaceHyphenation")));
+      this.aozoraConverter
+          .setSpaceHyphenation(Integer.parseInt(props.getProperty("SpaceHyphenation")));
       // 注記のルビ表示
       // propsのキー"ChukiRuby"の値: jRadioChukiRuby0 = "非表示" -> "0",
       // jRadioChukiRuby1 = "ルビ" -> "1", jRadioChukiRuby2 = "小書き" -> "2"
@@ -1620,15 +1635,17 @@ public class ListWindow {
           forcePageBreakSize = Integer.parseInt(props.getProperty("PageBreakSize")) * 1024;
           if (props.getPropertiesAsBoolean("PageBreakEmpty")) {
             forcePageBreakEmpty = Integer.parseInt(props.getProperty("PageBreakEmptyLine"));
-            forcePageBreakEmptySize = Integer.parseInt(props.getProperty("PageBreakEmptySize")) * 1024;
+            forcePageBreakEmptySize =
+                Integer.parseInt(props.getProperty("PageBreakEmptySize")) * 1024;
           }
           if (props.getPropertiesAsBoolean("PageBreakChapter")) {
             forcePageBreakChapter = 1;
-            forcePageBreakChapterSize = Integer.parseInt(props.getProperty("PageBreakChapterSize")) * 1024;
+            forcePageBreakChapterSize =
+                Integer.parseInt(props.getProperty("PageBreakChapterSize")) * 1024;
           }
           // Converterに設定
-          this.aozoraConverter.setForcePageBreak(forcePageBreakSize, forcePageBreakEmpty, forcePageBreakEmptySize,
-              forcePageBreakChapter, forcePageBreakChapterSize);
+          this.aozoraConverter.setForcePageBreak(forcePageBreakSize, forcePageBreakEmpty,
+              forcePageBreakEmptySize, forcePageBreakChapter, forcePageBreakChapterSize);
         } catch (Exception e) {
           LogAppender.println("強制改ページパラメータ読み込みエラー");
         }
@@ -1641,14 +1658,20 @@ public class ListWindow {
       } catch (Exception e) {
       }
 
-      this.aozoraConverter.setChapterLevel(maxLength, props.getPropertiesAsBoolean("ChapterExclude"),
-          props.getPropertiesAsBoolean("ChapterUseNextLine"), props.getPropertiesAsBoolean("ChapterSection"),
-          props.getPropertiesAsBoolean("ChapterH"), props.getPropertiesAsBoolean("ChapterH1"),
-          props.getPropertiesAsBoolean("ChapterH2"), props.getPropertiesAsBoolean("ChapterH3"),
-          props.getPropertiesAsBoolean("SameLineChapter"), props.getPropertiesAsBoolean("ChapterName"),
-          props.getPropertiesAsBoolean("ChapterNumOnly"), props.getPropertiesAsBoolean("ChapterNumTitle"),
-          props.getPropertiesAsBoolean("ChapterNumParen"), props.getPropertiesAsBoolean("ChapterNumParenTitle"),
-          props.getPropertiesAsBoolean("ChapterPattern") ? props.getProperty("ChapterPatternText") : "");
+      this.aozoraConverter.setChapterLevel(maxLength,
+          props.getPropertiesAsBoolean("ChapterExclude"),
+          props.getPropertiesAsBoolean("ChapterUseNextLine"),
+          props.getPropertiesAsBoolean("ChapterSection"), props.getPropertiesAsBoolean("ChapterH"),
+          props.getPropertiesAsBoolean("ChapterH1"), props.getPropertiesAsBoolean("ChapterH2"),
+          props.getPropertiesAsBoolean("ChapterH3"),
+          props.getPropertiesAsBoolean("SameLineChapter"),
+          props.getPropertiesAsBoolean("ChapterName"),
+          props.getPropertiesAsBoolean("ChapterNumOnly"),
+          props.getPropertiesAsBoolean("ChapterNumTitle"),
+          props.getPropertiesAsBoolean("ChapterNumParen"),
+          props.getPropertiesAsBoolean("ChapterNumParenTitle"),
+          props.getPropertiesAsBoolean("ChapterPattern") ? props.getProperty("ChapterPatternText")
+              : "");
     } catch (Exception e) {
       e.printStackTrace();
       LogAppender.append("エラーが発生しました : ");
@@ -1695,8 +1718,8 @@ public class ListWindow {
     int titleTypeIndex = Integer.parseInt(props.getProperty("TitleType"));
     try {
       // テキストファイルからメタ情報や画像単独ページ情報を取得
-      bookInfo = AozoraEpub3.getBookInfo(aozoraTxt, "txt", txtIdx, imageInfoReader, this.aozoraConverter, encType,
-          BookInfo.TitleType.indexOf(titleTypeIndex), pubFirst);
+      bookInfo = AozoraEpub3.getBookInfo(aozoraTxt, "txt", txtIdx, imageInfoReader,
+          this.aozoraConverter, encType, BookInfo.TitleType.indexOf(titleTypeIndex), pubFirst);
     } catch (Exception e) {
       LogAppender.error("ファイルが読み込めませんでした : " + aozoraTxt.getPath());
       return null;
@@ -1741,17 +1764,17 @@ public class ListWindow {
     } else {
       int propValue = Integer.parseInt(props.getProperty("TitlePage")); // "本文内"なら"0"、"中央"なら"1"、"横書き"なら"2"
       switch (propValue) {
-      case BookInfo.TITLE_NORMAL:
-        bookInfo.titlePageType = BookInfo.TITLE_NORMAL;
-        break;
-      case BookInfo.TITLE_MIDDLE:
-        bookInfo.titlePageType = BookInfo.TITLE_MIDDLE;
-        break;
-      case BookInfo.TITLE_HORIZONTAL:
-        bookInfo.titlePageType = BookInfo.TITLE_HORIZONTAL;
-        break;
-      default:
-        break;
+        case BookInfo.TITLE_NORMAL:
+          bookInfo.titlePageType = BookInfo.TITLE_NORMAL;
+          break;
+        case BookInfo.TITLE_MIDDLE:
+          bookInfo.titlePageType = BookInfo.TITLE_MIDDLE;
+          break;
+        case BookInfo.TITLE_HORIZONTAL:
+          bookInfo.titlePageType = BookInfo.TITLE_HORIZONTAL;
+          break;
+        default:
+          break;
       }
     }
 
@@ -1759,7 +1782,8 @@ public class ListWindow {
     if ("".equals(coverFileName)) {
       try {
         int maxCoverLine = Integer.parseInt(props.getProperty("MaxCoverLine"));
-        if (maxCoverLine > 0 && (bookInfo.firstImageLineNum == -1 || bookInfo.firstImageLineNum >= maxCoverLine)) {
+        if (maxCoverLine > 0
+            && (bookInfo.firstImageLineNum == -1 || bookInfo.firstImageLineNum >= maxCoverLine)) {
           coverImageIndex = -1;
           coverFileName = null;
         } else {
@@ -1818,12 +1842,14 @@ public class ListWindow {
         if (!props.getPropertiesAsBoolean("ChkConfirm") && bookInfo.coverEditInfo != null) {
           try {
             this.jConfirmDialog.jCoverImagePanel.setBookInfo(bookInfo);
-            if (bookInfo.coverImageIndex >= 0 && bookInfo.coverImageIndex < imageInfoReader.countImageFileNames()) {
+            if (bookInfo.coverImageIndex >= 0
+                && bookInfo.coverImageIndex < imageInfoReader.countImageFileNames()) {
               bookInfo.coverImage = imageInfoReader.getImage(bookInfo.coverImageIndex);
             } else if (bookInfo.coverImage == null && bookInfo.coverFileName != null) {
               bookInfo.loadCoverImage(bookInfo.coverFileName);
             }
-            bookInfo.coverImage = this.jConfirmDialog.jCoverImagePanel.getModifiedImage(coverW, coverH);
+            bookInfo.coverImage =
+                this.jConfirmDialog.jCoverImagePanel.getModifiedImage(coverW, coverH);
           } catch (Exception e) {
             e.printStackTrace();
           }
@@ -1845,8 +1871,8 @@ public class ListWindow {
         }
       }
       if (kindlegen == null) {
-        JOptionPane.showMessageDialog(frame, "kindlegenがありません\nkindlegen.exeをjarファイルの場所にコピーしてください", "kindlegenエラー",
-            JOptionPane.WARNING_MESSAGE);
+        JOptionPane.showMessageDialog(frame, "kindlegenがありません\nkindlegen.exeをjarファイルの場所にコピーしてください",
+            "kindlegenエラー", JOptionPane.WARNING_MESSAGE);
         LogAppender.println("変換処理をキャンセルしました");
         return null;
       }
@@ -1867,13 +1893,15 @@ public class ListWindow {
           props.getPropertiesAsBoolean("ChapterH"), props.getPropertiesAsBoolean("ChapterH1"),
           props.getPropertiesAsBoolean("ChapterH2"), props.getPropertiesAsBoolean("ChapterH3"),
           props.getPropertiesAsBoolean("ChapterName"),
-          props.getPropertiesAsBoolean("ChapterNumOnly") || props.getPropertiesAsBoolean("ChapterNumTitle")
+          props.getPropertiesAsBoolean("ChapterNumOnly")
+              || props.getPropertiesAsBoolean("ChapterNumTitle")
               || props.getPropertiesAsBoolean("ChapterNumParen")
               || props.getPropertiesAsBoolean("ChapterNumParenTitle"),
           props.getPropertiesAsBoolean("ChapterPattern"));
       this.jConfirmDialog.showDialog(aozoraTxt, dstPath + File.separator, title, creator,
-          Integer.parseInt(props.getProperty("TitleType")), props.getPropertiesAsBoolean("PubFirst"), bookInfo,
-          imageInfoReader, frame.getLocation(), coverW, coverH);
+          Integer.parseInt(props.getProperty("TitleType")),
+          props.getPropertiesAsBoolean("PubFirst"), bookInfo, imageInfoReader, frame.getLocation(),
+          coverW, coverH);
 
       // ダイアログが閉じた後に再開
       if (this.jConfirmDialog.canceled) {
@@ -1903,7 +1931,8 @@ public class ListWindow {
         bookInfo.creatorLine = -1;
 
       // プレビューでトリミングされていたらbookInfo.coverImageにBufferedImageを設定 それ以外はnullにする
-      BufferedImage coverImage = this.jConfirmDialog.jCoverImagePanel.getModifiedImage(coverW, coverH);
+      BufferedImage coverImage =
+          this.jConfirmDialog.jCoverImagePanel.getModifiedImage(coverW, coverH);
       if (coverImage != null) {
         // Epub3Writerでイメージを出力
         bookInfo.coverImage = coverImage;
@@ -1929,8 +1958,10 @@ public class ListWindow {
     // Kindleは一旦tmpファイルに出力
     File outFileOrg = null;
     if (kindlegen != null) {
-      outFile = AozoraEpub3.getOutFile(aozoraTxt, new File(dstPath), bookInfo, autoFileName, ".epub");
-      File mobiFile = new File(outFile.getAbsolutePath().substring(0, outFile.getAbsolutePath().length() - 4) + "mobi");
+      outFile =
+          AozoraEpub3.getOutFile(aozoraTxt, new File(dstPath), bookInfo, autoFileName, ".epub");
+      File mobiFile = new File(
+          outFile.getAbsolutePath().substring(0, outFile.getAbsolutePath().length() - 4) + "mobi");
       if (!overWrite && (mobiFile.exists() || (outExt.endsWith(".epub") && outFile.exists()))) {
         LogAppender.println("変換中止: " + aozoraTxt.getAbsolutePath());
         if (mobiFile.exists())
@@ -1959,22 +1990,20 @@ public class ListWindow {
       }
     }
     /*
-     * if (overWrite && outFile.exists()) { int ret =
-     * JOptionPane.showConfirmDialog(this,
-     * "ファイルが存在します\n上書きしますか？\n(取り消しで変換キャンセル)", "上書き確認",
-     * JOptionPane.YES_NO_CANCEL_OPTION); if (ret == JOptionPane.NO_OPTION) {
-     * LogAppender.println("変換中止: "+srcFile.getAbsolutePath()); return; } else
-     * if (ret == JOptionPane.CANCEL_OPTION) {
-     * LogAppender.println("変換中止: "+srcFile.getAbsolutePath()); convertCanceled
-     * = true; LogAppender.println("変換処理をキャンセルしました"); return; } }
+     * if (overWrite && outFile.exists()) { int ret = JOptionPane.showConfirmDialog(this,
+     * "ファイルが存在します\n上書きしますか？\n(取り消しで変換キャンセル)", "上書き確認", JOptionPane.YES_NO_CANCEL_OPTION); if (ret
+     * == JOptionPane.NO_OPTION) { LogAppender.println("変換中止: "+srcFile.getAbsolutePath()); return;
+     * } else if (ret == JOptionPane.CANCEL_OPTION) {
+     * LogAppender.println("変換中止: "+srcFile.getAbsolutePath()); convertCanceled = true;
+     * LogAppender.println("変換処理をキャンセルしました"); return; } }
      */
 
     ////////////////////////////////
     // 変換実行
     String ext = aozoraTxt.getName();
     ext = ext.substring(ext.lastIndexOf('.') + 1).toLowerCase();
-    AozoraEpub3.convertFile(aozoraTxt, ext, outFile, this.aozoraConverter, writer, encType, bookInfo, imageInfoReader,
-        txtIdx);
+    AozoraEpub3.convertFile(aozoraTxt, ext, outFile, this.aozoraConverter, writer, encType,
+        bookInfo, imageInfoReader, txtIdx);
 
     imageInfoReader = null;
     // 画像は除去
@@ -1994,10 +2023,13 @@ public class ListWindow {
       if (kindlegen != null) {
         long time = System.currentTimeMillis();
         String outFileName = outFile.getAbsolutePath();
-        LogAppender.println("kindlegenを実行します : " + kindlegen.getName() + " \"" + outFileName + "\"");
-        ProcessBuilder pb = new ProcessBuilder(kindlegen.getAbsolutePath(), "-locale", "en", "-verbose", outFileName);
+        LogAppender
+            .println("kindlegenを実行します : " + kindlegen.getName() + " \"" + outFileName + "\"");
+        ProcessBuilder pb = new ProcessBuilder(kindlegen.getAbsolutePath(), "-locale", "en",
+            "-verbose", outFileName);
         this.kindleProcess = pb.start();
-        BufferedReader br = new BufferedReader(new InputStreamReader(this.kindleProcess.getInputStream()));
+        BufferedReader br =
+            new BufferedReader(new InputStreamReader(this.kindleProcess.getInputStream()));
         String line;
         int idx = 0;
         int cnt = 0;
@@ -2025,9 +2057,11 @@ public class ListWindow {
           if (outFileOrg != null) {
             // mobiリネーム
             File mobiTmpFile = new File(
-                outFile.getAbsolutePath().substring(0, outFile.getAbsolutePath().length() - 4) + "mobi");
+                outFile.getAbsolutePath().substring(0, outFile.getAbsolutePath().length() - 4)
+                    + "mobi");
             File mobiFile = new File(
-                outFileOrg.getAbsolutePath().substring(0, outFileOrg.getAbsolutePath().length() - 4) + "mobi");
+                outFileOrg.getAbsolutePath().substring(0, outFileOrg.getAbsolutePath().length() - 4)
+                    + "mobi");
             if (mobiFile.exists())
               mobiFile.delete();
             mobiTmpFile.renameTo(mobiFile);
@@ -2039,8 +2073,9 @@ public class ListWindow {
             } else {
               outFile.delete();
             }
-            LogAppender.println("\n" + msg + "\nkindlegen変換完了 [" + (((System.currentTimeMillis() - time) / 100) / 10f)
-                + "s] -> " + mobiFile.getName());
+            LogAppender.println("\n" + msg + "\nkindlegen変換完了 ["
+                + (((System.currentTimeMillis() - time) / 100) / 10f) + "s] -> "
+                + mobiFile.getName());
           }
         }
       }
@@ -2158,11 +2193,13 @@ public class ListWindow {
     }
     boolean forceChapterwise = individualProps.getPropertiesAsBoolean("SplitChapterWise");
     boolean allowSingleEmptyLine = individualProps.getPropertiesAsBoolean("AllowSingleEmptyLines");
-    int successiveEmptyLinesLimit = Integer.parseInt(individualProps.getProperty("SuccessiveEmptyLinesLimit"));
+    int successiveEmptyLinesLimit =
+        Integer.parseInt(individualProps.getProperty("SuccessiveEmptyLinesLimit"));
 
     // 分割実行
-    ArrayList<ArrayList<File>> listOfLists = aozoraBook.split(dstPathForViewer, dstPathForEPUB3, volumeLength,
-        forceChapterwise, flagOutputForViewer, flagOutputForEPUB3, allowSingleEmptyLine, successiveEmptyLinesLimit);
+    ArrayList<ArrayList<File>> listOfLists = aozoraBook.split(dstPathForViewer, dstPathForEPUB3,
+        volumeLength, forceChapterwise, flagOutputForViewer, flagOutputForEPUB3,
+        allowSingleEmptyLine, successiveEmptyLinesLimit);
 
     ArrayList<File> listSrcs = listOfLists.get(0);
     ArrayList<File> listAozora = listOfLists.get(1);
@@ -2275,11 +2312,13 @@ public class ListWindow {
     }
     boolean forceChapterwise = individualProps.getPropertiesAsBoolean("SplitChapterWise");
     boolean allowSingleEmptyLine = individualProps.getPropertiesAsBoolean("AllowSingleEmptyLines");
-    int successiveEmptyLinesLimit = Integer.parseInt(individualProps.getProperty("SuccessiveEmptyLinesLimit"));
+    int successiveEmptyLinesLimit =
+        Integer.parseInt(individualProps.getProperty("SuccessiveEmptyLinesLimit"));
 
     // 分割実行
-    ArrayList<ArrayList<File>> listOfLists = aozoraBook.split(dstPathForViewer, dstPathForEPUB3, volumeLength,
-        forceChapterwise, flagOutputForViewer, flagOutputForEPUB3, allowSingleEmptyLine, successiveEmptyLinesLimit);
+    ArrayList<ArrayList<File>> listOfLists = aozoraBook.split(dstPathForViewer, dstPathForEPUB3,
+        volumeLength, forceChapterwise, flagOutputForViewer, flagOutputForEPUB3,
+        allowSingleEmptyLine, successiveEmptyLinesLimit);
 
     // EPUB3ファイル出力先の設定
     String dstPath = props.getProperty("EPUB3DstPath");
@@ -2325,17 +2364,16 @@ public class ListWindow {
 
   /**
    * EPUBファイルまたはビューワ閲覧用青空文庫TXTのリストを書き出す
-   * 
+   *
    * @param listFiles
-   * @param type
-   *          "EPUB3" または "Viewer" でなければならない
+   * @param type "EPUB3" または "Viewer" でなければならない
    * @param novelID
    * @param props
    * @throws IllegalArgumentException
    * @throws IOException
    */
-  private void writeFileList(ArrayList<File> listFiles, String type, NovelMeta novelMeta, Properties props)
-      throws IllegalArgumentException, IOException {
+  private void writeFileList(ArrayList<File> listFiles, String type, NovelMeta novelMeta,
+      Properties props) throws IllegalArgumentException, IOException {
     String fileName = "";
     if (type.equals("EPUB3")) {
       fileName = "EpubFiles.txt";
@@ -2344,7 +2382,8 @@ public class ListWindow {
     } else {
       throw new IllegalArgumentException("引数 String \"type\" は \"EPUB3\" または \"Viewer\" でなければならない");
     }
-    String novelWiseDstPath = Utils.getNovelWiseDstPath(novelMeta.url, props.getProperty("CachePath"));
+    String novelWiseDstPath =
+        Utils.getNovelWiseDstPath(novelMeta.url, props.getProperty("CachePath"));
     File listFile = new File(novelWiseDstPath + fileName);
     FileOutputStream fos = new FileOutputStream(listFile);
     OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8");
@@ -2361,8 +2400,7 @@ public class ListWindow {
   }
 
   /**
-   * NovelListの内容をCSVファイルに書き出す
-   * MacOSなら平気なのだがWindowsではopenCSVのCSVWriterをそのまま使うと文字化けが起きるので、
+   * NovelListの内容をCSVファイルに書き出す MacOSなら平気なのだがWindowsではopenCSVのCSVWriterをそのまま使うと文字化けが起きるので、
    * java.io.OutputStreamWriterを挟み、OutputStreamWriterに文字コードを指定することで文字化けを回避
    */
   private void writeCSV(File csvFile, NovelList novelList) throws IOException {
@@ -2371,12 +2409,14 @@ public class ListWindow {
     Writer writer = new OutputStreamWriter(fos, "UTF-8");
     csvWriter = new CSVWriter(writer, ',', '"', "\n");
     List<String[]> outStrList = new ArrayList<>();
-    String[] header = { "novel ID", "author", "title", "chapters", "last updated", "check flag", "URL", "author ID" };
+    String[] header = {"novel ID", "author", "title", "chapters", "last updated", "check flag",
+        "URL", "author ID"};
     outStrList.add(header);
     for (String novelID : novelList.novelMetaMap.keySet()) {
       NovelMeta novelMeta = novelList.novelMetaMap.get(novelID);
-      String[] row = { novelMeta.novelID, novelMeta.author, novelMeta.title, novelMeta.numSections.toString(),
-          novelMeta.lastUpdate, novelMeta.checkFlag.toString(), novelMeta.url, novelMeta.authorID };
+      String[] row = {novelMeta.novelID, novelMeta.author, novelMeta.title,
+          novelMeta.numSections.toString(), novelMeta.lastUpdate, novelMeta.checkFlag.toString(),
+          novelMeta.url, novelMeta.authorID};
       outStrList.add(row);
     }
     csvWriter.writeAll(outStrList);
@@ -2423,8 +2463,7 @@ public class ListWindow {
     /**
      * テーブルカラムをデータの幅に合わせる.
      *
-     * @param vc
-     *          表示列番号
+     * @param vc 表示列番号
      */
     public void sizeWidthToFitData(int vc) {
       JTable table = super.getTable();
@@ -2451,14 +2490,15 @@ public class ListWindow {
   // 変換履歴
   ////////////////////////////////////////////////////////////////
   /** 変換履歴格納用 最大255件 */
-  LinkedHashMap<String, BookInfoHistory> mapBookInfoHistory = new LinkedHashMap<String, BookInfoHistory>() {
-    private static final long serialVersionUID = 1L;
+  LinkedHashMap<String, BookInfoHistory> mapBookInfoHistory =
+      new LinkedHashMap<String, BookInfoHistory>() {
+        private static final long serialVersionUID = 1L;
 
-    @SuppressWarnings("rawtypes")
-    protected boolean removeEldestEntry(Map.Entry eldest) {
-      return size() > 256;
-    }
-  };
+        @SuppressWarnings("rawtypes")
+        protected boolean removeEldestEntry(Map.Entry eldest) {
+          return size() > 256;
+        }
+      };
 
   // 以前の変換情報取得
   BookInfoHistory getBookInfoHistory(BookInfo bookInfo) {
