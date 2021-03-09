@@ -31,7 +31,10 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -82,6 +85,7 @@ import com.github.ghmk5.info.NovelList;
 import com.github.ghmk5.info.NovelMeta;
 import com.github.ghmk5.info.Properties;
 import com.github.ghmk5.swing.DialogConverterSettings;
+import com.github.ghmk5.swing.DialogCopyFile;
 import com.github.ghmk5.swing.DialogListFilesToOpen;
 import com.github.ghmk5.txt.AozoraTxt;
 import com.github.ghmk5.util.Utils;
@@ -109,6 +113,8 @@ public class ListWindow {
 
   /** 変換設定ダイアログ */
   DialogConverterSettings dialogConverterSettings;
+
+  DialogCopyFile dialogCopyFile;
 
   /** アプリケーションのアイコン画像 */
   Image iconImage;
@@ -685,6 +691,103 @@ public class ListWindow {
     JMenuItem mntmOpenCache = new JMenuItem("キャッシュディレクトリを開く");
     mntmOpenCache.addActionListener(new ActionOpenIndividualCache());
     tableContextMenu.add(mntmOpenCache);
+
+    JMenuItem mntmCopyFile = new JMenuItem("EPUB/青空文庫TXTファイルをコピー");
+    mntmCopyFile.addActionListener(new AbstractAction() {
+
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        dialogCopyFile = new DialogCopyFile(frame, "EPUB/青空文庫TXTファイル コピー先選択", true, props);
+        dialogCopyFile.setVisible(true);
+
+        if (dialogCopyFile.accepted) {
+          int[] selection = table.getSelectedRows();
+          ArrayList<File> filesToCopy = new ArrayList<File>();
+          String novelID;
+          Path dstDirAoTxt = Path.of(dialogCopyFile.copyDstAoTxt);
+          Path dstDirEpub3 = Path.of(dialogCopyFile.copyDstEpub3);
+          Path epub3StoreDir = Path.of(props.getProperty("EPUB3DstPath"));
+          Path aoTxtStoreDir = Path.of(props.getProperty("ViewerDstPath"));
+          Path indStoreDir;
+          HashMap<Path, ArrayList<File>> fileMap = new HashMap<Path, ArrayList<File>>();
+          ArrayList<File> aoTxtFiles = new ArrayList<File>();
+          ArrayList<File> epubFiles = new ArrayList<File>();
+          for (int i : selection) {
+            novelID = (String) table.getValueAt(selection[i], 0);
+            if (dialogCopyFile.cbAoTxt.isSelected()) {
+              if (props.getPropertiesAsBoolean("UseNovelwiseDirViewer")) {
+                indStoreDir = Paths.get(aoTxtStoreDir.toString(), novelID);
+              } else {
+                indStoreDir = aoTxtStoreDir;
+              }
+              for (File file : indStoreDir.toFile().listFiles()) {
+                if (file.getName().matches(".+\\.txt$")) {
+                  aoTxtFiles.add(file);
+                }
+              }
+              fileMap.put(dstDirAoTxt, aoTxtFiles);
+            }
+            if (dialogCopyFile.cbEpubTxt.isSelected()) {
+              if (props.getPropertiesAsBoolean("UseNovelwiseDirEPUB3")) {
+                indStoreDir = Paths.get(epub3StoreDir.toString(), novelID);
+              } else {
+                indStoreDir = epub3StoreDir;
+              }
+              for (File file : indStoreDir.toFile().listFiles()) {
+                if (file.getName().matches(".+\\.epub$")) {
+                  epubFiles.add(file);
+                }
+              }
+              if (fileMap.keySet().contains(dstDirEpub3)) {
+                aoTxtFiles = fileMap.get(dstDirEpub3);
+                aoTxtFiles.addAll(epubFiles);
+                fileMap.put(dstDirEpub3, aoTxtFiles);
+              } else {
+                fileMap.put(dstDirEpub3, epubFiles);
+              }
+            }
+          }
+
+          ArrayList<File> filesCouldntCopied = new ArrayList<File>();
+          for (Path dstPath : fileMap.keySet()) {
+            for (File file : fileMap.get(dstPath)) {
+              try {
+                Files.copy(file.toPath(), Paths.get(dstPath.toString(), file.getName()),
+                    StandardCopyOption.REPLACE_EXISTING);
+                LogAppender.println(file.getName() + " をコピーしました");
+              } catch (Exception ioe) {
+                ioe.printStackTrace();
+                filesCouldntCopied.add(file);
+              }
+            }
+            if (filesCouldntCopied.size() > 0) {
+              LogAppender.println("以下のファイルはコピーできません");
+              for (File file : filesCouldntCopied) {
+                LogAppender.println("  " + file.getAbsolutePath());
+              }
+            } else {
+              if (dialogCopyFile.cbAoTxt.isSelected()) {
+                props.setProperty("CopyDstAoTxt", dstDirAoTxt.toString());
+              }
+              if (dialogCopyFile.cbEpubTxt.isSelected()) {
+                props.setProperty("CopyDstEpub3", dstDirEpub3.toString());
+              }
+              try {
+                // 設定ファイル更新
+                fos = new FileOutputStream(jarPath + propFileName);
+                props.store(fos, "nucJ Parameters");
+                fos.close();
+              } catch (Exception e1) {
+                LogAppender.println("設定ファイル " + jarPath + propFileName + " の更新に失敗しました");
+                e1.printStackTrace();
+              }
+            }
+          }
+
+        }
+      }
+    });
+    tableContextMenu.add(mntmCopyFile);
 
     JMenuItem tglChkFlg = new JMenuItem("更新チェック可否の切り替え(トグル動作)");
     tglChkFlg.addActionListener(new ActionToggleChkUpdt());
