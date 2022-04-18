@@ -692,6 +692,14 @@ public class ListWindow {
     mntmOpenCache.addActionListener(new ActionOpenIndividualCache());
     tableContextMenu.add(mntmOpenCache);
 
+    // JMenuItem mntmOpenAoTxtStoreD = new JMenuItem("青空文庫TXTファイル保存ディレクトリを開く");
+    // tableContextMenu.add(mntmOpenAoTxtStoreD);
+    // // 青空文庫TXTファイル保存ディレクトリを開く処理
+
+    // JMenuItem mntmOpenEpubStoreD = new JMenuItem("EPUBファイル保存ディレクトリを開く");
+    // tableContextMenu.add(mntmOpenEpubStoreD);
+    // // EPUBファイル保存ディレクトリを開く処理
+
     JMenuItem mntmCopyFile = new JMenuItem("EPUB/青空文庫TXTファイルをコピー");
     mntmCopyFile.addActionListener(new AbstractAction() {
 
@@ -2246,6 +2254,7 @@ public class ListWindow {
     }
     if (props.getPropertiesAsBoolean("UseNovelwiseDirEPUB3")) {
       dstPath = dstPath + File.separator + novelMeta.novelID;
+      // dstPath = dstPath + File.separator + "[" + novelMeta.author + "] " + novelMeta.title;
       if (new File(dstPath).exists()) {
         if (!new File(dstPath).isDirectory()) {
           LogAppender.println("指定されたEPUB3ファイル出力先ディレクトリと同名のファイルが既に存在します。処理を中止します");
@@ -2263,7 +2272,9 @@ public class ListWindow {
       return null;
     }
     if (props.getPropertiesAsBoolean("UseNovelwiseDirViewer")) {
-      dstPathForViewer = dstPathForViewer + File.separator + novelMeta.novelID;
+      // dstPathForViewer = dstPathForViewer + File.separator + novelMeta.novelID;
+      dstPathForViewer =
+          dstPathForViewer + File.separator + "[" + novelMeta.author + "] " + novelMeta.title;
       if (new File(dstPathForViewer).exists()) {
         if (!new File(dstPathForViewer).isDirectory()) {
           LogAppender.println("指定されたビューワ用ファイル出力先ディレクトリと同名のファイルが既に存在します。処理を中止します");
@@ -2337,6 +2348,9 @@ public class ListWindow {
     // EPUBファイルリストの書き出し
     writeFileList(listEpub3, "EPUB3", novelMeta, props);
 
+    // 青空文庫TXTをzipにまとめる処理
+    // サブディレクトリを使うか否かはpropsから拾えるはず
+
     return null;
   }
 
@@ -2392,7 +2406,9 @@ public class ListWindow {
       return null;
     }
     if (props.getPropertiesAsBoolean("UseNovelwiseDirViewer")) {
-      dstPathForViewer = dstPathForViewer + File.separator + novelID;
+      // dstPathForViewer = dstPathForViewer + File.separator + novelMeta.novelID;
+      dstPathForViewer =
+          dstPathForViewer + File.separator + "[" + novelMeta.author + "] " + novelMeta.title;
       if (new File(dstPathForViewer).exists()) {
         if (!new File(dstPathForViewer).isDirectory()) {
           LogAppender.println("指定されたビューワ閲覧用青空文庫テキスト出力先ディレクトリと同名のファイルが既に存在します。処理を中止します");
@@ -2430,7 +2446,8 @@ public class ListWindow {
       return null;
     }
     if (props.getPropertiesAsBoolean("UseNovelwiseDirEPUB3")) {
-      dstPath = dstPath + File.separator + novelID;
+      dstPath = dstPath + File.separator + novelMeta.novelID;
+      // dstPath = dstPath + File.separator + "[" + novelMeta.author + "] " + novelMeta.title;
       if (new File(dstPath).exists()) {
         if (!new File(dstPath).isDirectory()) {
           LogAppender.println("指定されたEPUB3ファイル出力先ディレクトリと同名のファイルが既に存在します。処理を中止します");

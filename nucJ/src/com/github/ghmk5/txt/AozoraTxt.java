@@ -12,9 +12,7 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import org.apache.commons.lang.StringUtils;
-
 import com.github.ghmk5.util.FileName;
 
 /** 青空文庫テキストの本文およびタイトル・著者名・章・節などのメタ情報を含んだオブジェクト */
@@ -39,13 +37,12 @@ public class AozoraTxt {
   /**
    * 青空文庫テキストの本文およびタイトル・著者名・章・節などのメタ情報を含んだオブジェクト
    *
-   * @param aozoraTxtFile
-   *          WebAozoraConverterが生成したconverted.txt
-   * @param charCode
-   *          InputStreamReaderに与える文字コード識別子
+   * @param aozoraTxtFile WebAozoraConverterが生成したconverted.txt
+   * @param charCode InputStreamReaderに与える文字コード識別子
    * @throws IOException
    */
-  public AozoraTxt(File aozoraTxtFile, String charCode) throws IOException, ArrayIndexOutOfBoundsException {
+  public AozoraTxt(File aozoraTxtFile, String charCode)
+      throws IOException, ArrayIndexOutOfBoundsException {
     FileInputStream fileInputStream = new FileInputStream(aozoraTxtFile);
     InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream, charCode);
 
@@ -221,8 +218,8 @@ public class AozoraTxt {
 
     // 変換日時・底本行の取得
     int lastIdxOflastSection = this.listOfChapters.get(chapterIdx).getListOfSections().size() - 1;
-    ArrayList<String> footNote = this.listOfChapters.get(chapterIdx).getListOfSections()
-        .get(lastIdxOflastSection).footNote;
+    ArrayList<String> footNote =
+        this.listOfChapters.get(chapterIdx).getListOfSections().get(lastIdxOflastSection).footNote;
     if (footNote.size() == 0) {
       ArrayList<String> bodyOfLastSection = this.listOfChapters.get(chapterIdx).getListOfSections()
           .get(lastIdxOflastSection).getBodyAsList();
@@ -237,7 +234,8 @@ public class AozoraTxt {
       footNote.remove(footNote.size() - 1);
       lineOfOriginalTextURL = footNote.get(footNote.size() - 1);
       footNote.remove(footNote.size() - 1);
-      this.listOfChapters.get(chapterIdx).getListOfSections().get(lastIdxOflastSection).footNote = footNote;
+      this.listOfChapters.get(chapterIdx).getListOfSections().get(lastIdxOflastSection).footNote =
+          footNote;
     }
     Pattern pOriginalTextURL = Pattern.compile("(https?://([^/]+/)+)\"");
     Matcher mOriginalTextURL = pOriginalTextURL.matcher(lineOfOriginalTextURL);
@@ -288,29 +286,22 @@ public class AozoraTxt {
   /**
    * 分割した青空文庫テキストファイルを保存し、分割済みEPUB3変換用ファイル、Epub3ファイル、ビューワ閲覧用青空文庫TXTのリストを返す
    *
-   * @param dstPathForViewer
-   *          ビューワー閲覧用ファイルの保存パス
-   * @param dstPathForEPUB3
-   *          EPUB3変換用ファイルの保存パス
-   * @param volumeLength
-   *          分割ファイルの文字数 この数字を超えないように節単位で分割される
-   * @param forceChapterwise
-   *          この値がtrueのとき、強制的に章単位で分割する
-   * @param flagOutputForViewer
-   *          この値がtrueのとき、ビューワー閲覧用ファイルを出力する
-   * @param flagOutputForEPUB3
-   *          この値がtrueのとき、EPUB3変換用ファイルを出力する
-   * @param allowSingleEmptyLine
-   *          この値がtrueのとき、本文中の単一の空行をそのまま残す パラグラフ毎に空行を挟んでいる作品用
-   *          successiveEmptyLinesLimitと合わせて用いることにより、単一の空行は削除し、連続した空行を一つにまとめることができる
-   * @param successiveEmptyLinesLimit
-   *          連続した空行の最大数 この数を超えて連続する空行はこの数まで減らされる
+   * @param dstPathForViewer ビューワー閲覧用ファイルの保存パス
+   * @param dstPathForEPUB3 EPUB3変換用ファイルの保存パス
+   * @param volumeLength 分割ファイルの文字数 この数字を超えないように節単位で分割される
+   * @param forceChapterwise この値がtrueのとき、強制的に章単位で分割する
+   * @param flagOutputForViewer この値がtrueのとき、ビューワー閲覧用ファイルを出力する
+   * @param flagOutputForEPUB3 この値がtrueのとき、EPUB3変換用ファイルを出力する
+   * @param allowSingleEmptyLine この値がtrueのとき、本文中の単一の空行をそのまま残す パラグラフ毎に空行を挟んでいる作品用
+   *        successiveEmptyLinesLimitと合わせて用いることにより、単一の空行は削除し、連続した空行を一つにまとめることができる
+   * @param successiveEmptyLinesLimit 連続した空行の最大数 この数を超えて連続する空行はこの数まで減らされる
    * @return EPUB3変換用ファイルのリスト
    * @throws IOException
    */
-  public ArrayList<ArrayList<File>> split(String dstPathForViewer, String dstPathForEPUB3, int volumeLength,
-      boolean forceChapterwise, boolean flagOutputForViewer, boolean flagOutputForEPUB3, boolean allowSingleEmptyLine,
-      int successiveEmptyLinesLimit) throws IOException {
+  public ArrayList<ArrayList<File>> split(String dstPathForViewer, String dstPathForEPUB3,
+      int volumeLength, boolean forceChapterwise, boolean flagOutputForViewer,
+      boolean flagOutputForEPUB3, boolean allowSingleEmptyLine, int successiveEmptyLinesLimit)
+      throws IOException {
     ArrayList<ArrayList<File>> listOfLists = new ArrayList<>();
     ArrayList<File> listRawSplit = new ArrayList<>();
     ArrayList<File> listAozora = new ArrayList<>();
@@ -361,8 +352,8 @@ public class AozoraTxt {
         continue; // 章分けがある場合のデフォルト章 空のはず
       } else if (!aozoraChapter.title.equals("defaultChapterTitle")) { // 章分けありの通常章なら章タイトルを書き込む
         contentsAsListForEPUB3.add("［＃ここから大見出し］\n" + aozoraChapter.title + "\n［＃ここで大見出し終わり］\n\n");
-        contentsAsListForViewer
-            .add("［＃ここから３字下げ］\n［＃ここから大見出し］\n" + aozoraChapter.title + "\n［＃ここで大見出し終わり］\n［＃ここで字下げ終わり］\n\n");
+        contentsAsListForViewer.add("［＃ここから３字下げ］\n［＃ここから大見出し］\n" + aozoraChapter.title
+            + "\n［＃ここで大見出し終わり］\n［＃ここで字下げ終わり］\n\n");
       } // 章分けなしの場合、章タイトルの書き込みをスキップする
 
       for (AozoraSection aozoraSection : aozoraChapter.getListOfSections()) {
@@ -387,8 +378,8 @@ public class AozoraTxt {
 
         // 節タイトルを追加
         contentsAsListForEPUB3.add("［＃ここから中見出し］\n" + aozoraSection.title + "\n［＃ここで中見出し終わり］\n\n");
-        contentsAsListForViewer
-            .add("\n［＃ここから５字下げ］\n［＃ここから中見出し］\n" + aozoraSection.title + "\n［＃ここで中見出し終わり］\n［＃ここで字下げ終わり］\n\n");
+        contentsAsListForViewer.add("\n［＃ここから５字下げ］\n［＃ここから中見出し］\n" + aozoraSection.title
+            + "\n［＃ここで中見出し終わり］\n［＃ここで字下げ終わり］\n\n");
 
         // 投稿改稿日時を追加
         dateLine = "［＃ここから地から１字上げ］\n［＃ここから１段階小さな文字］\n" + aozoraSection.datePublished + " 公開";
@@ -404,7 +395,9 @@ public class AozoraTxt {
         contentsAsListForViewer.add(dateLine);
 
         // 節頭注があれば追加
-        if (aozoraSection.getEmptyLinesTreatedHeadNote(allowSingleEmptyLine, successiveEmptyLinesLimit).size() > 0) {
+        if (aozoraSection
+            .getEmptyLinesTreatedHeadNote(allowSingleEmptyLine, successiveEmptyLinesLimit)
+            .size() > 0) {
           contentsAsListForEPUB3.add("\n［＃区切り線］\n［＃ここから２字下げ］\n［＃ここから２字上げ］\n［＃ここから１段階小さな文字］\n\n");
           contentsAsListForViewer.add("\n［＃ここから４字下げ］\n＊＊＊\n");
           for (String line : aozoraSection.getEmptyLinesTreatedHeadNote(allowSingleEmptyLine,
@@ -417,7 +410,8 @@ public class AozoraTxt {
         }
 
         // 本文を追加
-        for (String line : aozoraSection.getEmptyLinesTreatedBody(allowSingleEmptyLine, successiveEmptyLinesLimit)) {
+        for (String line : aozoraSection.getEmptyLinesTreatedBody(allowSingleEmptyLine,
+            successiveEmptyLinesLimit)) {
 
           contentsAsListForEPUB3.add(line + "\n");
 
@@ -427,13 +421,15 @@ public class AozoraTxt {
           mTagMinusIndentEnd = pTagMinusIndentEnd.matcher(line);
           mTagSetSmallStart = pTagSetSmallStart.matcher(line);
           mTagSetSmallEnd = pTagSetSmallEnd.matcher(line);
-          if (!mTagMinusIndentStart.find() && !mTagMinusIndentEnd.find() && !mTagSetSmallStart.find()
-              && !mTagSetSmallEnd.find())
+          if (!mTagMinusIndentStart.find() && !mTagMinusIndentEnd.find()
+              && !mTagSetSmallStart.find() && !mTagSetSmallEnd.find())
             contentsAsListForViewer.add(line + "\n");
         }
 
         // 節脚注があれば追加
-        if (aozoraSection.getEmptyLinesTreatedFootNote(allowSingleEmptyLine, successiveEmptyLinesLimit).size() > 0) {
+        if (aozoraSection
+            .getEmptyLinesTreatedFootNote(allowSingleEmptyLine, successiveEmptyLinesLimit)
+            .size() > 0) {
           contentsAsListForEPUB3.add("\n\n［＃区切り線］\n［＃ここから２字下げ］\n［＃ここから２字上げ］\n［＃ここから１段階小さな文字］\n\n");
           contentsAsListForViewer.add("\n\n［＃ここから４字下げ］\n＊＊＊\n");
           for (String line : aozoraSection.getEmptyLinesTreatedFootNote(allowSingleEmptyLine,
@@ -464,6 +460,7 @@ public class AozoraTxt {
     if (flagOutputForEPUB3) {
       for (ArrayList<String> contentsAsList : volumesAsListForEPUB3) {
         fileNameForEPUB3 = "converted" + String.format("%02d", volumeNumber) + ".txt";
+        // fileNameForEPUB3 = FileName.replaceToMultiByte(fileNameForEPUB3);
         if (!dstPathForEPUB3.endsWith("/"))
           dstPathForEPUB3 += "/";
         dstFileForEPUB3 = new File(dstPathForEPUB3 + fileNameForEPUB3);
@@ -482,7 +479,8 @@ public class AozoraTxt {
     volumeNumber = 1;
     if (flagOutputForViewer) {
       for (ArrayList<String> contentsAsList : volumesAsListForViewer) {
-        fileNameForViewer = "[" + this.author + "] " + this.title + " " + String.format("%02d", volumeNumber) + ".txt";
+        fileNameForViewer = "[" + this.author + "] " + this.title + " "
+            + String.format("%02d", volumeNumber) + ".txt";
         fileNameForViewer = FileName.replaceToMultiByte(fileNameForViewer);
         if (!dstPathForViewer.endsWith("/"))
           dstPathForViewer += "/";
@@ -563,11 +561,9 @@ public class AozoraTxt {
     ArrayList<AozoraSection> listOfSections;
 
     /**
-     * @param idx
-     *          章番号 0は章分けがない作品で使われる defaultChapter 通常の章は番号1から始まる
-     *          したがって、章分けがある作品では第0章は空であり、章分けがない作品では全ての節が第0章に属する
-     * @param title
-     *          章タイトル defaultChapterの場合は"defaultChapterTitle"
+     * @param idx 章番号 0は章分けがない作品で使われる defaultChapter 通常の章は番号1から始まる
+     *        したがって、章分けがある作品では第0章は空であり、章分けがない作品では全ての節が第0章に属する
+     * @param title 章タイトル defaultChapterの場合は"defaultChapterTitle"
      */
     public AozoraChapter(int idx, String title) {
       this.idx = idx;
@@ -577,13 +573,10 @@ public class AozoraTxt {
     }
 
     /**
-     * @param idx
-     *          章番号 0は章分けがない作品で使われる defaultChapter 通常の章は番号1から始まる
-     *          したがって、章分けがある作品では第0章は空であり、章分けがない作品では全ての節が第0章に属する
-     * @param title
-     *          章タイトル defaultChapterの場合は"defaultChapterTitle"
-     * @param listOfSections
-     *          ArrayList<AozoraSection>
+     * @param idx 章番号 0は章分けがない作品で使われる defaultChapter 通常の章は番号1から始まる
+     *        したがって、章分けがある作品では第0章は空であり、章分けがない作品では全ての節が第0章に属する
+     * @param title 章タイトル defaultChapterの場合は"defaultChapterTitle"
+     * @param listOfSections ArrayList<AozoraSection>
      *
      */
     public AozoraChapter(int idx, String title, ArrayList<AozoraSection> listOfSections) {
@@ -645,12 +638,9 @@ public class AozoraTxt {
     ArrayList<String> footNote;
 
     /**
-     * @param idx
-     *          節番号 0はインスタンス作成時に自動的に生成されるdefaultSectionに与えられる 通常の節は番号1から始まる
-     * @param chapterIdx
-     *          この節が属する章の番号
-     * @param title
-     *          節タイトル defaultSectionの場合は"defaultSectionTitle"
+     * @param idx 節番号 0はインスタンス作成時に自動的に生成されるdefaultSectionに与えられる 通常の節は番号1から始まる
+     * @param chapterIdx この節が属する章の番号
+     * @param title 節タイトル defaultSectionの場合は"defaultSectionTitle"
      */
     public AozoraSection(int idx, int chapterIdx, String title) {
       this.idx = idx;
@@ -663,14 +653,10 @@ public class AozoraTxt {
     }
 
     /**
-     * @param idx
-     *          節番号 0はインスタンス作成時に自動的に生成されるdefaultSectionに与えられる 通常の節は番号1から始まる
-     * @param chapterIdx
-     *          この節が属する章の番号
-     * @param title
-     *          節タイトル defaultSectionの場合は"defaultSectionTitle"
-     * @param body
-     *          パラグラフのリストとしての本文 節タイトルを含まない 各パラグラフは改行コードを含まない
+     * @param idx 節番号 0はインスタンス作成時に自動的に生成されるdefaultSectionに与えられる 通常の節は番号1から始まる
+     * @param chapterIdx この節が属する章の番号
+     * @param title 節タイトル defaultSectionの場合は"defaultSectionTitle"
+     * @param body パラグラフのリストとしての本文 節タイトルを含まない 各パラグラフは改行コードを含まない
      */
     public AozoraSection(int idx, int chapterIdx, String title, ArrayList<String> body) {
       this.idx = idx;
@@ -721,15 +707,13 @@ public class AozoraTxt {
     /**
      * パラグラフのリストを受け取り、空行調整して返す。先頭と末尾の空行は除かれる
      *
-     * @param allowSingleEmptyLine
-     *          この値がtrueのとき、本文中の単一の空行をそのまま残す パラグラフ毎に空行を挟んでいる作品用
-     *          successiveEmptyLinesLimitと合わせて用いることにより、単一の空行は削除し、連続した空行を一つにまとめることができる
-     * @param successiveEmptyLinesLimit
-     *          連続した空行の最大数 この数を超えて連続する空行はこの数まで減らされる
+     * @param allowSingleEmptyLine この値がtrueのとき、本文中の単一の空行をそのまま残す パラグラフ毎に空行を挟んでいる作品用
+     *        successiveEmptyLinesLimitと合わせて用いることにより、単一の空行は削除し、連続した空行を一つにまとめることができる
+     * @param successiveEmptyLinesLimit 連続した空行の最大数 この数を超えて連続する空行はこの数まで減らされる
      * @return 要素として行を持つArrayList 要素末尾に改行コードは付かない
      */
-    public ArrayList<String> treatEmptyLines(ArrayList<String> srcList, boolean allowSingleEmptyLine,
-        int successiveEmptyLinesLimit) {
+    public ArrayList<String> treatEmptyLines(ArrayList<String> srcList,
+        boolean allowSingleEmptyLine, int successiveEmptyLinesLimit) {
 
       // TODO successiveEmptyLinesLimitが0だったときの動作検証
 
@@ -754,7 +738,8 @@ public class AozoraTxt {
               emptyLinesTreatedList.add("");
             }
           } else {
-            if (successiveEmptyLinesCount > 0 && successiveEmptyLinesCount < successiveEmptyLinesLimit) {
+            if (successiveEmptyLinesCount > 0
+                && successiveEmptyLinesCount < successiveEmptyLinesLimit) {
               emptyLinesTreatedList.add("");
             } else if (successiveEmptyLinesCount == successiveEmptyLinesLimit) {
               emptyLinesTreatedList.add("");
@@ -762,8 +747,8 @@ public class AozoraTxt {
           }
           successiveEmptyLinesCount++;
         } else {
-          if (successiveEmptyLinesCount > 1 && successiveEmptyLinesCount <= successiveEmptyLinesLimit
-              && !allowSingleEmptyLine) {
+          if (successiveEmptyLinesCount > 1
+              && successiveEmptyLinesCount <= successiveEmptyLinesLimit && !allowSingleEmptyLine) {
             emptyLinesTreatedList.add(""); // 単一空行を許さない場合で連続空行が許容数以下のとき、最初の空行が削られてるので補完
           }
           emptyLinesTreatedList.add(line); // 文字列を出力
@@ -809,17 +794,16 @@ public class AozoraTxt {
     /**
      * treatEmptyLinesにより空行調整をした本文を返す
      *
-     * @param allowSingleEmptyLine
-     *          この値がtrueのとき、本文中の単一の空行をそのまま残す パラグラフ毎に空行を挟んでいる作品用
-     *          successiveEmptyLinesLimitと合わせて用いることにより、単一の空行は削除し、連続した空行を一つにまとめることができる
-     * @param successiveEmptyLinesLimit
-     *          連続した空行の最大数 この数を超えて連続する空行はこの数まで減らされる
+     * @param allowSingleEmptyLine この値がtrueのとき、本文中の単一の空行をそのまま残す パラグラフ毎に空行を挟んでいる作品用
+     *        successiveEmptyLinesLimitと合わせて用いることにより、単一の空行は削除し、連続した空行を一つにまとめることができる
+     * @param successiveEmptyLinesLimit 連続した空行の最大数 この数を超えて連続する空行はこの数まで減らされる
      * @return 要素として行を持つArrayList 要素末尾に改行コードは付かない
      */
-    public ArrayList<String> getEmptyLinesTreatedBody(boolean allowSingleEmptyLine, int successiveEmptyLinesLimit) {
+    public ArrayList<String> getEmptyLinesTreatedBody(boolean allowSingleEmptyLine,
+        int successiveEmptyLinesLimit) {
 
-      ArrayList<String> emptyLinesTreatedBody = this.treatEmptyLines(this.body, allowSingleEmptyLine,
-          successiveEmptyLinesLimit);
+      ArrayList<String> emptyLinesTreatedBody =
+          this.treatEmptyLines(this.body, allowSingleEmptyLine, successiveEmptyLinesLimit);
 
       return emptyLinesTreatedBody;
     }
@@ -827,17 +811,16 @@ public class AozoraTxt {
     /**
      * treatEmptyLinesにより空行調整をした節の頭注を返す
      *
-     * @param allowSingleEmptyLine
-     *          この値がtrueのとき、本文中の単一の空行をそのまま残す パラグラフ毎に空行を挟んでいる作品用
-     *          successiveEmptyLinesLimitと合わせて用いることにより、単一の空行は削除し、連続した空行を一つにまとめることができる
-     * @param successiveEmptyLinesLimit
-     *          連続した空行の最大数 この数を超えて連続する空行はこの数まで減らされる
+     * @param allowSingleEmptyLine この値がtrueのとき、本文中の単一の空行をそのまま残す パラグラフ毎に空行を挟んでいる作品用
+     *        successiveEmptyLinesLimitと合わせて用いることにより、単一の空行は削除し、連続した空行を一つにまとめることができる
+     * @param successiveEmptyLinesLimit 連続した空行の最大数 この数を超えて連続する空行はこの数まで減らされる
      * @return 要素として行を持つArrayList 要素末尾に改行コードは付かない
      */
-    public ArrayList<String> getEmptyLinesTreatedHeadNote(boolean allowSingleEmptyLine, int successiveEmptyLinesLimit) {
+    public ArrayList<String> getEmptyLinesTreatedHeadNote(boolean allowSingleEmptyLine,
+        int successiveEmptyLinesLimit) {
 
-      ArrayList<String> emptyLinesTreatedHeadNote = this.treatEmptyLines(this.headNote, allowSingleEmptyLine,
-          successiveEmptyLinesLimit);
+      ArrayList<String> emptyLinesTreatedHeadNote =
+          this.treatEmptyLines(this.headNote, allowSingleEmptyLine, successiveEmptyLinesLimit);
 
       return emptyLinesTreatedHeadNote;
     }
@@ -845,17 +828,16 @@ public class AozoraTxt {
     /**
      * treatEmptyLinesにより空行調整をした節の脚注を返す
      *
-     * @param allowSingleEmptyLine
-     *          この値がtrueのとき、本文中の単一の空行をそのまま残す パラグラフ毎に空行を挟んでいる作品用
-     *          successiveEmptyLinesLimitと合わせて用いることにより、単一の空行は削除し、連続した空行を一つにまとめることができる
-     * @param successiveEmptyLinesLimit
-     *          連続した空行の最大数 この数を超えて連続する空行はこの数まで減らされる
+     * @param allowSingleEmptyLine この値がtrueのとき、本文中の単一の空行をそのまま残す パラグラフ毎に空行を挟んでいる作品用
+     *        successiveEmptyLinesLimitと合わせて用いることにより、単一の空行は削除し、連続した空行を一つにまとめることができる
+     * @param successiveEmptyLinesLimit 連続した空行の最大数 この数を超えて連続する空行はこの数まで減らされる
      * @return 要素として行を持つArrayList 要素末尾に改行コードは付かない
      */
-    public ArrayList<String> getEmptyLinesTreatedFootNote(boolean allowSingleEmptyLine, int successiveEmptyLinesLimit) {
+    public ArrayList<String> getEmptyLinesTreatedFootNote(boolean allowSingleEmptyLine,
+        int successiveEmptyLinesLimit) {
 
-      ArrayList<String> emptyLinesTreatedFootNote = this.treatEmptyLines(this.footNote, allowSingleEmptyLine,
-          successiveEmptyLinesLimit);
+      ArrayList<String> emptyLinesTreatedFootNote =
+          this.treatEmptyLines(this.footNote, allowSingleEmptyLine, successiveEmptyLinesLimit);
 
       return emptyLinesTreatedFootNote;
     }
