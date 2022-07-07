@@ -692,6 +692,34 @@ public class ListWindow {
     mntmOpenCache.addActionListener(new ActionOpenIndividualCache());
     tableContextMenu.add(mntmOpenCache);
 
+    JMenuItem mntmOpenAoTxt = new JMenuItem("青空文庫テキストをエディタで開く");
+    mntmOpenAoTxt.addActionListener(new AbstractAction() {
+
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        // 選択された作品のIDを取得
+        ArrayList<String> listNovelIDsToBeTreated = new ArrayList<>();
+        for (int idx : table.getSelectedRows()) {
+          idx = table.convertRowIndexToModel(idx);
+          listNovelIDsToBeTreated.add((String) table.getModel().getValueAt(idx, 0));
+        }
+        for (String novelID : listNovelIDsToBeTreated) {
+          String urlString = novelList.novelMetaMap.get(novelID).url;
+          String cachePathString =
+              Utils.getNovelWiseDstPath(urlString, cachePath.getAbsolutePath());
+          Path aoTxtPath = Paths.get(cachePathString).resolve(Paths.get("converted.txt"));
+          try {
+            Desktop.getDesktop().open(aoTxtPath.toFile());
+          } catch (IOException e1) {
+            LogAppender.println("青空文庫テキストファイル " + aoTxtPath + " は開けません");
+            e1.printStackTrace();
+          }
+        }
+
+      }
+    });
+    tableContextMenu.add(mntmOpenAoTxt);
+
     // JMenuItem mntmOpenAoTxtStoreD = new JMenuItem("青空文庫TXTファイル保存ディレクトリを開く");
     // tableContextMenu.add(mntmOpenAoTxtStoreD);
     // // 青空文庫TXTファイル保存ディレクトリを開く処理
